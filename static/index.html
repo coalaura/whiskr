@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Nata+Sans:wght@100..900&display=swap" rel="stylesheet" />
+
+		<link href="chat.css" rel="stylesheet" />
+
+		<title>chat</title>
+	</head>
+	<body>
+		<div id="page">
+			<div id="messages"></div>
+			<div id="chat">
+				<button id="bottom" class="hidden" title="Scroll to bottom"></button>
+
+				<textarea id="message" placeholder="Type something..."></textarea>
+
+				<button id="add" title="Add message"></button>
+				<button id="send" title="Add message and start completion"></button>
+
+				<div class="options">
+					<div class="option">
+						<label for="role" title="Role"></label>
+						<select id="role">
+							<option value="user" selected>User</option>
+							<option value="assistant">Assistant</option>
+							<option value="system">System</option>
+						</select>
+					</div>
+					<div class="option">
+						<label for="model" title="Model"></label>
+						<select id="model"></select>
+					</div>
+					<div class="option">
+						<label for="temperature" title="Temperature (0 - 1)"></label>
+						<input id="temperature" type="number" min="0" max="1" step="0.05" value="0.85" />
+					</div>
+					<div class="option">
+						<button id="clear" title="Clear the entire chat"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="chat.js"></script>
+	</body>
+</html>
