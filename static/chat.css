@@ -112,8 +112,12 @@ body {
 .message .text {
 	display: block;
 	background: transparent;
-	padding: 8px 12px;
+	padding: 6px 12px;
 	width: 100%;
+}
+
+.message .text {
+	padding-bottom: 10px;
 }
 
 .message:not(.editing) textarea.text,
