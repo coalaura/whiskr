@@ -23,7 +23,6 @@ body {
 	flex-direction: column;
 	gap: 25px;
 	background: #1e2030;
-	box-shadow: 0px 0px 4px 4px #1e2030;
 	margin: auto;
 	margin-top: 30px;
 	width: 100%;
@@ -57,7 +56,6 @@ body {
 #message,
 .message {
 	border: none;
-	box-shadow: 0px 0px 4px 4px #24273a;
 	border-radius: 6px;
 	background: #24273a;
 	font: inherit;
@@ -69,6 +67,7 @@ body {
 	max-width: 700px;
 	min-width: 200px;
 	width: max-content;
+	padding-top: 22px;
 }
 
 .message.user {
@@ -83,8 +82,8 @@ body {
 	position: absolute;
 	line-height: 12px;
 	font-size: 12px;
-	top: 4px;
-	left: 4px;
+	top: 6px;
+	left: 6px;
 	padding-left: 20px;
 }
 
@@ -109,18 +108,73 @@ body {
 	background-image: url(icons/assistant.svg);
 }
 
+.message .reasoning,
 .message .text {
 	display: block;
 	background: transparent;
-	padding: 10px 12px;
-	padding-top: 28px;
-	white-space: pre-line;
+	padding: 8px 12px;
 	width: 100%;
 }
 
 .message:not(.editing) textarea.text,
 .message.editing div.text {
 	display: none;
+}
+
+.message:not(.expanded) .reasoning-text {
+	height: 0;
+	overflow: hidden;
+}
+
+.message.expanded .reasoning-text {
+	padding: 10px 12px;
+	background: #1e2030;
+	margin-top: 10px;
+	border-radius: 6px;
+}
+
+.message:not(.has-reasoning) .reasoning {
+	display: none;
+}
+
+.reasoning .toggle {
+	position: relative;
+	padding: 0 20px;
+	font-weight: 600;
+	font-size: 14px;
+	margin-top: 2px;
+}
+
+.reasoning .toggle::after,
+.reasoning .toggle::before {
+	content: "";
+	background-image: url(icons/reasoning.svg);
+	position: absolute;
+	top: 0;
+	left: -2px;
+	width: 20px;
+	height: 20px;
+}
+
+.reasoning .toggle::after {
+	background-image: url(icons/chevron.svg);
+	left: unset;
+	right: -2px;
+	top: 1px;
+	transition: 150ms;
+}
+
+.message.expanded .reasoning .toggle::after {
+	transform: rotate(180deg);
+}
+
+.markdown p {
+	margin: 0;
+	margin-bottom: 14px;
+}
+
+.markdown p:last-child {
+	margin-bottom: 0;
 }
 
 textarea {
@@ -169,46 +223,47 @@ textarea {
 	display: none;
 }
 
+.message.reasoning .reasoning button.toggle::before {
+	animation: rotating 2s linear infinite;
+	background-image: url(icons/loading.svg);
+}
+
 .message .text::before {
 	font-style: italic;
 }
 
+.message:empty.receiving .text::before,
 .message.waiting .text::before {
-	content: "waiting...";
+	content: ". . .";
 }
 
-.message.reasoning .text::before {
-	content: "reasoning...";
-}
-
-.message:empty.receiving .text::before {
-	content: "receiving...";
+button,
+input,
+select {
+	border: none;
+	font: inherit;
+	color: inherit;
+	outline: none;
 }
 
 button {
 	background: transparent;
-	border: none;
-	color: inherit;
 	cursor: pointer;
+}
+
+input,
+select {
+	background: #363a4f;
 }
 
 #chat button {
 	position: absolute;
 }
 
-input,
-select {
-	border: none;
-	background: #363a4f;
-	font: inherit;
-	color: inherit;
-	outline: none;
-}
-
 #chat .options {
 	position: absolute;
 	bottom: 4px;
-	left: 12px;
+	left: 20px;
 	width: max-content;
 	display: flex;
 	align-items: center;
@@ -230,11 +285,14 @@ select {
 	margin-right: 4px;
 }
 
+.reasoning .toggle::before,
+.reasoning .toggle::after,
 #bottom,
 .message .role::before,
 #clear,
 #add,
 #send,
+.message .copy,
 .message .edit,
 .message .delete,
 #chat .option label {
@@ -244,6 +302,14 @@ select {
 	background-position: center;
 	background-size: contain;
 	background-repeat: no-repeat;
+}
+
+.message .copy {
+	background-image: url(icons/copy.svg);
+}
+
+.message .copy.copied {
+	background-image: url(icons/check.svg);
 }
 
 .message .edit {
@@ -265,7 +331,6 @@ select {
 #model {
 	width: 180px;
 	padding: 2px 4px;
-	text-align: right;
 }
 
 #temperature {
@@ -281,6 +346,10 @@ label[for="role"] {
 
 label[for="model"] {
 	background-image: url(icons/model.svg);
+}
+
+label[for="prompt"] {
+	background-image: url(icons/prompt.svg);
 }
 
 label[for="temperature"] {
@@ -300,7 +369,7 @@ label[for="temperature"] {
 #add,
 #send {
 	bottom: 4px;
-	right: 12px;
+	right: 20px;
 	width: 28px;
 	height: 28px;
 	background-image: url(icons/send.svg);
@@ -308,7 +377,7 @@ label[for="temperature"] {
 
 #add {
 	bottom: 4px;
-	right: 44px;
+	right: 52px;
 	background-image: url(icons/add.svg);
 }
 
@@ -323,4 +392,14 @@ label[for="temperature"] {
 
 .completing #send {
 	background-image: url(icons/stop.svg);
+}
+
+@keyframes rotating {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
 }

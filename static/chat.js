@@ -5,10 +5,285 @@
 		$bottom = document.getElementById("bottom"),
 		$role = document.getElementById("role"),
 		$model = document.getElementById("model"),
+		$prompt = document.getElementById("prompt"),
 		$temperature = document.getElementById("temperature"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$clear = document.getElementById("clear");
+
+	const messages = [];
+
+	function uid() {
+		return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+	}
+
+	function make(tag, ...classes) {
+		const el = document.createElement(tag);
+
+		el.classList.add(...classes);
+
+		return el;
+	}
+
+	function render(markdown) {
+		return marked.parse(DOMPurify.sanitize(markdown), {
+			gfm: true,
+		});
+	}
+
+	function scroll() {
+		$messages.scroll({
+			top: $messages.scrollHeight + 200,
+			behavior: "smooth",
+		});
+	}
+
+	class Message {
+		#id;
+		#role;
+		#reasoning;
+		#text;
+
+		#editing = false;
+		#expanded = false;
+		#state = false;
+
+		#_message;
+		#_role;
+		#_reasoning;
+		#_text;
+		#_edit;
+
+		constructor(role, reasoning, text) {
+			this.#id = uid();
+			this.#role = role;
+			this.#reasoning = reasoning || "";
+			this.#text = text || "";
+
+			this.#build();
+			this.#render();
+
+			messages.push(this);
+		}
+
+		#build() {
+			// main message div
+			this.#_message = make("div", "message", this.#role);
+
+			// message role
+			this.#_role = make("div", "role", this.#role);
+
+			this.#_message.appendChild(this.#_role);
+
+			// message reasoning (wrapper)
+			const _reasoning = make("div", "reasoning", "markdown");
+
+			this.#_message.appendChild(_reasoning);
+
+			// message reasoning (toggle)
+			const _toggle = make("button", "toggle");
+
+			_toggle.textContent = "Reasoning";
+
+			_reasoning.appendChild(_toggle);
+
+			_toggle.addEventListener("click", () => {
+				this.#expanded = !this.#expanded;
+
+				if (this.#expanded) {
+					this.#_message.classList.add("expanded");
+				} else {
+					this.#_message.classList.remove("expanded");
+				}
+			});
+
+			// message reasoning (content)
+			this.#_reasoning = make("div", "reasoning-text");
+
+			_reasoning.appendChild(this.#_reasoning);
+
+			// message content
+			this.#_text = make("div", "text", "markdown");
+
+			this.#_message.appendChild(this.#_text);
+
+			// message edit textarea
+			this.#_edit = make("textarea", "text");
+
+			this.#_message.appendChild(this.#_edit);
+
+			// message options
+			const _opts = make("div", "options");
+
+			this.#_message.appendChild(_opts);
+
+			// copy option
+			const _optCopy = make("button", "copy");
+
+			_optCopy.title = "Copy message content";
+
+			_opts.appendChild(_optCopy);
+
+			let timeout;
+
+			_optCopy.addEventListener("click", () => {
+				clearTimeout(timeout);
+
+				navigator.clipboard.writeText(this.#text);
+
+				_optCopy.classList.add("copied");
+
+				timeout = setTimeout(() => {
+					_optCopy.classList.remove("copied");
+				}, 1000);
+			});
+
+			// edit option
+			const _optEdit = make("button", "edit");
+
+			_optEdit.title = "Edit message content";
+
+			_opts.appendChild(_optEdit);
+
+			_optEdit.addEventListener("click", () => {
+				this.toggleEdit();
+			});
+
+			// delete option
+			const _optDelete = make("button", "delete");
+
+			_optDelete.title = "Delete message";
+
+			_opts.appendChild(_optDelete);
+
+			_optDelete.addEventListener("click", () => {
+				this.delete();
+			});
+
+			$messages.appendChild(this.#_message);
+
+			scroll();
+		}
+
+		#render(only = false) {
+			if (!only || only === "role") {
+				this.#_role.textContent = this.#role;
+			}
+
+			if (!only || only === "reasoning") {
+				this.#_reasoning.innerHTML = render(this.#reasoning);
+
+				if (this.#reasoning) {
+					this.#_message.classList.add("has-reasoning");
+				} else {
+					this.#_message.classList.remove("has-reasoning");
+				}
+			}
+
+			if (!only || only === "text") {
+				this.#_text.innerHTML = render(this.#text);
+			}
+
+			scroll();
+		}
+
+		#save() {
+			const data = messages.map((message) => message.getData(true));
+
+			console.log("save", data);
+
+			localStorage.setItem("messages", JSON.stringify(data));
+		}
+
+		getData(includeReasoning = false) {
+			const data = {
+				role: this.#role,
+				text: this.#text,
+			};
+
+			if (this.#reasoning && includeReasoning) {
+				data.reasoning = this.#reasoning;
+			}
+
+			return data;
+		}
+
+		setState(state) {
+			if (this.#state === state) {
+				return;
+			}
+
+			if (this.#state) {
+				this.#_message.classList.remove(this.#state);
+			}
+
+			if (state) {
+				this.#_message.classList.add(state);
+			}
+
+			this.#state = state;
+		}
+
+		addReasoning(chunk) {
+			this.#reasoning += chunk;
+
+			this.#render("reasoning");
+			this.#save();
+		}
+
+		addText(text) {
+			this.#text += text;
+
+			this.#render("text");
+			this.#save();
+		}
+
+		stopEdit() {
+			if (!this.#editing) {
+				return;
+			}
+
+			this.toggleEdit();
+		}
+
+		toggleEdit() {
+			this.#editing = !this.#editing;
+
+			if (this.#editing) {
+				this.#_edit.value = this.#text;
+
+				this.#_edit.style.height = `${this.#_text.offsetHeight}px`;
+				this.#_edit.style.width = `${this.#_text.offsetWidth}px`;
+
+				this.setState("editing");
+
+				this.#_edit.focus();
+			} else {
+				this.#text = this.#_edit.value;
+
+				this.setState(false);
+
+				this.#render();
+				this.#save();
+			}
+		}
+
+		delete() {
+			const index = messages.findIndex((msg) => msg.#id === this.#id);
+
+			if (index === -1) {
+				return;
+			}
+
+			console.log("delete", index);
+
+			messages.splice(index, 1);
+
+			this.#_message.remove();
+
+			this.#save();
+		}
+	}
 
 	let controller;
 
@@ -116,132 +391,19 @@
 	function restore(models) {
 		$role.value = localStorage.getItem("role") || "user";
 		$model.value = localStorage.getItem("model") || models[0].id;
+		$prompt.value = localStorage.getItem("prompt") || "normal";
 		$temperature.value = localStorage.getItem("temperature") || 0.85;
 
 		try {
-			const messages = JSON.parse(localStorage.getItem("messages") || "[]");
-
-			messages.forEach(addMessage);
+			JSON.parse(localStorage.getItem("messages") || "[]").forEach(
+				(message) =>
+					new Message(
+						message.role,
+						message.reasoning,
+						message.text,
+					),
+			);
 		} catch {}
-	}
-
-	function saveMessages() {
-		localStorage.setItem("messages", JSON.stringify(buildMessages(false)));
-	}
-
-	function scrollMessages() {
-		$messages.scroll({
-			top: $messages.scrollHeight + 200,
-			behavior: "smooth",
-		});
-	}
-
-	function toggleEditing(el) {
-		const text = el.querySelector("div.text"),
-			edit = el.querySelector("textarea.text");
-
-		if (el.classList.contains("editing")) {
-			text.textContent = edit.value.trim();
-
-			el.classList.remove("editing");
-
-			saveMessages();
-		} else {
-			edit.value = text.textContent;
-			edit.style.height = `${text.offsetHeight}px`;
-
-			el.classList.add("editing");
-
-			edit.focus();
-		}
-	}
-
-	function addMessage(message) {
-		const el = document.createElement("div");
-
-		el.classList.add("message", message.role);
-
-		// message role
-		const role = document.createElement("div");
-
-		role.textContent = message.role;
-		role.classList.add("role");
-
-		el.appendChild(role);
-
-		// message content
-		const text = document.createElement("div");
-
-		text.textContent = message.content;
-		text.classList.add("text");
-
-		el.appendChild(text);
-
-		// message edit textarea
-		const edit = document.createElement("textarea");
-
-		edit.classList.add("text");
-
-		el.appendChild(edit);
-
-		// message options
-		const opts = document.createElement("div");
-
-		opts.classList.add("options");
-
-		el.appendChild(opts);
-
-		// edit option
-		const optEdit = document.createElement("button");
-
-		optEdit.title = "Edit message content";
-		optEdit.classList.add("edit");
-
-		opts.appendChild(optEdit);
-
-		optEdit.addEventListener("click", () => {
-			toggleEditing(el);
-		});
-
-		// delete option
-		const optDelete = document.createElement("button");
-
-		optDelete.title = "Delete message";
-		optDelete.classList.add("delete");
-
-		opts.appendChild(optDelete);
-
-		optDelete.addEventListener("click", () => {
-			el.remove();
-
-			saveMessages();
-		});
-
-		// append to messages
-		$messages.appendChild(el);
-
-		scrollMessages();
-
-		return {
-			set(content) {
-				text.textContent = content;
-
-				scrollMessages();
-			},
-			state(state) {
-				if (state && el.classList.contains(state)) {
-					return;
-				}
-
-				el.classList.remove("waiting", "reasoning", "receiving");
-
-				if (state) {
-					el.classList.add(state);
-				}
-
-				scrollMessages();
-			},
-		};
 	}
 
 	function pushMessage() {
@@ -251,40 +413,9 @@
 			return false;
 		}
 
-		addMessage({
-			role: $role.value,
-			content: text,
-		});
-
 		$message.value = "";
 
-		saveMessages();
-
-		return true;
-	}
-
-	function buildMessages(clean = true) {
-		const messages = [];
-
-		$messages.querySelectorAll(".message").forEach((message) => {
-			if (clean && message.classList.contains("editing")) {
-				toggleEditing(message);
-			}
-
-			const role = message.querySelector(".role"),
-				text = message.querySelector(".text");
-
-			if (!role || !text) {
-				return;
-			}
-
-			messages.push({
-				role: role.textContent.trim(),
-				content: text.textContent.trim().replace(/\r/g, ""),
-			});
-		});
-
-		return messages;
+		return new Message($role.value, "", text);
 	}
 
 	$messages.addEventListener("scroll", () => {
@@ -313,6 +444,10 @@
 		localStorage.setItem("model", $model.value);
 	});
 
+	$prompt.addEventListener("change", () => {
+		localStorage.setItem("prompt", $prompt.value);
+	});
+
 	$temperature.addEventListener("input", () => {
 		localStorage.setItem("temperature", $temperature.value);
 	});
@@ -330,9 +465,9 @@
 			return;
 		}
 
-		$messages.innerHTML = "";
-
-		saveMessages();
+		for (const message of messages) {
+			message.delete();
+		}
 	});
 
 	$send.addEventListener("click", () => {
@@ -349,26 +484,21 @@
 		}
 
 		pushMessage();
-		saveMessages();
 
 		controller = new AbortController();
 
 		$chat.classList.add("completing");
 
 		const body = {
+			prompt: $prompt.value,
 			model: $model.value,
 			temperature: temperature,
-			messages: buildMessages(),
+			messages: messages.map((message) => message.getData()),
 		};
 
-		const result = {
-			role: "assistant",
-			content: "",
-		};
+		const message = new Message("assistant", "", "");
 
-		const message = addMessage(result);
-
-		message.state("waiting");
+		message.setState("waiting");
 
 		stream(
 			"/-/chat",
@@ -384,28 +514,27 @@
 				if (!chunk) {
 					controller = null;
 
-					saveMessages();
+					message.setState(false);
 
 					$chat.classList.remove("completing");
 
 					return;
 				}
 
+				console.log(chunk);
+
 				switch (chunk.type) {
 					case "reason":
-						message.state("reasoning");
+						message.setState("reasoning");
+						message.addReasoning(chunk.text);
 
 						break;
 					case "text":
-						result.content += chunk.text;
-
-						message.state("receive");
-						message.set(result.content);
+						message.setState("receiving");
+						message.addText(chunk.text);
 
 						break;
 				}
-
-				saveMessages();
 			},
 		);
 	});

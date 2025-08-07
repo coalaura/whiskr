@@ -6,16 +6,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/revrost/go-openrouter"
 )
 
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role string `json:"role"`
+	Text string `json:"text"`
 }
 
 type Request struct {
+	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
 	Temperature float64   `json:"temperature"`
 	Messages    []Message `json:"messages"`
@@ -24,7 +26,8 @@ type Request struct {
 func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 	var request openrouter.ChatCompletionRequest
 
-	if _, ok := ModelMap[r.Model]; !ok {
+	model, ok := ModelMap[r.Model]
+	if !ok {
 		return nil, fmt.Errorf("unknown model: %q", r.Model)
 	}
 
@@ -36,6 +39,15 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	request.Temperature = float32(r.Temperature)
 
+	prompt, err := BuildPrompt(r.Prompt, model)
+	if err != nil {
+		return nil, err
+	}
+
+	if prompt != "" {
+		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
+	}
+
 	for index, message := range r.Messages {
 		if message.Role != openrouter.ChatMessageRoleSystem && message.Role != openrouter.ChatMessageRoleAssistant && message.Role != openrouter.ChatMessageRoleUser {
 			return nil, fmt.Errorf("[%d] invalid role: %q", index+1, message.Role)
@@ -44,7 +56,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.ChatCompletionMessage{
 			Role: message.Role,
 			Content: openrouter.Content{
-				Text: message.Content,
+				Text: message.Text,
 			},
 		})
 	}
@@ -73,6 +85,10 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request.Stream = true
+
+	// DEBUG
+	b, _ := json.MarshalIndent(request, "", "\t")
+	os.WriteFile("debug.json", b, 0755)
 
 	ctx := r.Context()
 
