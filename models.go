@@ -1,6 +1,9 @@
 package main
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 type Model struct {
 	ID                  string   `json:"id"`
@@ -22,9 +25,15 @@ func LoadModels() ([]*Model, error) {
 	models := make([]*Model, len(list))
 
 	for index, model := range list {
+		name := model.Name
+
+		if index := strings.Index(name, ": "); index != -1 {
+			name = name[index+2:]
+		}
+
 		m := &Model{
 			ID:                  model.ID,
-			Name:                model.Name,
+			Name:                name,
 			Description:         model.Description,
 			SupportedParameters: model.SupportedParameters,
 		}
