@@ -585,5 +585,8 @@
 		scroll(!interacted);
 	});
 
+	dropdown($role);
+	dropdown($prompt);
+
 	loadModels().then(restore);
 })();

@@ -3,17 +3,22 @@
 		#_select;
 		#_dropdown;
 		#_selected;
+		#_search;
 
+		#search = false;
 		#selected = false;
 		#options = [];
 
 		constructor(el) {
 			this.#_select = el;
 
+			this.#search = "searchable" in el.dataset;
+
 			this.#_select.querySelectorAll("option").forEach((option) => {
 				this.#options.push({
 					value: option.value,
-					label: option.textContent.trim(),
+					label: option.textContent,
+					search: searchable(option.textContent),
 				});
 			});
 
@@ -47,31 +52,70 @@
 			// dropdown
 			this.#_dropdown = make("div", "dropdown");
 
-			this.#_dropdown.addEventListener("click", () => {
-				this.#_dropdown.classList.add("open");
-			});
-
 			// selected item
 			this.#_selected = make("div", "selected");
 
+			this.#_selected.addEventListener("click", () => {
+				this.#_dropdown.classList.toggle("open");
+			});
+
 			this.#_dropdown.appendChild(this.#_selected);
 
-			// option wrapper
-			const _options = make("div", "options");
+			// content
+			const _content = make("div", "cont");
 
-			this.#_dropdown.appendChild(_options);
+			this.#_dropdown.appendChild(_content);
+
+			// option wrapper
+			const _options = make("div", "opts");
+
+			_content.appendChild(_options);
 
 			// options
 			for (const option of this.#options) {
-				const _opt = make("div", "option");
+				const _opt = make("div", "opt");
 
 				_opt.textContent = option.label;
 
 				_opt.addEventListener("click", () => {
 					this.#set(option.value);
+
+					this.#_dropdown.classList.remove("open");
 				});
 
+				_options.appendChild(_opt);
+
 				option.el = _opt;
+			}
+
+			// live search (if enabled)
+			if (this.#search) {
+				this.#_search = make("input", "search");
+
+				this.#_search.type = "text";
+				this.#_search.placeholder = "Search...";
+
+				this.#_search.addEventListener("input", () => {
+					this.#filter();
+				});
+
+				this.#_search.addEventListener("keydown", (event) => {
+					if (event.key !== "Escape") {
+						return;
+					}
+
+					if (this.#_search.value) {
+						this.#_search.value = "";
+
+						this.#_search.dispatchEvent(new Event("input"));
+
+						return;
+					}
+
+					this.#_dropdown.classList.remove("open");
+				});
+
+				_content.appendChild(this.#_search);
 			}
 
 			// add to dom
@@ -92,9 +136,23 @@
 			this.#_selected.textContent = selection.label;
 		}
 
-		#set(value) {
-			console.log("value", value);
+		#filter() {
+			if (!this.#_search) {
+				return;
+			}
 
+			const query = searchable(this.#_search.value);
+
+			for (const option of this.#options) {
+				if (query && !option.search.includes(query)) {
+					option.el.classList.add("filtered");
+				} else {
+					option.el.classList.remove("filtered");
+				}
+			}
+		}
+
+		#set(value) {
 			const index = this.#options.findIndex((option) => option.value === value);
 
 			if (this.#selected === index) {
@@ -105,6 +163,16 @@
 
 			this.#render();
 		}
+	}
+
+	function searchable(text) {
+		// lowercase
+		text = text.toLowerCase();
+
+		// only alpha-num
+		text = text.replace(/[^\w]/g, "");
+
+		return text.trim();
 	}
 
 	document.body.addEventListener("click", (event) => {

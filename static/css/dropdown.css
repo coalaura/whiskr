@@ -1,0 +1,74 @@
+.dropdown {
+	position: relative;
+	user-select: none;
+	background: #363a4f;
+	padding: 2px 5px;
+	font-size: 14px;
+	white-space: nowrap;
+}
+
+.dropdown .selected {
+	display: flex;
+	gap: 5px;
+	align-items: center;
+	cursor: pointer;
+}
+
+.dropdown .selected::after {
+	content: "";
+	display: block;
+	width: 16px;
+	height: 16px;
+	background-image: url(icons/chevron.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+	transform: rotate(180deg);
+}
+
+.dropdown .cont {
+	display: flex;
+	position: absolute;
+	bottom: calc(100% + 4px);
+	left: 0;
+	flex-direction: column;
+	background: #363a4f;
+	max-height: 250px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+	border: 1px solid #494d64;
+}
+
+.dropdown:not(.open) .cont {
+	display: none;
+}
+
+.dropdown .opts {
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+.dropdown .opt {
+	padding: 4px 6px;
+	cursor: pointer;
+	background: #363a4f;
+}
+
+.dropdown .opt:nth-child(2n+1) {
+	background: #32354a;
+}
+
+.dropdown .opt:hover {
+	background: #2c2f44;
+}
+
+.dropdown .opt.filtered {
+	display: none;
+}
+
+.dropdown .search {
+	background: #2a2e41;
+	border-top: 2px solid #494d64;
+	font-size: 15px;
+	padding: 4px 6px;
+}

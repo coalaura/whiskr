@@ -30,7 +30,7 @@
 
 html,
 body {
-	font-family: "Lato", sans-serif;
+	font-family: "Work Sans", sans-serif;
 	font-size: 15px;
 	background: #181926;
 	color: #cad3f5;
@@ -284,6 +284,7 @@ body {
 	padding-bottom: 30px;
 }
 
+.dropdown,
 textarea,
 button,
 input,
@@ -307,6 +308,8 @@ button {
 input,
 select {
 	background: #363a4f;
+	padding: 2px 5px;
+	font-size: 14px;
 }
 
 #chat button {
