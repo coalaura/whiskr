@@ -1,10 +1,36 @@
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Regular.ttf);
+	font-weight: normal;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Bold.ttf);
+	font-weight: 700;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Italic.ttf);
+	font-weight: normal;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-BoldItalic.ttf);
+	font-weight: 700;
+	font-style: italic;
+}
+
 * {
 	box-sizing: border-box;
 }
 
 html,
 body {
-	font-family: "Nata Sans", sans-serif;
+	font-family: "Lato", sans-serif;
 	font-size: 15px;
 	background: #181926;
 	color: #cad3f5;
@@ -67,7 +93,10 @@ body {
 	max-width: 700px;
 	min-width: 200px;
 	width: max-content;
-	padding-top: 22px;
+	padding-top: 28px;
+	background: #363a4f;
+	overflow: hidden;
+	flex-shrink: 0;
 }
 
 .message.user {
@@ -80,9 +109,10 @@ body {
 
 .message .role {
 	position: absolute;
-	line-height: 12px;
+	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
 	font-size: 12px;
-	top: 6px;
+	line-height: 12px;
+	top: 8px;
 	left: 6px;
 	padding-left: 20px;
 }
@@ -108,11 +138,15 @@ body {
 	background-image: url(icons/assistant.svg);
 }
 
+.message.assistant {
+	max-width: 800px;
+}
+
 .message .reasoning,
 .message .text {
 	display: block;
 	background: transparent;
-	padding: 6px 12px;
+	padding: 10px 12px;
 	width: 100%;
 }
 
@@ -125,16 +159,31 @@ body {
 	display: none;
 }
 
+.message div.text {
+	background: #24273a;
+}
+
+.message textarea.text {
+	background: #181926;
+}
+
+.message .reasoning-text {
+	--height: auto;
+	height: calc(var(--height) + 20px);
+	background: #1e2030;
+	border-radius: 6px;
+	transition: 150ms;
+	padding: 10px 12px;
+}
+
 .message:not(.expanded) .reasoning-text {
 	height: 0;
+	padding: 0 12px;
 	overflow: hidden;
 }
 
 .message.expanded .reasoning-text {
-	padding: 10px 12px;
-	background: #1e2030;
 	margin-top: 10px;
-	border-radius: 6px;
 }
 
 .message:not(.has-reasoning) .reasoning {
@@ -172,45 +221,12 @@ body {
 	transform: rotate(180deg);
 }
 
-.markdown p {
-	margin: 0;
-	margin-bottom: 14px;
-}
-
-.markdown p:last-child {
-	margin-bottom: 0;
-}
-
-textarea {
-	border: none;
-	resize: none;
-	outline: none;
-	color: inherit;
-	font: inherit;
-}
-
-#chat {
-	display: flex;
-	position: relative;
-	justify-content: center;
-	padding: 0 12px;
-	height: 240px;
-}
-
-#message {
-	border-bottom-left-radius: 0px;
-	border-bottom-right-radius: 0px;
-	width: 100%;
-	height: 100%;
-	padding: 14px 16px;
-}
-
 .message .options {
 	display: flex;
 	gap: 4px;
 	position: absolute;
 	top: 4px;
-	right: 4px;
+	right: 6px;
 	opacity: 0;
 	pointer-events: none;
 	transition: 150ms;
@@ -241,6 +257,34 @@ textarea {
 	content: ". . .";
 }
 
+#chat {
+	display: flex;
+	position: relative;
+	justify-content: center;
+	padding: 0 12px;
+	height: 240px;
+}
+
+#chat::after {
+	content: "";
+	position: absolute;
+	bottom: 0;
+	left: 12px;
+	right: 12px;
+	height: 36px;
+	background: #24273a;
+}
+
+#message {
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	width: 100%;
+	height: 100%;
+	padding: 14px 16px;
+	padding-bottom: 30px;
+}
+
+textarea,
 button,
 input,
 select {
@@ -248,6 +292,11 @@ select {
 	font: inherit;
 	color: inherit;
 	outline: none;
+	margin: 0;
+}
+
+textarea {
+	resize: none;
 }
 
 button {
@@ -266,12 +315,13 @@ select {
 
 #chat .options {
 	position: absolute;
-	bottom: 4px;
+	bottom: 6px;
 	left: 20px;
 	width: max-content;
 	display: flex;
 	align-items: center;
 	gap: 12px;
+	z-index: 10;
 }
 
 #chat .option {
@@ -293,9 +343,11 @@ select {
 .reasoning .toggle::after,
 #bottom,
 .message .role::before,
+#scrolling,
 #clear,
 #add,
 #send,
+.pre-copy,
 .message .copy,
 .message .edit,
 .message .delete,
@@ -308,10 +360,12 @@ select {
 	background-repeat: no-repeat;
 }
 
+.pre-copy,
 .message .copy {
 	background-image: url(icons/copy.svg);
 }
 
+.pre-copy.copied,
 .message .copy.copied {
 	background-image: url(icons/check.svg);
 }
@@ -377,12 +431,22 @@ label[for="temperature"] {
 	width: 28px;
 	height: 28px;
 	background-image: url(icons/send.svg);
+	z-index: 10;
 }
 
 #add {
 	bottom: 4px;
 	right: 52px;
 	background-image: url(icons/add.svg);
+}
+
+#scrolling {
+	position: unset !important;
+	background-image: url(icons/screen-slash.svg);
+}
+
+#scrolling.on {
+	background-image: url(icons/screen.svg);
 }
 
 #clear {

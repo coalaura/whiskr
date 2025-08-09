@@ -6,9 +6,11 @@
 
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Nata+Sans:wght@100..900&display=swap" rel="stylesheet" />
+		<link href="https://fonts.googleapis.com/css2?family=Lato:wght@100..900&display=swap" rel="stylesheet" />
 
-		<link href="chat.css" rel="stylesheet" />
+		<link href="css/catppuccin.css" rel="stylesheet" />
+		<link href="css/markdown.css" rel="stylesheet" />
+		<link href="css/chat.css" rel="stylesheet" />
 
 		<title>chat</title>
 	</head>
@@ -18,7 +20,7 @@
 			<div id="chat">
 				<button id="bottom" class="hidden" title="Scroll to bottom"></button>
 
-				<textarea id="message" placeholder="Type something..."></textarea>
+				<textarea id="message" placeholder="Type something..." autocomplete="off"></textarea>
 
 				<button id="add" title="Add message"></button>
 				<button id="send" title="Add message and start completion"></button>
@@ -48,14 +50,20 @@
 						<input id="temperature" type="number" min="0" max="1" step="0.05" value="0.85" />
 					</div>
 					<div class="option">
+						<button id="scrolling" title="Turn on auto-scrolling"></button>
+					</div>
+					<div class="option">
 						<button id="clear" title="Clear the entire chat"></button>
 					</div>
 				</div>
 			</div>
 		</div>
 
-		<script src="purify.min.js"></script>
-		<script src="marked.min.js"></script>
-		<script src="chat.js"></script>
+		<script src="lib/highlight.min.js"></script>
+		<script src="lib/marked.min.js"></script>
+		<script src="js/lib.js"></script>
+		<script src="js/markdown.js"></script>
+		<script src="js/dropdown.js"></script>
+		<script src="js/chat.js"></script>
 	</body>
 </html>

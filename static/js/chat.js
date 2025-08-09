@@ -9,29 +9,18 @@
 		$temperature = document.getElementById("temperature"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
+		$scrolling = document.getElementById("scrolling"),
 		$clear = document.getElementById("clear");
 
 	const messages = [];
 
-	function uid() {
-		return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-	}
+	let autoScrolling = false, interacted = false;
 
-	function make(tag, ...classes) {
-		const el = document.createElement(tag);
+	function scroll(force = false) {
+		if (!autoScrolling && !force) {
+			return;
+		}
 
-		el.classList.add(...classes);
-
-		return el;
-	}
-
-	function render(markdown) {
-		return marked.parse(DOMPurify.sanitize(markdown), {
-			gfm: true,
-		});
-	}
-
-	function scroll() {
 		$messages.scroll({
 			top: $messages.scrollHeight + 200,
 			behavior: "smooth",
@@ -112,6 +101,16 @@
 
 			this.#_message.appendChild(this.#_edit);
 
+			this.#_edit.addEventListener("keydown", (event) => {
+				if (event.ctrlKey && event.key === "Enter") {
+					this.toggleEdit();
+				} else if (event.key === "Escape") {
+					this.#_edit.value = this.#text;
+
+					this.toggleEdit();
+				}
+			});
+
 			// message options
 			const _opts = make("div", "options");
 
@@ -160,12 +159,13 @@
 				this.delete();
 			});
 
+			// add to dom
 			$messages.appendChild(this.#_message);
 
 			scroll();
 		}
 
-		#render(only = false) {
+		#render(only = false, noScroll = false) {
 			if (!only || only === "role") {
 				this.#_role.textContent = this.#role;
 			}
@@ -178,21 +178,27 @@
 				} else {
 					this.#_message.classList.remove("has-reasoning");
 				}
+
+				this.#_reasoning.style.setProperty(
+					"--height",
+					`${this.#_reasoning.scrollHeight}px`,
+				);
 			}
 
 			if (!only || only === "text") {
 				this.#_text.innerHTML = render(this.#text);
 			}
 
-			scroll();
+			if (!noScroll) {
+				scroll();
+			}
 		}
 
 		#save() {
-			const data = messages.map((message) => message.getData(true));
-
-			console.log("save", data);
-
-			localStorage.setItem("messages", JSON.stringify(data));
+			storeValue(
+				"messages",
+				messages.map((message) => message.getData(true)),
+			);
 		}
 
 		getData(includeReasoning = false) {
@@ -263,7 +269,7 @@
 
 				this.setState(false);
 
-				this.#render();
+				this.#render(false, true);
 				this.#save();
 			}
 		}
@@ -275,13 +281,13 @@
 				return;
 			}
 
-			console.log("delete", index);
+			this.#_message.remove();
 
 			messages.splice(index, 1);
 
-			this.#_message.remove();
-
 			this.#save();
+
+			$messages.dispatchEvent(new Event("scroll"));
 		}
 	}
 
@@ -371,7 +377,7 @@
 		if (!models) {
 			alert("Failed to load models.");
 
-			return;
+			return [];
 		}
 
 		models.sort((a, b) => a.name > b.name);
@@ -386,24 +392,27 @@
 
 			$model.appendChild(el);
 		}
+
+		dropdown($model);
+
+		return models;
 	}
 
 	function restore(models) {
-		$role.value = localStorage.getItem("role") || "user";
-		$model.value = localStorage.getItem("model") || models[0].id;
-		$prompt.value = localStorage.getItem("prompt") || "normal";
-		$temperature.value = localStorage.getItem("temperature") || 0.85;
+		$role.value = loadValue("role", "user");
+		$model.value = loadValue("model", models[0].id);
+		$prompt.value = loadValue("prompt", "normal");
+		$temperature.value = loadValue("temperature", 0.85);
 
-		try {
-			JSON.parse(localStorage.getItem("messages") || "[]").forEach(
-				(message) =>
-					new Message(
-						message.role,
-						message.reasoning,
-						message.text,
-					),
-			);
-		} catch {}
+		if (loadValue("scrolling")) {
+			$scrolling.click();
+		}
+
+		loadValue("messages", []).forEach(
+			(message) => new Message(message.role, message.reasoning, message.text),
+		);
+
+		scroll(true);
 	}
 
 	function pushMessage() {
@@ -430,10 +439,9 @@
 	});
 
 	$bottom.addEventListener("click", () => {
-		$messages.scroll({
-			top: $messages.scrollHeight,
-			behavior: "smooth",
-		});
+		interacted = true;
+
+		scroll(true);
 	});
 
 	$role.addEventListener("change", () => {
@@ -457,6 +465,8 @@
 	});
 
 	$add.addEventListener("click", () => {
+		interacted = true;
+
 		pushMessage();
 	});
 
@@ -465,12 +475,32 @@
 			return;
 		}
 
-		for (const message of messages) {
-			message.delete();
+		interacted = true;
+
+		for (let x = messages.length - 1; x >= 0; x--) {
+			messages[x].delete();
 		}
 	});
 
+	$scrolling.addEventListener("click", () => {
+		interacted = true;
+
+		autoScrolling = !autoScrolling;
+
+		if (autoScrolling) {
+			$scrolling.title = "Turn off auto-scrolling";
+			$scrolling.classList.add("on");
+		} else {
+			$scrolling.title = "Turn on auto-scrolling";
+			$scrolling.classList.remove("on");
+		}
+
+		storeValue("scrolling", autoScrolling);
+	});
+
 	$send.addEventListener("click", () => {
+		interacted = true;
+
 		if (controller) {
 			controller.abort();
 
@@ -521,7 +551,7 @@
 					return;
 				}
 
-				console.log(chunk);
+				console.debug(chunk);
 
 				switch (chunk.type) {
 					case "reason":
@@ -545,6 +575,14 @@
 		}
 
 		$send.click();
+	});
+
+	addEventListener("wheel", () => {
+		interacted = true;
+	});
+
+	addEventListener("image-loaded", () => {
+		scroll(!interacted);
 	});
 
 	loadModels().then(restore);
