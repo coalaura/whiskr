@@ -1,4 +1,4 @@
-# Local AI Chat
+# whiskr
 
 A simple, private, self-hosted web chat interface to interact with AI models via the OpenRouter API. All chat history and settings are stored locally in your browser, ensuring your privacy.
 
