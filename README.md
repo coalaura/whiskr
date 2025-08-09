@@ -2,7 +2,7 @@
 
 A simple, private, self-hosted web chat interface to interact with AI models via the OpenRouter API. All chat history and settings are stored locally in your browser, ensuring your privacy.
 
-![screenshot](./.github/chat.png)
+![screenshot](.github/chat.png)
 
 ## Features
 
@@ -29,4 +29,4 @@ go build -o chat
 
 * **Send Message:** Type in the input box and press `Ctrl+Enter` or click the send button.
 * **Edit/Delete:** Hover over a message to reveal the edit and delete options.
-* **Options:** Change the model, temperature, or message role using the controls at the bottom-left.
+* **Options:** Change the model, temperature, prompt, or message role using the controls at the bottom-left.
