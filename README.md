@@ -1,11 +1,10 @@
 # whiskr
 
 whiskr is a private, self-hosted web chat interface for interacting with AI models via [OpenRouter](https://openrouter.ai/).
-All chat history and settings are stored locally in the browser, ensuring no server-side storage.
 
 ## Features
 
-- Private and self-hosted
+- Private and self-hosted (data stored in localStorage)
 - Supports any model available on your OpenRouter account
 - Real-time streaming responses
 - Edit, delete, or copy any message
