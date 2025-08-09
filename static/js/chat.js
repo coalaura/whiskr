@@ -65,7 +65,7 @@
 			this.#_message.appendChild(this.#_role);
 
 			// message reasoning (wrapper)
-			const _reasoning = make("div", "reasoning", "markdown");
+			const _reasoning = make("div", "reasoning");
 
 			this.#_message.appendChild(_reasoning);
 
@@ -87,7 +87,7 @@
 			});
 
 			// message reasoning (content)
-			this.#_reasoning = make("div", "reasoning-text");
+			this.#_reasoning = make("div", "reasoning-text", "markdown");
 
 			_reasoning.appendChild(this.#_reasoning);
 
@@ -187,6 +187,12 @@
 
 			if (!only || only === "text") {
 				this.#_text.innerHTML = render(this.#text);
+
+				if (this.#text) {
+					this.#_message.classList.add("has-text");
+				} else {
+					this.#_message.classList.remove("has-text");
+				}
 			}
 
 			if (!noScroll) {
@@ -443,23 +449,23 @@
 	});
 
 	$role.addEventListener("change", () => {
-		localStorage.setItem("role", $role.value);
+		storeValue("role", $role.value);
 	});
 
 	$model.addEventListener("change", () => {
-		localStorage.setItem("model", $model.value);
+		storeValue("model", $model.value);
 	});
 
 	$prompt.addEventListener("change", () => {
-		localStorage.setItem("prompt", $prompt.value);
+		storeValue("prompt", $prompt.value);
 	});
 
 	$temperature.addEventListener("input", () => {
-		localStorage.setItem("temperature", $temperature.value);
+		storeValue("temperature", $temperature.value);
 	});
 
 	$message.addEventListener("input", () => {
-		localStorage.setItem("message", $message.value);
+		storeValue("message", $message.value);
 	});
 
 	$add.addEventListener("click", () => {

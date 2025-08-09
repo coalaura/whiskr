@@ -18,14 +18,15 @@
 			let code;
 
 			if (lang && hljs.getLanguage(lang)) {
-				code = hljs.highlight(text, {
+				code = hljs.highlight(text.trim(), {
 					language: lang,
 				});
 			} else {
-				code = hljs.highlightAuto(text);
+				code = hljs.highlightAuto(text.trim());
 			}
 
 			token.escaped = true;
+			token.lang = code.language || "plaintext";
 			token.text = code.value;
 		},
 

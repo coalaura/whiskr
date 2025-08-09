@@ -61,6 +61,12 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		})
 	}
 
+	h := "high"
+
+	request.Reasoning = &openrouter.ChatCompletionReasoning{
+		Effort: &h,
+	}
+
 	return &request, nil
 }
 

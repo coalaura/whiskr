@@ -45,6 +45,8 @@
 				set: (value) => {
 					descriptor.set.call(this.#_select, value);
 
+					this.#_select.dispatchEvent(new Event("change"));
+
 					this.#set(value);
 				},
 			});
@@ -78,7 +80,7 @@
 				_opt.textContent = option.label;
 
 				_opt.addEventListener("click", () => {
-					this.#set(option.value);
+					this.#_select.value = option.value;
 
 					this.#_dropdown.classList.remove("open");
 				});
