@@ -1,32 +1,57 @@
 # whiskr
 
-A simple, private, self-hosted web chat interface to interact with AI models via the OpenRouter API. All chat history and settings are stored locally in your browser, ensuring your privacy.
-
-![screenshot](.github/chat.png)
+whiskr is a private, self-hosted web chat interface for interacting with AI models via [OpenRouter](https://openrouter.ai/).
+All chat history and settings are stored locally in the browser, ensuring no server-side storage.
 
 ## Features
 
-* **Private & Self-Hosted:** Your conversations never leave your machine.
-* **Broad Model Support:** Use any model available on your OpenRouter account.
-* **Real-time Streaming:** Get responses from the AI as they are generated.
-* **Full Conversation Control:** Edit, delete, or clear messages at any time.
-* **Persistent Settings:** Remembers your chosen model, temperature, and other settings.
+- Private and self-hosted
+- Supports any model available on your OpenRouter account
+- Real-time streaming responses
+- Edit, delete, or copy any message
+- Persistent settings for model, temperature, and other parameters
+- Full conversation control including clearing and modifying messages
+
+## TODO
+
+- Image and file attachments
+- Reasoning effort control
+- Web search tool
+- Import and export of chats
+
+## Built With
+
+**Frontend**
+- Vanilla JavaScript and CSS
+- [marked](https://github.com/markedjs/marked) for Markdown rendering
+- [highlight.js](https://highlightjs.org/) for syntax highlighting
+- Fonts: [Inter](https://rsms.me/inter/) (UI), [Comic Code](https://tosche.net/fonts/comic-code) (code)
+- Icons: [SVGRepo](https://www.svgrepo.com/)
+- Color palette: [Catppuccin Macchiato](https://catppuccin.com/)
+
+**Backend**
+- Go
+- OpenRouter API for model completions
 
 ## Getting Started
 
-1. **Set your API Key:** Copy the `.example.env` file to `.env` and add your `OPENROUTER_TOKEN`.
+1. Copy `.example.env` to `.env` and set `OPENROUTER_TOKEN`:
 ```bash
 cp .example.env .env
 ```
-2. **Build and Run:**
+2. Build and run:
 ```bash
-go build -o chat
-./chat
+go build -o whiskr
+./whiskr
 ```
-3. Open your browser to `http://localhost:3443`.
+3. Open `http://localhost:3443` in your browser.
 
 ## Usage
 
-* **Send Message:** Type in the input box and press `Ctrl+Enter` or click the send button.
-* **Edit/Delete:** Hover over a message to reveal the edit and delete options.
-* **Options:** Change the model, temperature, prompt, or message role using the controls at the bottom-left.
+- Send a message with `Ctrl+Enter` or the send button
+- Hover over a message to edit, delete, or copy it
+- Adjust model, temperature, prompt, or message role from the controls in the bottom-left
+
+## License
+
+GPL-3.0 see [LICENSE](LICENSE) for details.
