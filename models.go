@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"sort"
 	"strings"
 )
 
@@ -21,6 +22,10 @@ func LoadModels() ([]*Model, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].Created > list[j].Created
+	})
 
 	models := make([]*Model, len(list))
 

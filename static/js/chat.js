@@ -380,8 +380,6 @@
 			return [];
 		}
 
-		models.sort((a, b) => a.name > b.name);
-
 		$model.innerHTML = "";
 
 		for (const model of models) {
