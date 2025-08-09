@@ -1,5 +1,7 @@
 # whiskr
 
+![screenshot](.github/chat.png)
+
 whiskr is a private, self-hosted web chat interface for interacting with AI models via [OpenRouter](https://openrouter.ai/).
 
 ## Features
