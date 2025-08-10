@@ -105,19 +105,16 @@
 
 .markdown th {
 	background: rgba(165, 173, 203, 0.07);
-	/* subtle neutral tint */
 	font-weight: 600;
 	color: #CAD3F5;
 }
 
 .markdown tr:nth-child(even) td {
 	background: rgba(165, 173, 203, 0.03);
-	/* very soft zebra */
 }
 
 .markdown tr:hover td {
 	background: rgba(165, 173, 203, 0.05);
-	/* gentle hover */
 }
 
 .markdown code,
@@ -140,6 +137,7 @@
 	border-radius: 6px;
 	line-height: 18px;
 	overflow: hidden;
+	tab-size: 4;
 }
 
 .markdown pre code {

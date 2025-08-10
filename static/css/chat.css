@@ -202,7 +202,8 @@ body {
 
 .reasoning .toggle {
 	position: relative;
-	padding: 0 20px;
+	padding: 0 22px;
+	padding-left: 26px;
 	font-weight: 600;
 	font-size: 14px;
 }
@@ -252,8 +253,11 @@ body {
 }
 
 .message.reasoning .reasoning button.toggle::before {
-	animation: rotating 2s linear infinite;
-	background-image: url(icons/loading.svg);
+	animation: rotating 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
+	top: -1px;
+	width: 18px;
+	height: 18px;
 }
 
 .message .text::before {
