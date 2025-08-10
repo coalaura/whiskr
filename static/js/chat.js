@@ -483,6 +483,9 @@
 		);
 
 		scroll(true);
+
+		// small fix, sometimes when hard reloading we don't scroll all the way
+		setTimeout(scroll, 250, true);
 	}
 
 	function pushMessage() {
