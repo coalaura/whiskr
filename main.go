@@ -1,9 +1,13 @@
 package main
 
 import (
+	"errors"
 	"net/http"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/coalaura/logger"
 	adapter "github.com/coalaura/logger/http"
@@ -18,9 +22,12 @@ var log = logger.New().DetectTerminal().WithOptions(logger.Options{
 })
 
 func main() {
+	log.Info("Loading models...")
+
 	models, err := LoadModels()
 	log.MustPanic(err)
 
+	log.Info("Preparing router...")
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
@@ -38,7 +45,18 @@ func main() {
 
 	r.Post("/-/chat", HandleChat)
 
-	log.Debug("Listening at http://localhost:3443/")
+	if !NoOpen {
+		time.AfterFunc(500*time.Millisecond, func() {
+			log.Info("Opening browser...")
+
+			err := open("http://localhost:3443/")
+			if err != nil {
+				log.WarningE(err)
+			}
+		})
+	}
+
+	log.Info("Listening at http://localhost:3443/")
 	http.ListenAndServe(":3443", r)
 }
 
@@ -53,4 +71,17 @@ func cache(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func open(url string) error {
+	switch runtime.GOOS {
+	case "linux":
+		return exec.Command("xdg-open", url).Start()
+	case "windows":
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		return exec.Command("open", url).Start()
+	}
+
+	return errors.New("unsupported platform")
 }

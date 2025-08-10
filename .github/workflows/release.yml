@@ -37,7 +37,7 @@ jobs:
           --original-filename whiskr.exe \
           --icon static/favicon.ico \
           --copyright "(c) 2025 coalaura" \
-          --file-description "AI story writing tool" \
+          --file-description "Minimal LLM chat UI using OpenRouter giving you control over your context." \
           --file-version "${{ github.ref_name }}" \
           --arch "${{ matrix.goarch }}"
 
