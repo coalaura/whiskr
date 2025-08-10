@@ -39,8 +39,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
-	if r.Temperature < 0 || r.Temperature > 1 {
-		return nil, fmt.Errorf("invalid temperature (0-1): %f", r.Temperature)
+	if r.Temperature < 0 || r.Temperature > 2 {
+		return nil, fmt.Errorf("invalid temperature (0-2): %f", r.Temperature)
 	}
 
 	request.Temperature = float32(r.Temperature)
