@@ -50,6 +50,7 @@ go build -o whiskr
 ## Usage
 
 - Send a message with `Ctrl+Enter` or the send button
+- Just add a message with the add button
 - Hover over a message to edit, delete, or copy it
 - Adjust model, temperature, prompt, or message role from the controls in the bottom-left
 
