@@ -71,7 +71,7 @@ body {
 #page {
 	display: flex;
 	flex-direction: column;
-	gap: 25px;
+	gap: 5px;
 	background: #1e2030;
 	margin: auto;
 	margin-top: 30px;
