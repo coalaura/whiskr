@@ -520,7 +520,11 @@
 		}
 
 		// render version
-		$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> <a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`;
+		if (data.version === "dev") {
+			$version.remove();
+		} else {
+			$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> <a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`;
+		}
 
 		// render models
 		$model.innerHTML = "";
