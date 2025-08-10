@@ -448,7 +448,10 @@
 			const el = document.createElement("option");
 
 			el.value = model.id;
+			el.title = model.description;
 			el.textContent = model.name;
+
+			el.dataset.tags = (model.tags || []).join(",");
 
 			$model.appendChild(el);
 		}

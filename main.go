@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/coalaura/logger"
 	adapter "github.com/coalaura/logger/http"
@@ -23,7 +25,7 @@ func main() {
 	r.Use(adapter.Middleware(log))
 
 	fs := http.FileServer(http.Dir("./static"))
-	r.Handle("/*", http.StripPrefix("/", fs))
+	r.Handle("/*", cache(http.StripPrefix("/", fs)))
 
 	r.Get("/-/models", func(w http.ResponseWriter, r *http.Request) {
 		RespondJson(w, http.StatusOK, models)
@@ -33,4 +35,17 @@ func main() {
 
 	log.Debug("Listening at http://localhost:3443/")
 	http.ListenAndServe(":3443", r)
+}
+
+func cache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.ToLower(r.URL.Path)
+		ext := filepath.Ext(path)
+
+		if ext == ".svg" || ext == ".ttf" || strings.HasSuffix(path, ".min.js") {
+			w.Header().Set("Cache-Control", "public, max-age=3024000, immutable")
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

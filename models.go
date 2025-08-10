@@ -4,13 +4,15 @@ import (
 	"context"
 	"sort"
 	"strings"
+
+	"github.com/revrost/go-openrouter"
 )
 
 type Model struct {
-	ID                  string   `json:"id"`
-	Name                string   `json:"name"`
-	Description         string   `json:"description"`
-	SupportedParameters []string `json:"supported_parameters,omitempty"`
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags,omitempty"`
 }
 
 var ModelMap = make(map[string]*Model)
@@ -37,10 +39,10 @@ func LoadModels() ([]*Model, error) {
 		}
 
 		m := &Model{
-			ID:                  model.ID,
-			Name:                name,
-			Description:         model.Description,
-			SupportedParameters: model.SupportedParameters,
+			ID:          model.ID,
+			Name:        name,
+			Description: model.Description,
+			Tags:        GetModelTags(model),
 		}
 
 		models[index] = m
@@ -49,4 +51,18 @@ func LoadModels() ([]*Model, error) {
 	}
 
 	return models, nil
+}
+
+func GetModelTags(model openrouter.Model) []string {
+	var tags []string
+
+	for _, parameter := range model.SupportedParameters {
+		if parameter == "reasoning" || parameter == "tools" {
+			tags = append(tags, parameter)
+		}
+	}
+
+	sort.Strings(tags)
+
+	return tags
 }

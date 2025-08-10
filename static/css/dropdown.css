@@ -48,6 +48,14 @@
 	overflow-y: auto;
 }
 
+.dropdown .selected,
+.dropdown .opt {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 5px;
+}
+
 .dropdown .opt {
 	padding: 4px 6px;
 	cursor: pointer;
@@ -64,6 +72,34 @@
 
 .dropdown .opt.filtered {
 	display: none;
+}
+
+.dropdown .label {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 300px;
+}
+
+.dropdown .tags {
+	display: flex;
+	gap: 2px;
+}
+
+.dropdown .tags .tag {
+	width: 18px;
+	height: 18px;
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.tags .tag.reasoning {
+	background-image: url(icons/tags/reasoning.svg)
+}
+
+.tags .tag.tools {
+	background-image: url(icons/tags/tools.svg)
 }
 
 .dropdown .search {

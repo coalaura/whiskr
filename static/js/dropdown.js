@@ -15,9 +15,15 @@
 			this.#search = "searchable" in el.dataset;
 
 			this.#_select.querySelectorAll("option").forEach((option) => {
+				const tags = option.dataset.tags?.trim();
+
 				this.#options.push({
 					value: option.value,
 					label: option.textContent,
+
+					title: option.title || false,
+					tags: tags ? tags.split(",") : [],
+
 					search: searchable(option.textContent),
 				});
 			});
@@ -75,9 +81,10 @@
 
 			// options
 			for (const option of this.#options) {
+				// option wrapper
 				const _opt = make("div", "opt");
 
-				_opt.textContent = option.label;
+				_opt.title = option.title || "";
 
 				_opt.addEventListener("click", () => {
 					this.#_select.value = option.value;
@@ -85,6 +92,30 @@
 					this.#_dropdown.classList.remove("open");
 				});
 
+				// option label
+				const _label = make("div", "label");
+
+				_label.title = option.label;
+				_label.textContent = option.label;
+
+				_opt.appendChild(_label);
+
+				// option tags (optional)
+				if (option.tags?.length) {
+					const _tags = make("div", "tags");
+
+					for (const tag of option.tags) {
+						const _tag = make("div", "tag", tag);
+
+						_tag.title = tag;
+
+						_tags.appendChild(_tag);
+					}
+
+					_opt.appendChild(_tags);
+				}
+
+				// add to options
 				_options.appendChild(_opt);
 
 				option.el = _opt;
@@ -128,14 +159,14 @@
 
 		#render() {
 			if (this.#selected === false) {
-				this.#_selected.textContent = "";
+				this.#_selected.innerHTML = "";
 
 				return;
 			}
 
 			const selection = this.#options[this.#selected];
 
-			this.#_selected.textContent = selection.label;
+			this.#_selected.innerHTML = selection.el.innerHTML;
 		}
 
 		#filter() {
