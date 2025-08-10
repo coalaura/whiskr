@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/revrost/go-openrouter"
 )
 
 type Chunk struct {
@@ -65,6 +67,14 @@ func TextChunk(text string) Chunk {
 func ErrorChunk(err error) Chunk {
 	return Chunk{
 		Type: "error",
-		Text: err.Error(),
+		Text: GetErrorMessage(err),
 	}
+}
+
+func GetErrorMessage(err error) string {
+	if apiErr, ok := err.(*openrouter.APIError); ok {
+		return apiErr.Error()
+	}
+
+	return err.Error()
 }

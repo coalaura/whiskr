@@ -253,7 +253,6 @@
 
 		#render(only = false, noScroll = false) {
 			if (!only || only === "tags") {
-				console.log(this.#tags);
 				this.#_tags.innerHTML = this.#tags
 					.map((tag) => `<div class="tag-${tag}" title="${tag}"></div>`)
 					.join("");

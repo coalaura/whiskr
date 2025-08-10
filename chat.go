@@ -128,7 +128,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	stream, err := OpenRouterStartStream(ctx, *request)
 	if err != nil {
 		RespondJson(w, http.StatusBadRequest, map[string]any{
-			"error": err.Error(),
+			"error": GetErrorMessage(err),
 		})
 
 		return
