@@ -12,6 +12,11 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - Edit, delete, or copy any message
 - Persistent settings for model, temperature, and other parameters
 - Full conversation control including clearing and modifying messages
+- Smooth UI updates with [morphdom](https://github.com/patrick-steele-idem/morphdom), selections, images, and other state are preserved during updates
+- Easy model selection:
+  - Tags indicate if a model supports **tools**, **vision**, or **reasoning**
+  - Search field with fuzzy matching to quickly find models
+  - Models are listed newest -> oldest
 
 ## TODO
 
@@ -24,6 +29,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 **Frontend**
 - Vanilla JavaScript and CSS
+- [morphdom](https://github.com/patrick-steele-idem/morphdom) for DOM diffing without losing state
 - [marked](https://github.com/markedjs/marked) for Markdown rendering
 - [highlight.js](https://highlightjs.org/) for syntax highlighting
 - Fonts: [Inter](https://rsms.me/inter/) (UI), [Comic Code](https://tosche.net/fonts/comic-code) (code)
@@ -53,6 +59,8 @@ go build -o whiskr
 - Just add a message with the add button
 - Hover over a message to edit, delete, or copy it
 - Adjust model, temperature, prompt, or message role from the controls in the bottom-left
+- Use the model search field to quickly find models (supports fuzzy matching)
+- Look for tags in the model list to see if a model supports tools, vision, or reasoning
 
 ## License
 
