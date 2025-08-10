@@ -281,7 +281,7 @@
 			if (!only || only === "text") {
 				let text = this.#text;
 
-				if (this.#tags.includes("json")) {
+				if (text && this.#tags.includes("json")) {
 					text = `\`\`\`json\n${text}\n\`\`\``;
 				}
 
