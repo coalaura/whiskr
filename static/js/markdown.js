@@ -1,6 +1,5 @@
 (() => {
-	const timeouts = new WeakMap(),
-		images = {};
+	const timeouts = new WeakMap();
 
 	marked.use({
 		async: false,
@@ -36,47 +35,8 @@
 
 				return `<pre>${header}<code>${code.text}</code></pre>`;
 			},
-
-			image(image) {
-				const { href } = image;
-
-				const id = `i_${btoa(href).replace(/=/g, "")}`,
-					style = prepareImage(id, href) || "";
-
-				return `<div class="image ${id}" style="${style}"></div>`;
-			},
 		},
 	});
-
-	function prepareImage(id, href) {
-		if (href in images) {
-			return images[href];
-		}
-
-		images[href] = false;
-
-		const image = new Image();
-
-		image.addEventListener("load", () => {
-			const style = `aspect-ratio:${image.naturalWidth}/${image.naturalHeight};width:${image.naturalWidth}px;background-image:url(${href})`;
-
-			images[href] = style;
-
-			document.querySelectorAll(`.image.${id}`).forEach((img) => {
-				img.setAttribute("style", style);
-			});
-
-			window.dispatchEvent(new Event("image-loaded"));
-		});
-
-		image.addEventListener("error", () => {
-			console.error(`Failed to load image: ${href}`);
-		});
-
-		image.src = href;
-
-		return false;
-	}
 
 	document.body.addEventListener("click", (event) => {
 		const button = event.target,

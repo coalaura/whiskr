@@ -28,6 +28,16 @@ function loadValue(key, fallback = false) {
 	return fallback;
 }
 
+function schedule(cb) {
+	if (document.visibilityState === "visible") {
+		requestAnimationFrame(cb);
+
+		return;
+	}
+
+	setTimeout(cb, 80);
+}
+
 function uid() {
 	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }

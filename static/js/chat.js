@@ -14,17 +14,20 @@
 
 	const messages = [];
 
-	let autoScrolling = false, interacted = false;
+	let autoScrolling = false,
+		interacted = false;
 
 	function scroll(force = false) {
 		if (!autoScrolling && !force) {
 			return;
 		}
 
-		$messages.scroll({
-			top: $messages.scrollHeight + 200,
-			behavior: "smooth",
-		});
+		setTimeout(() => {
+			$messages.scroll({
+				top: $messages.scrollHeight + 200,
+				behavior: "smooth",
+			});
+		}, 0);
 	}
 
 	class Message {
@@ -36,6 +39,10 @@
 		#editing = false;
 		#expanded = false;
 		#state = false;
+
+		#_diff;
+		#pending = {};
+		#patching = {};
 
 		#_message;
 		#_role;
@@ -49,10 +56,16 @@
 			this.#reasoning = reasoning || "";
 			this.#text = text || "";
 
+			this.#_diff = document.createElement("div");
+
 			this.#build();
 			this.#render();
 
 			messages.push(this);
+
+			if (this.#reasoning || this.#text) {
+				this.#save();
+			}
 		}
 
 		#build() {
@@ -165,38 +178,81 @@
 			scroll();
 		}
 
+		#handleImages(element) {
+			element.querySelectorAll("img:not(.image)").forEach((img) => {
+				img.classList.add("image");
+
+				img.addEventListener("load", () => {
+					scroll(!interacted);
+				});
+			});
+		}
+
+		#patch(name, element, md, after = false) {
+			if (!element.firstChild) {
+				element.innerHTML = render(md);
+
+				this.#handleImages(element);
+
+				after?.();
+
+				return;
+			}
+
+			this.#pending[name] = md;
+
+			if (this.#patching[name]) {
+				return;
+			}
+
+			this.#patching[name] = true;
+
+			schedule(() => {
+				const html = render(this.#pending[name]);
+
+				this.#patching[name] = false;
+
+				this.#_diff.innerHTML = html;
+
+				morphdom(element, this.#_diff, {
+					childrenOnly: true,
+					onBeforeElUpdated: (fromEl, toEl) => {
+						return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
+					},
+				});
+
+				this.#_diff.innerHTML = "";
+
+				this.#handleImages(element);
+
+				after?.();
+			});
+		}
+
 		#render(only = false, noScroll = false) {
 			if (!only || only === "role") {
 				this.#_role.textContent = this.#role;
 			}
 
 			if (!only || only === "reasoning") {
-				this.#_reasoning.innerHTML = render(this.#reasoning);
+				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
+					this.#_reasoning.style.setProperty(
+						"--height",
+						`${this.#_reasoning.scrollHeight}px`,
+					);
 
-				if (this.#reasoning) {
-					this.#_message.classList.add("has-reasoning");
-				} else {
-					this.#_message.classList.remove("has-reasoning");
-				}
+					noScroll || scroll();
+				});
 
-				this.#_reasoning.style.setProperty(
-					"--height",
-					`${this.#_reasoning.scrollHeight}px`,
-				);
+				this.#_message.classList.toggle("has-reasoning", !!this.#reasoning);
 			}
 
 			if (!only || only === "text") {
-				this.#_text.innerHTML = render(this.#text);
+				this.#patch("text", this.#_text, this.#text, () => {
+					noScroll || scroll();
+				});
 
-				if (this.#text) {
-					this.#_message.classList.add("has-text");
-				} else {
-					this.#_message.classList.remove("has-text");
-				}
-			}
-
-			if (!noScroll) {
-				scroll();
+				this.#_message.classList.toggle("has-text", !!this.#text);
 			}
 		}
 
@@ -555,8 +611,6 @@
 					return;
 				}
 
-				console.debug(chunk);
-
 				switch (chunk.type) {
 					case "reason":
 						message.setState("reasoning");
@@ -583,10 +637,6 @@
 
 	addEventListener("wheel", () => {
 		interacted = true;
-	});
-
-	addEventListener("image-loaded", () => {
-		scroll(!interacted);
 	});
 
 	dropdown($role);
