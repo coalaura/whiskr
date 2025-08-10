@@ -259,18 +259,20 @@ body.loading #version {
 }
 
 .message .reasoning-text {
-	--height: auto;
-	height: calc(var(--height) + 20px);
 	background: #1e2030;
 	border-radius: 6px;
-	transition: 150ms;
 	padding: 10px 12px;
 }
 
-.message:not(.expanded) .reasoning-text {
-	height: 0;
-	padding: 0 12px;
+.message .reasoning-wrapper {
+	--height: auto;
+	height: calc(var(--height) + 20px);
 	overflow: hidden;
+	transition: 150ms;
+}
+
+.message:not(.expanded) .reasoning-wrapper {
+	height: 0;
 }
 
 .message.expanded .reasoning-text {

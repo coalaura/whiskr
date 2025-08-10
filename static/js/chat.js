@@ -116,16 +116,23 @@
 				this.#expanded = !this.#expanded;
 
 				if (this.#expanded) {
+					this.#updateReasoningHeight();
+
 					this.#_message.classList.add("expanded");
 				} else {
 					this.#_message.classList.remove("expanded");
 				}
 			});
 
+			// message reasoning (height wrapper)
+			const _height = make("div", "reasoning-wrapper");
+
+			_reasoning.appendChild(_height);
+
 			// message reasoning (content)
 			this.#_reasoning = make("div", "reasoning-text", "markdown");
 
-			_reasoning.appendChild(this.#_reasoning);
+			_height.appendChild(this.#_reasoning);
 
 			// message content
 			this.#_text = make("div", "text", "markdown");
@@ -211,6 +218,13 @@
 			});
 		}
 
+		#updateReasoningHeight() {
+			this.#_reasoning.parentNode.style.setProperty(
+				"--height",
+				`${this.#_reasoning.scrollHeight}px`,
+			);
+		}
+
 		#patch(name, element, md, after = false) {
 			if (!element.firstChild) {
 				element.innerHTML = render(md);
@@ -267,10 +281,7 @@
 
 			if (!only || only === "reasoning") {
 				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
-					this.#_reasoning.style.setProperty(
-						"--height",
-						`${this.#_reasoning.scrollHeight}px`,
-					);
+					this.#updateReasoningHeight();
 
 					noScroll || scroll();
 				});
