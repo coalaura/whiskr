@@ -1,5 +1,7 @@
-function storeValue(key, value) {
-	if (!value) {
+/** biome-ignore-all lint/correctness/noUnusedVariables: utility */
+
+function storeValue(key, value = false) {
+	if (value === null || value === undefined || value === false) {
 		localStorage.removeItem(key);
 
 		return;
@@ -11,14 +13,14 @@ function storeValue(key, value) {
 function loadValue(key, fallback = false) {
 	const raw = localStorage.getItem(key);
 
-	if (!raw) {
+	if (raw === null) {
 		return fallback;
 	}
 
 	try {
 		const value = JSON.parse(raw);
 
-		if (!value) {
+		if (value === null) {
 			throw new Error("no value");
 		}
 

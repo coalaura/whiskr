@@ -8,7 +8,7 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
 
-		<link href="css/catppuccin.css" rel="stylesheet" />
+		<link href="lib/catppuccin.min.css" rel="stylesheet" />
 		<link href="css/dropdown.css" rel="stylesheet" />
 		<link href="css/markdown.css" rel="stylesheet" />
 		<link href="css/chat.css" rel="stylesheet" />
@@ -62,6 +62,10 @@
 					<div class="option none">
 						<label for="reasoning-tokens" title="Maximum amount of reasoning tokens"></label>
 						<input id="reasoning-tokens" type="number" min="2" max="1" step="0.05" value="0.85" />
+					</div>
+					<div class="option group">
+						<button id="json" class="none" title="Turn on structured json output"></button>
+						<button id="search" title="Turn on web-search (openrouter built-in)"></button>
 					</div>
 					<div class="option">
 						<button id="scrolling" title="Turn on auto-scrolling"></button>

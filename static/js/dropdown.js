@@ -5,13 +5,15 @@
 		#_selected;
 		#_search;
 
+		#maxTags = false;
 		#search = false;
 		#selected = false;
 		#options = [];
 
-		constructor(el) {
+		constructor(el, maxTags = false) {
 			this.#_select = el;
 
+			this.#maxTags = maxTags;
 			this.#search = "searchable" in el.dataset;
 
 			this.#_select.querySelectorAll("option").forEach((option) => {
@@ -101,15 +103,23 @@
 				_opt.appendChild(_label);
 
 				// option tags (optional)
-				if (option.tags?.length) {
+				const tags = option.tags;
+
+				if (option.tags.length) {
 					const _tags = make("div", "tags");
 
-					for (const tag of option.tags) {
-						const _tag = make("div", "tag", tag);
+					_tags.title = `${this.#maxTags ? `${tags.length}/${this.#maxTags}: ` : ""}${tags.join(", ")}`;
 
-						_tag.title = tag;
+					if (this.#maxTags && tags.length >= this.#maxTags) {
+						const _all = make("div", "tag", "all");
 
-						_tags.appendChild(_tag);
+						_tags.appendChild(_all);
+					} else {
+						for (const tag of tags) {
+							const _tag = make("div", "tag", tag);
+
+							_tags.appendChild(_tag);
+						}
 					}
 
 					_opt.appendChild(_tags);
@@ -220,5 +230,5 @@
 		});
 	});
 
-	window.dropdown = (el) => new Dropdown(el);
+	window.dropdown = (el, maxTags = false) => new Dropdown(el, maxTags);
 })();

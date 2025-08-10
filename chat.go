@@ -25,6 +25,8 @@ type Request struct {
 	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
 	Temperature float64   `json:"temperature"`
+	JSON        bool      `json:"json"`
+	Search      bool      `json:"search"`
 	Reasoning   Reasoning `json:"reasoning"`
 	Messages    []Message `json:"messages"`
 }
@@ -58,6 +60,18 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 			request.Reasoning.MaxTokens = &r.Reasoning.Tokens
 		}
+	}
+
+	if model.JSON && r.JSON {
+		request.ResponseFormat = &openrouter.ChatCompletionResponseFormat{
+			Type: openrouter.ChatCompletionResponseFormatTypeJSONObject,
+		}
+	}
+
+	if r.Search {
+		request.Plugins = append(request.Plugins, openrouter.ChatCompletionPlugin{
+			ID: openrouter.PluginIDWeb,
+		})
 	}
 
 	prompt, err := BuildPrompt(r.Prompt, model)

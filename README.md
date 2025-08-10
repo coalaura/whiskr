@@ -18,12 +18,13 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - Search field with fuzzy matching to quickly find models
   - Models are listed newest -> oldest
 - Reasoning effort control
+- Web search tool
+- Structured JSON output
 
 ## TODO
 
 - Retry button for assistant messages
 - Import and export of chats
-- Web search tool
 - Image and file attachments
 
 ## Built With

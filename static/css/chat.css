@@ -137,21 +137,43 @@ body {
 
 .message .role {
 	position: absolute;
+	display: flex;
+	gap: 4px;
+	align-items: center;
 	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
 	font-size: 12px;
 	line-height: 12px;
-	top: 8px;
+	top: 6px;
 	left: 6px;
-	padding-left: 20px;
 }
 
-#messages .message .role::before {
+.message .tags::before {
 	content: "";
-	width: 16px;
-	height: 16px;
 	position: absolute;
-	top: -1px;
-	left: 0;
+	top: 7px;
+	left: -10px;
+	height: 2px;
+	width: 5px;
+	background: #939ab7;
+}
+
+.message .tags {
+	display: flex;
+	gap: 4px;
+	position: relative;
+	margin-left: 12px;
+}
+
+.message:not(.has-tags) .tags {
+	display: none;
+}
+
+#messages .message .tag-json {
+	background-image: url(icons/json-mode.svg);
+}
+
+#messages .message .tag-search {
+	background-image: url(icons/search-tool.svg);
 }
 
 .message.user .role::before {
@@ -187,13 +209,26 @@ body {
 	display: none;
 }
 
-.message .reasoning,
-.message div.text {
+#messages .message .reasoning,
+#messages .message div.text {
 	background: #24273a;
 }
 
-.message textarea.text {
+#messages .message textarea.text {
 	background: #181926;
+}
+
+.message .text .error {
+	color: #ed8796;
+}
+
+.message.errored {
+	border: 2px solid #ed8796;
+}
+
+.message.errored .options .copy,
+.message.errored .options .edit {
+	display: none;
 }
 
 .reasoning-text pre {
@@ -387,14 +422,18 @@ select {
 .reasoning .toggle::before,
 .reasoning .toggle::after,
 #bottom,
-.message .role::before,
+#messages .message .role::before,
+#messages .message .tag-json,
+#messages .message .tag-search,
+#json,
+#search,
 #scrolling,
 #clear,
 #add,
 #send,
 .pre-copy,
-.message .copy,
-.message .edit,
+#messages .message .copy,
+#messages .message .edit,
 .message .delete,
 #chat .option label {
 	display: block;
@@ -405,8 +444,20 @@ select {
 	background-repeat: no-repeat;
 }
 
+#messages .message .tag-json,
+#messages .message .tag-search,
+#messages .message .role::before {
+	content: "";
+	width: 16px;
+	height: 16px;
+}
+
+input.invalid {
+	border: 1px solid #ed8796;
+}
+
 .pre-copy,
-.message .copy {
+#messages .message .copy {
 	background-image: url(icons/copy.svg);
 }
 
@@ -415,11 +466,11 @@ select {
 	background-image: url(icons/check.svg);
 }
 
-.message .edit {
+#messages .message .edit {
 	background-image: url(icons/edit.svg);
 }
 
-.message.editing .edit {
+#messages .message.editing .edit {
 	background-image: url(icons/save.svg);
 }
 
@@ -494,8 +545,14 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/add.svg);
 }
 
-#scrolling {
+#json,
+#search,
+#scrolling,
+#clear {
 	position: unset !important;
+}
+
+#scrolling {
 	background-image: url(icons/screen-slash.svg);
 }
 
@@ -503,8 +560,23 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/screen.svg);
 }
 
+#json {
+	background-image: url(icons/json-off.svg);
+}
+
+#json.on {
+	background-image: url(icons/json-on.svg);
+}
+
+#search {
+	background-image: url(icons/search-off.svg);
+}
+
+#search.on {
+	background-image: url(icons/search-on.svg);
+}
+
 #clear {
-	position: unset !important;
 	background-image: url(icons/trash.svg);
 }
 

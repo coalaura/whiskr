@@ -9,6 +9,8 @@
 		$temperature = document.getElementById("temperature"),
 		$reasoningEffort = document.getElementById("reasoning-effort"),
 		$reasoningTokens = document.getElementById("reasoning-tokens"),
+		$json = document.getElementById("json"),
+		$search = document.getElementById("search"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$scrolling = document.getElementById("scrolling"),
@@ -18,6 +20,8 @@
 		models = {};
 
 	let autoScrolling = false,
+		jsonMode = false,
+		searchTool = false,
 		interacted = false;
 
 	function scroll(force = false) {
@@ -27,7 +31,7 @@
 
 		setTimeout(() => {
 			$messages.scroll({
-				top: $messages.scrollHeight + 200,
+				top: $messages.scrollHeight,
 				behavior: "smooth",
 			});
 		}, 0);
@@ -39,6 +43,9 @@
 		#reasoning;
 		#text;
 
+		#tags = [];
+		#error = false;
+
 		#editing = false;
 		#expanded = false;
 		#state = false;
@@ -48,7 +55,7 @@
 		#patching = {};
 
 		#_message;
-		#_role;
+		#_tags;
 		#_reasoning;
 		#_text;
 		#_edit;
@@ -75,10 +82,22 @@
 			// main message div
 			this.#_message = make("div", "message", this.#role);
 
-			// message role
-			this.#_role = make("div", "role", this.#role);
+			// message role (wrapper)
+			const _wrapper = make("div", "role", this.#role);
 
-			this.#_message.appendChild(this.#_role);
+			this.#_message.appendChild(_wrapper);
+
+			// message role
+			const _role = make("div");
+
+			_role.textContent = this.#role;
+
+			_wrapper.appendChild(_role);
+
+			// message tags
+			this.#_tags = make("div", "tags");
+
+			_wrapper.appendChild(this.#_tags);
 
 			// message reasoning (wrapper)
 			const _reasoning = make("div", "reasoning");
@@ -233,8 +252,17 @@
 		}
 
 		#render(only = false, noScroll = false) {
-			if (!only || only === "role") {
-				this.#_role.textContent = this.#role;
+			if (!only || only === "tags") {
+				console.log(this.#tags);
+				this.#_tags.innerHTML = this.#tags
+					.map((tag) => `<div class="tag-${tag}" title="${tag}"></div>`)
+					.join("");
+
+				this.#_message.classList.toggle("has-tags", this.#tags.length > 0);
+			}
+
+			if (this.#error) {
+				return;
 			}
 
 			if (!only || only === "reasoning") {
@@ -251,7 +279,13 @@
 			}
 
 			if (!only || only === "text") {
-				this.#patch("text", this.#_text, this.#text, () => {
+				let text = this.#text;
+
+				if (this.#tags.includes("json")) {
+					text = `\`\`\`json\n${text}\n\`\`\``;
+				}
+
+				this.#patch("text", this.#_text, text, () => {
 					noScroll || scroll();
 				});
 
@@ -262,21 +296,45 @@
 		#save() {
 			storeValue(
 				"messages",
-				messages.map((message) => message.getData(true)),
+				messages.map((message) => message.getData(true)).filter(Boolean),
 			);
 		}
 
-		getData(includeReasoning = false) {
+		getData(full = false) {
 			const data = {
 				role: this.#role,
 				text: this.#text,
 			};
 
-			if (this.#reasoning && includeReasoning) {
+			if (this.#reasoning && full) {
 				data.reasoning = this.#reasoning;
 			}
 
+			if (this.#error && full) {
+				data.error = this.#error;
+			}
+
+			if (this.#tags.length && full) {
+				data.tags = this.#tags;
+			}
+
 			return data;
+		}
+
+		addTag(tag) {
+			if (this.#tags.includes(tag)) {
+				return;
+			}
+
+			this.#tags.push(tag);
+
+			this.#render("tags");
+
+			if (tag === "json") {
+				this.#render("text");
+			}
+
+			this.#save();
 		}
 
 		setState(state) {
@@ -306,6 +364,20 @@
 			this.#text += text;
 
 			this.#render("text");
+			this.#save();
+		}
+
+		showError(error) {
+			this.#error = error;
+
+			this.#_message.classList.add("errored");
+
+			const _err = make("div", "error");
+
+			_err.textContent = this.#error;
+
+			this.#_text.appendChild(_err);
+
 			this.#save();
 		}
 
@@ -379,7 +451,9 @@
 			const response = await fetch(url, options);
 
 			if (!response.ok) {
-				throw new Error(response.statusText);
+				const err = await response.json();
+
+				throw new Error(err?.error || response.statusText);
 			}
 
 			const reader = response.body.getReader(),
@@ -461,7 +535,7 @@
 			models[model.id] = model;
 		}
 
-		dropdown($model);
+		dropdown($model, 4);
 
 		return modelList;
 	}
@@ -474,13 +548,29 @@
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
+		if (loadValue("json")) {
+			$json.click();
+		}
+
+		if (loadValue("search")) {
+			$search.click();
+		}
+
 		if (loadValue("scrolling")) {
 			$scrolling.click();
 		}
 
-		loadValue("messages", []).forEach(
-			(message) => new Message(message.role, message.reasoning, message.text),
-		);
+		loadValue("messages", []).forEach((message) => {
+			const obj = new Message(message.role, message.reasoning, message.text);
+
+			if (message.error) {
+				obj.showError(message.error);
+			}
+
+			if (message.tags) {
+				message.tags.forEach((tag) => obj.addTag(tag));
+			}
+		});
 
 		scroll(true);
 
@@ -537,6 +627,8 @@
 			$reasoningEffort.parentNode.classList.add("none");
 			$reasoningTokens.parentNode.classList.add("none");
 		}
+
+		$json.classList.toggle("none", !data?.tags.includes("json"));
 	});
 
 	$prompt.addEventListener("change", () => {
@@ -544,7 +636,15 @@
 	});
 
 	$temperature.addEventListener("input", () => {
-		storeValue("temperature", $temperature.value);
+		const value = $temperature.value,
+			temperature = parseFloat(value);
+
+		storeValue("temperature", value);
+
+		$temperature.classList.toggle(
+			"invalid",
+			Number.isNaN(temperature) || temperature < 0 || temperature > 2,
+		);
 	});
 
 	$reasoningEffort.addEventListener("change", () => {
@@ -555,8 +655,32 @@
 		$reasoningTokens.parentNode.classList.toggle("none", !!effort);
 	});
 
-	$reasoningTokens.addEventListener("change", () => {
-		storeValue("reasoning-tokens", $reasoningTokens.value);
+	$reasoningTokens.addEventListener("input", () => {
+		const value = $reasoningTokens.value,
+			tokens = parseInt(value);
+
+		storeValue("reasoning-tokens", value);
+
+		$reasoningTokens.classList.toggle(
+			"invalid",
+			Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024,
+		);
+	});
+
+	$json.addEventListener("click", () => {
+		jsonMode = !jsonMode;
+
+		storeValue("json", jsonMode);
+
+		$json.classList.toggle("on", jsonMode);
+	});
+
+	$search.addEventListener("click", () => {
+		searchTool = !searchTool;
+
+		storeValue("search", searchTool);
+
+		$search.classList.toggle("on", searchTool);
 	});
 
 	$message.addEventListener("input", () => {
@@ -589,6 +713,8 @@
 		if (autoScrolling) {
 			$scrolling.title = "Turn off auto-scrolling";
 			$scrolling.classList.add("on");
+
+			scroll();
 		} else {
 			$scrolling.title = "Turn on auto-scrolling";
 			$scrolling.classList.remove("on");
@@ -612,7 +738,7 @@
 
 		const temperature = parseFloat($temperature.value);
 
-		if (Number.isNaN(temperature) || temperature < 0 || temperature > 1) {
+		if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
 			return;
 		}
 
@@ -640,12 +766,22 @@
 				effort: effort,
 				tokens: tokens || 0,
 			},
+			json: jsonMode,
+			search: searchTool,
 			messages: messages.map((message) => message.getData()),
 		};
 
 		const message = new Message("assistant", "", "");
 
 		message.setState("waiting");
+
+		if (jsonMode) {
+			message.addTag("json");
+		}
+
+		if (searchTool) {
+			message.addTag("search");
+		}
 
 		stream(
 			"/-/chat",
@@ -677,6 +813,10 @@
 					case "text":
 						message.setState("receiving");
 						message.addText(chunk.text);
+
+						break;
+					case "error":
+						message.showError(chunk.text);
 
 						break;
 				}

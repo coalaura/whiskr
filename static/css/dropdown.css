@@ -106,6 +106,14 @@
 	background-image: url(icons/tags/vision.svg)
 }
 
+.tags .tag.json {
+	background-image: url(icons/tags/json.svg)
+}
+
+.tags .tag.all {
+	background-image: url(icons/tags/all.svg)
+}
+
 .dropdown .search {
 	background: #2a2e41;
 	border-top: 2px solid #494d64;
