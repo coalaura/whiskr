@@ -62,6 +62,12 @@ func GetModelTags(model openrouter.Model) []string {
 		}
 	}
 
+	for _, modality := range model.Architecture.InputModalities {
+		if modality == "image" {
+			tags = append(tags, "vision")
+		}
+	}
+
 	sort.Strings(tags)
 
 	return tags

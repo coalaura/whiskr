@@ -102,6 +102,10 @@
 	background-image: url(icons/tags/tools.svg)
 }
 
+.tags .tag.vision {
+	background-image: url(icons/tags/vision.svg)
+}
+
 .dropdown .search {
 	background: #2a2e41;
 	border-top: 2px solid #494d64;
