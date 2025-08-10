@@ -7,12 +7,15 @@
 		$model = document.getElementById("model"),
 		$prompt = document.getElementById("prompt"),
 		$temperature = document.getElementById("temperature"),
+		$reasoningEffort = document.getElementById("reasoning-effort"),
+		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$scrolling = document.getElementById("scrolling"),
 		$clear = document.getElementById("clear");
 
-	const messages = [];
+	const messages = [],
+		models = {};
 
 	let autoScrolling = false,
 		interacted = false;
@@ -434,9 +437,9 @@
 	}
 
 	async function loadModels() {
-		const models = await json("/-/models");
+		const modelList = await json("/-/models");
 
-		if (!models) {
+		if (!modelList) {
 			alert("Failed to load models.");
 
 			return [];
@@ -444,7 +447,7 @@
 
 		$model.innerHTML = "";
 
-		for (const model of models) {
+		for (const model of modelList) {
 			const el = document.createElement("option");
 
 			el.value = model.id;
@@ -454,18 +457,22 @@
 			el.dataset.tags = (model.tags || []).join(",");
 
 			$model.appendChild(el);
+
+			models[model.id] = model;
 		}
 
 		dropdown($model);
 
-		return models;
+		return modelList;
 	}
 
-	function restore(models) {
+	function restore(modelList) {
 		$role.value = loadValue("role", "user");
-		$model.value = loadValue("model", models[0].id);
+		$model.value = loadValue("model", modelList[0].id);
 		$prompt.value = loadValue("prompt", "normal");
 		$temperature.value = loadValue("temperature", 0.85);
+		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
+		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
 		if (loadValue("scrolling")) {
 			$scrolling.click();
@@ -512,7 +519,21 @@
 	});
 
 	$model.addEventListener("change", () => {
-		storeValue("model", $model.value);
+		const model = $model.value,
+			data = model ? models[model] : null;
+
+		storeValue("model", model);
+
+		if (data?.tags.includes("reasoning")) {
+			$reasoningEffort.parentNode.classList.remove("none");
+			$reasoningTokens.parentNode.classList.toggle(
+				"none",
+				!!$reasoningEffort.value,
+			);
+		} else {
+			$reasoningEffort.parentNode.classList.add("none");
+			$reasoningTokens.parentNode.classList.add("none");
+		}
 	});
 
 	$prompt.addEventListener("change", () => {
@@ -521,6 +542,18 @@
 
 	$temperature.addEventListener("input", () => {
 		storeValue("temperature", $temperature.value);
+	});
+
+	$reasoningEffort.addEventListener("change", () => {
+		const effort = $reasoningEffort.value;
+
+		storeValue("reasoning-effort", effort);
+
+		$reasoningTokens.parentNode.classList.toggle("none", !!effort);
+	});
+
+	$reasoningTokens.addEventListener("change", () => {
+		storeValue("reasoning-tokens", $reasoningTokens.value);
 	});
 
 	$message.addEventListener("input", () => {
@@ -570,9 +603,23 @@
 			return;
 		}
 
+		if (!$temperature.value) {
+			$temperature.value = 0.85;
+		}
+
 		const temperature = parseFloat($temperature.value);
 
 		if (Number.isNaN(temperature) || temperature < 0 || temperature > 1) {
+			return;
+		}
+
+		const effort = $reasoningEffort.value,
+			tokens = parseInt($reasoningTokens.value);
+
+		if (
+			!effort &&
+			(Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)
+		) {
 			return;
 		}
 
@@ -586,6 +633,10 @@
 			prompt: $prompt.value,
 			model: $model.value,
 			temperature: temperature,
+			reasoning: {
+				effort: effort,
+				tokens: tokens || 0,
+			},
 			messages: messages.map((message) => message.getData()),
 		};
 
@@ -644,6 +695,7 @@
 
 	dropdown($role);
 	dropdown($prompt);
+	dropdown($reasoningEffort);
 
 	loadModels().then(restore);
 })();

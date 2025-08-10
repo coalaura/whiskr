@@ -87,6 +87,10 @@ body {
 	pointer-events: none !important;
 }
 
+.none {
+	display: none !important;
+}
+
 #messages {
 	display: flex;
 	flex-direction: column;
@@ -432,9 +436,10 @@ select {
 	padding: 2px 4px;
 }
 
+#reasoning-tokens,
 #temperature {
 	appearance: textfield;
-	width: 50px;
+	width: 48px;
 	padding: 2px 4px;
 	text-align: right;
 }
@@ -453,6 +458,14 @@ label[for="prompt"] {
 
 label[for="temperature"] {
 	background-image: url(icons/temperature.svg);
+}
+
+label[for="reasoning-effort"] {
+	background-image: url(icons/reasoning.svg);
+}
+
+label[for="reasoning-tokens"] {
+	background-image: url(icons/amount.svg);
 }
 
 #bottom {

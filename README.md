@@ -17,10 +17,10 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - Tags indicate if a model supports **tools**, **vision**, or **reasoning**
   - Search field with fuzzy matching to quickly find models
   - Models are listed newest -> oldest
+- Reasoning effort control
 
 ## TODO
 
-- Reasoning effort control
 - Retry button for assistant messages
 - Import and export of chats
 - Web search tool

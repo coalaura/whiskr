@@ -16,10 +16,16 @@ type Message struct {
 	Text string `json:"text"`
 }
 
+type Reasoning struct {
+	Effort string `json:"effort"`
+	Tokens int    `json:"tokens"`
+}
+
 type Request struct {
 	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
 	Temperature float64   `json:"temperature"`
+	Reasoning   Reasoning `json:"reasoning"`
 	Messages    []Message `json:"messages"`
 }
 
@@ -38,6 +44,21 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 	}
 
 	request.Temperature = float32(r.Temperature)
+
+	if model.Reasoning {
+		request.Reasoning = &openrouter.ChatCompletionReasoning{}
+
+		switch r.Reasoning.Effort {
+		case "high", "medium", "low":
+			request.Reasoning.Effort = &r.Reasoning.Effort
+		default:
+			if r.Reasoning.Tokens <= 0 || r.Reasoning.Tokens > 1024*1024 {
+				return nil, fmt.Errorf("invalid reasoning tokens (1-1048576): %d", r.Reasoning.Tokens)
+			}
+
+			request.Reasoning.MaxTokens = &r.Reasoning.Tokens
+		}
+	}
 
 	prompt, err := BuildPrompt(r.Prompt, model)
 	if err != nil {
@@ -59,12 +80,6 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 				Text: message.Text,
 			},
 		})
-	}
-
-	h := "high"
-
-	request.Reasoning = &openrouter.ChatCompletionReasoning{
-		Effort: &h,
 	}
 
 	return &request, nil

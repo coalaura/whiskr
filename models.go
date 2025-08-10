@@ -13,6 +13,8 @@ type Model struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Tags        []string `json:"tags,omitempty"`
+
+	Reasoning bool `json:"-"`
 }
 
 var ModelMap = make(map[string]*Model)
@@ -38,11 +40,15 @@ func LoadModels() ([]*Model, error) {
 			name = name[index+2:]
 		}
 
+		tags, reasoning := GetModelTags(model)
+
 		m := &Model{
 			ID:          model.ID,
 			Name:        name,
 			Description: model.Description,
-			Tags:        GetModelTags(model),
+			Tags:        tags,
+
+			Reasoning: reasoning,
 		}
 
 		models[index] = m
@@ -53,10 +59,17 @@ func LoadModels() ([]*Model, error) {
 	return models, nil
 }
 
-func GetModelTags(model openrouter.Model) []string {
-	var tags []string
+func GetModelTags(model openrouter.Model) ([]string, bool) {
+	var (
+		reasoning bool
+		tags      []string
+	)
 
 	for _, parameter := range model.SupportedParameters {
+		if parameter == "reasoning" {
+			reasoning = true
+		}
+
 		if parameter == "reasoning" || parameter == "tools" {
 			tags = append(tags, parameter)
 		}
@@ -70,5 +83,5 @@ func GetModelTags(model openrouter.Model) []string {
 
 	sort.Strings(tags)
 
-	return tags
+	return tags, reasoning
 }
