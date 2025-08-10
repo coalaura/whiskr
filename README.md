@@ -20,10 +20,11 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## TODO
 
-- Image and file attachments
 - Reasoning effort control
-- Web search tool
+- Retry button for assistant messages
 - Import and export of chats
+- Web search tool
+- Image and file attachments
 
 ## Built With
 
