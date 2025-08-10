@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -122,8 +121,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	request.Stream = true
 
 	// DEBUG
-	b, _ := json.MarshalIndent(request, "", "\t")
-	os.WriteFile("debug.json", b, 0755)
+	dump(request)
 
 	ctx := r.Context()
 
@@ -164,6 +162,9 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		}
 
 		choice := chunk.Choices[0]
+
+		// DEBUG
+		debug(choice)
 
 		if choice.FinishReason == openrouter.FinishReasonContentFilter {
 			response.Send(ErrorChunk(errors.New("stopped due to content_filter")))
