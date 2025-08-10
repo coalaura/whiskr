@@ -28,6 +28,30 @@
 	box-sizing: border-box;
 }
 
+:-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: #181926;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #cad3f5;
+	border-radius: 4px;
+	border: 1px solid #181926;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: #cad3f5;
+}
+
+* {
+	scrollbar-width: thin;
+	scrollbar-color: #cad3f5 #181926;
+}
+
 html,
 body {
 	font-family: "Work Sans", sans-serif;
