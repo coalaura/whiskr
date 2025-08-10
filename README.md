@@ -32,7 +32,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 **Backend**
 - Go
-- OpenRouter API for model completions
+- [OpenRouter](https://openrouter.ai/) for model list and completions
 
 ## Getting Started
 
