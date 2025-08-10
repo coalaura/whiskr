@@ -767,7 +767,9 @@
 			},
 			json: jsonMode,
 			search: searchTool,
-			messages: messages.map((message) => message.getData()),
+			messages: messages
+				.map((message) => message.getData())
+				.filter((data) => data?.text),
 		};
 
 		const message = new Message("assistant", "", "");
