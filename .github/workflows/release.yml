@@ -1,0 +1,88 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos:   [windows, linux]
+        goarch: [amd64, arm64]
+      fail-fast: false
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.5'
+
+    - name: Generate Windows resources
+      if: matrix.goos == 'windows'
+      run: |
+        go install github.com/tc-hib/go-winres@latest
+        go-winres simply \
+          --manifest cli \
+          --product-name whiskr \
+          --original-filename whiskr.exe \
+          --icon static/favicon.ico \
+          --copyright "(c) 2025 coalaura" \
+          --file-description "AI story writing tool" \
+          --file-version "${{ github.ref_name }}" \
+          --arch "${{ matrix.goarch }}"
+
+    - name: Build ${{ matrix.goos }}_${{ matrix.goarch }}
+      shell: bash
+      run: |
+        mkdir -p build
+        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+
+        GOOS=${{ matrix.goos }} \
+        GOARCH=${{ matrix.goarch }} \
+        CGO_ENABLED=0 \
+        go build \
+          -trimpath \
+          -buildvcs=false \
+          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}'" \
+          -o "build/whiskr${EXT}" .
+
+        cp -r static build/static
+        cp .example.env build/.env
+        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" static
+        rm -rf build/static build/.env "build/whiskr${EXT}"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+        path: build/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./build
+
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ./build/**
+        name: "Release ${{ github.ref_name }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

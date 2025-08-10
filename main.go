@@ -11,6 +11,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+const Version = "dev"
+
 var log = logger.New().DetectTerminal().WithOptions(logger.Options{
 	NoLevel: true,
 })
@@ -27,8 +29,11 @@ func main() {
 	fs := http.FileServer(http.Dir("./static"))
 	r.Handle("/*", cache(http.StripPrefix("/", fs)))
 
-	r.Get("/-/models", func(w http.ResponseWriter, r *http.Request) {
-		RespondJson(w, http.StatusOK, models)
+	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
+		RespondJson(w, http.StatusOK, map[string]any{
+			"version": Version,
+			"models":  models,
+		})
 	})
 
 	r.Post("/-/chat", HandleChat)

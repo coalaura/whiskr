@@ -35,6 +35,10 @@
 
 				return `<pre>${header}<code>${code.text}</code></pre>`;
 			},
+
+			link(link) {
+				return `<a href="${link.href}" target="_blank">${escapeHtml(link.text || link.href)}</a>`;
+			},
 		},
 	});
 

@@ -1,5 +1,6 @@
 (() => {
-	const $messages = document.getElementById("messages"),
+	const $version = document.getElementById("version"),
+		$messages = document.getElementById("messages"),
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
 		$bottom = document.getElementById("bottom"),
@@ -509,18 +510,22 @@
 		}
 	}
 
-	async function loadModels() {
-		const modelList = await json("/-/models");
+	async function loadData() {
+		const data = await json("/-/data");
 
-		if (!modelList) {
-			alert("Failed to load models.");
+		if (!data) {
+			alert("Failed to load data.");
 
-			return [];
+			return false;
 		}
 
+		// render version
+		$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> <a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`;
+
+		// render models
 		$model.innerHTML = "";
 
-		for (const model of modelList) {
+		for (const model of data.models) {
 			const el = document.createElement("option");
 
 			el.value = model.id;
@@ -536,7 +541,7 @@
 
 		dropdown($model, 4);
 
-		return modelList;
+		return data;
 	}
 
 	function restore(modelList) {
@@ -841,5 +846,9 @@
 	dropdown($prompt);
 	dropdown($reasoningEffort);
 
-	loadModels().then(restore);
+	loadData().then((data) => {
+		restore(data?.models || []);
+
+		document.body.classList.remove("loading");
+	});
 })();

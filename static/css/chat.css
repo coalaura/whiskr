@@ -68,6 +68,29 @@ body {
 	overflow: hidden;
 }
 
+#version {
+	position: absolute;
+	font-size: 12px;
+	font-style: italic;
+	top: 3px;
+	right: 6px;
+	color: #a5adcb;
+}
+
+#version a {
+	color: #a5adcb;
+	text-decoration: none;
+}
+
+body.loading #version {
+	font-size: 0;
+	animation: rotating 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
+	width: 16px;
+	height: 16px;
+	top: 6px;
+}
+
 #page {
 	display: flex;
 	flex-direction: column;
@@ -419,6 +442,7 @@ select {
 	margin-right: 4px;
 }
 
+body.loading #version,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
 #bottom,
