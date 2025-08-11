@@ -119,6 +119,9 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request.Stream = true
+	request.Usage = &openrouter.IncludeUsage{
+		Include: true,
+	}
 
 	// DEBUG
 	dump(request)
@@ -145,6 +148,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var id string
+
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
@@ -155,6 +160,12 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			response.Send(ErrorChunk(err))
 
 			return
+		}
+
+		if id == "" {
+			id = chunk.ID
+
+			response.Send(IDChunk(id))
 		}
 
 		if len(chunk.Choices) == 0 {

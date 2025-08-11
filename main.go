@@ -43,6 +43,7 @@ func main() {
 		})
 	})
 
+	r.Get("/-/stats/{id}", HandleStats)
 	r.Post("/-/chat", HandleChat)
 
 	if !NoOpen {

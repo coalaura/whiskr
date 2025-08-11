@@ -146,7 +146,6 @@ body.loading #version {
 	width: max-content;
 	padding-top: 28px;
 	background: #363a4f;
-	overflow: hidden;
 	flex-shrink: 0;
 }
 
@@ -170,13 +169,16 @@ body.loading #version {
 	left: 6px;
 }
 
+.statistics .provider::after,
+.statistics .ttft::after,
+.statistics .tps::after,
 .message .tags::before {
 	content: "";
 	position: absolute;
 	top: 7px;
 	left: -10px;
 	height: 2px;
-	width: 5px;
+	width: 6px;
 	background: #939ab7;
 }
 
@@ -284,6 +286,11 @@ body.loading #version {
 	display: none;
 }
 
+#messages .message div.text {
+	border-bottom-left-radius: 6px;
+	border-bottom-right-radius: 6px;
+}
+
 .message.has-reasoning .text {
 	padding-top: 4px;
 }
@@ -355,6 +362,61 @@ body.loading #version {
 .message:empty.receiving .text::before,
 .message.waiting .text::before {
 	content: ". . .";
+}
+
+.statistics {
+	position: absolute;
+	transition: 150ms;
+	top: calc(100% + 5px);
+	left: 8px;
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	white-space: nowrap;
+	font-size: 13px;
+	line-height: 13px;
+	pointer-events: none;
+}
+
+.statistics .provider,
+.statistics .ttft,
+.statistics .tps,
+.statistics .tokens {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.statistics .provider::after,
+.statistics .ttft::after,
+.statistics .tps::after {
+	left: unset;
+	right: -14px;
+}
+
+.statistics .provider::before {
+	background-image: url(icons/provider.svg);
+}
+
+.statistics .ttft::before {
+	background-image: url(icons/ttft.svg);
+}
+
+.statistics .tps::before {
+	background-image: url(icons/tps.svg);
+}
+
+.statistics .tokens::before {
+	background-image: url(icons/amount.svg);
+}
+
+.message:not(:hover) .statistics {
+	opacity: 0;
+}
+
+.message:not(.has-statistics) .statistics {
+	display: none;
 }
 
 #chat {
@@ -451,16 +513,20 @@ body.loading #version,
 #messages .message .role::before,
 #messages .message .tag-json,
 #messages .message .tag-search,
+#messages .message .copy,
+#messages .message .edit,
+#messages .message .delete,
+.pre-copy,
+.message .statistics .provider::before,
+.message .statistics .ttft::before,
+.message .statistics .tps::before,
+.message .statistics .tokens::before,
 #json,
 #search,
 #scrolling,
 #clear,
 #add,
 #send,
-.pre-copy,
-#messages .message .copy,
-#messages .message .edit,
-.message .delete,
 #chat .option label {
 	display: block;
 	width: 20px;
@@ -470,6 +536,10 @@ body.loading #version,
 	background-repeat: no-repeat;
 }
 
+.message .statistics .provider::before,
+.message .statistics .ttft::before,
+.message .statistics .tps::before,
+.message .statistics .tokens::before,
 #messages .message .tag-json,
 #messages .message .tag-search,
 #messages .message .role::before {
@@ -500,7 +570,7 @@ input.invalid {
 	background-image: url(icons/save.svg);
 }
 
-.message .delete {
+#messages .message .delete {
 	background-image: url(icons/delete.svg);
 }
 

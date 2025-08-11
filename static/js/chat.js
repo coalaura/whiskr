@@ -45,6 +45,7 @@
 		#text;
 
 		#tags = [];
+		#statistics;
 		#error = false;
 
 		#editing = false;
@@ -60,6 +61,7 @@
 		#_reasoning;
 		#_text;
 		#_edit;
+		#_statistics;
 
 		constructor(role, reasoning, text) {
 			this.#id = uid();
@@ -202,6 +204,11 @@
 				this.delete();
 			});
 
+			// statistics
+			this.#_statistics = make("div", "statistics");
+
+			this.#_message.appendChild(this.#_statistics);
+
 			// add to dom
 			$messages.appendChild(this.#_message);
 
@@ -268,11 +275,40 @@
 
 		#render(only = false, noScroll = false) {
 			if (!only || only === "tags") {
-				this.#_tags.innerHTML = this.#tags
-					.map((tag) => `<div class="tag-${tag}" title="${tag}"></div>`)
-					.join("");
+				const tags = this.#tags.map(
+					(tag) => `<div class="tag-${tag}" title="${tag}"></div>`,
+				);
+
+				this.#_tags.innerHTML = tags.join("");
 
 				this.#_message.classList.toggle("has-tags", this.#tags.length > 0);
+			}
+
+			if (!only || only === "statistics") {
+				let html = "";
+
+				if (this.#statistics) {
+					const { provider, ttft, time, input, output } = this.#statistics;
+
+					const tps = output / (time / 1000);
+
+					html = [
+						provider ? `<div class="provider">${provider}</div>` : "",
+						`<div class="ttft">${formatMilliseconds(ttft)}</div>`,
+						`<div class="tps">${fixed(tps, 2)} t/s</div>`,
+						`<div class="tokens">
+							<div class="input">${input}</div>
+							+
+							<div class="output">${output}</div>
+							=
+							<div class="total">${input + output}</div>
+						</div>`,
+					].join("");
+				}
+
+				this.#_statistics.innerHTML = html;
+
+				this.#_message.classList.toggle("has-statistics", !!html);
 			}
 
 			if (this.#error) {
@@ -329,7 +365,37 @@
 				data.tags = this.#tags;
 			}
 
+			if (this.#statistics) {
+				data.statistics = this.#statistics;
+			}
+
 			return data;
+		}
+
+		setStatistics(statistics) {
+			this.#statistics = statistics;
+
+			this.#render("statistics");
+			this.#save();
+		}
+
+		async loadGenerationData(generationID) {
+			if (!generationID) {
+				return;
+			}
+
+			try {
+				const response = await fetch(`/-/stats/${generationID}`),
+					data = await response.json();
+
+				if (!data || data.error) {
+					throw new Error(data?.error || response.statusText);
+				}
+
+				this.setStatistics(data);
+			} catch (err) {
+				console.error(err);
+			}
 		}
 
 		addTag(tag) {
@@ -586,6 +652,10 @@
 				obj.showError(message.error);
 			}
 
+			if (message.statistics) {
+				obj.setStatistics(message.statistics);
+			}
+
 			if (message.tags) {
 				message.tags.forEach((tag) => obj.addTag(tag));
 			}
@@ -804,6 +874,8 @@
 			message.addTag("search");
 		}
 
+		let generationID;
+
 		stream(
 			"/-/chat",
 			{
@@ -822,10 +894,18 @@
 
 					$chat.classList.remove("completing");
 
+					setTimeout(() => {
+						message.loadGenerationData(generationID);
+					}, 750);
+
 					return;
 				}
 
 				switch (chunk.type) {
+					case "id":
+						generationID = chunk.text;
+
+						break;
 					case "reason":
 						message.setState("reasoning");
 						message.addReasoning(chunk.text);

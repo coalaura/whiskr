@@ -64,6 +64,13 @@ func TextChunk(text string) Chunk {
 	}
 }
 
+func IDChunk(id string) Chunk {
+	return Chunk{
+		Type: "id",
+		Text: id,
+	}
+}
+
 func ErrorChunk(err error) Chunk {
 	return Chunk{
 		Type: "error",

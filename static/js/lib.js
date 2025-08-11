@@ -60,3 +60,17 @@ function escapeHtml(text) {
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;");
 }
+
+function formatMilliseconds(ms) {
+	if (ms < 1000) {
+		return `${ms}ms`;
+	} else if (ms < 10000) {
+		return `${(ms / 1000).toFixed(1)}s`;
+	}
+
+	return `${Math.round(ms / 1000)}s`;
+}
+
+function fixed(num, decimals = 0) {
+	return num.toFixed(decimals).replace(/\.?0+$/m, "");
+}
