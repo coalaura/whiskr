@@ -22,11 +22,10 @@
 
 	let autoScrolling = false,
 		jsonMode = false,
-		searchTool = false,
-		interacted = false;
+		searchTool = false;
 
-	function scroll(force = false) {
-		if (!autoScrolling && !force) {
+	function scroll() {
+		if (!autoScrolling) {
 			return;
 		}
 
@@ -44,6 +43,7 @@
 		#reasoning;
 		#text;
 
+		#tool;
 		#tags = [];
 		#statistics;
 		#error = false;
@@ -61,6 +61,7 @@
 		#_reasoning;
 		#_text;
 		#_edit;
+		#_tool;
 		#_statistics;
 
 		constructor(role, reasoning, text) {
@@ -156,6 +157,35 @@
 				}
 			});
 
+			// message tool
+			this.#_tool = make("div", "tool");
+
+			this.#_message.appendChild(this.#_tool);
+
+			// tool call
+			const _call = make("div", "call");
+
+			this.#_tool.appendChild(_call);
+
+			_call.addEventListener("click", () => {
+				this.#_tool.classList.toggle("expanded");
+			});
+
+			// tool call name
+			const _callName = make("div", "name");
+
+			_call.appendChild(_callName);
+
+			// tool call arguments
+			const _callArguments = make("div", "arguments");
+
+			_call.appendChild(_callArguments);
+
+			// tool call result
+			const _callResult = make("div", "result", "markdown");
+
+			this.#_tool.appendChild(_callResult);
+
 			// message options
 			const _opts = make("div", "options");
 
@@ -220,7 +250,7 @@
 				img.classList.add("image");
 
 				img.addEventListener("load", () => {
-					scroll(!interacted);
+					scroll();
 				});
 			});
 		}
@@ -230,6 +260,21 @@
 				"--height",
 				`${this.#_reasoning.scrollHeight}px`,
 			);
+		}
+
+		#updateToolHeight() {
+			const result = this.#_tool.querySelector(".result");
+
+			this.#_tool.style.setProperty("--height", `${result.scrollHeight}px`);
+		}
+
+		#morph(from, to) {
+			morphdom(from, to, {
+				childrenOnly: true,
+				onBeforeElUpdated: (fromEl, toEl) => {
+					return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
+				},
+			});
 		}
 
 		#patch(name, element, md, after = false) {
@@ -258,12 +303,7 @@
 
 				this.#_diff.innerHTML = html;
 
-				morphdom(element, this.#_diff, {
-					childrenOnly: true,
-					onBeforeElUpdated: (fromEl, toEl) => {
-						return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
-					},
-				});
+				this.#morph(element, this.#_diff);
 
 				this.#_diff.innerHTML = "";
 
@@ -282,6 +322,34 @@
 				this.#_tags.innerHTML = tags.join("");
 
 				this.#_message.classList.toggle("has-tags", this.#tags.length > 0);
+			}
+
+			if (!only || only === "tool") {
+				if (this.#tool) {
+					const { name, args, result } = this.#tool;
+
+					const _name = this.#_tool.querySelector(".name"),
+						_arguments = this.#_tool.querySelector(".arguments"),
+						_result = this.#_tool.querySelector(".result");
+
+					_name.title = `Show ${name} call result`;
+					_name.textContent = name;
+
+					_arguments.title = args;
+					_arguments.textContent = args;
+
+					_result.innerHTML = render(result || "*processing*");
+
+					this.#_tool.setAttribute("data-tool", name);
+				} else {
+					this.#_tool.removeAttribute("data-tool");
+				}
+
+				this.#_message.classList.toggle("has-tool", !!this.#tool);
+
+				this.#updateToolHeight();
+
+				noScroll || scroll();
 			}
 
 			if (!only || only === "statistics") {
@@ -353,6 +421,10 @@
 				text: this.#text,
 			};
 
+			if (this.#tool) {
+				data.tool = this.#tool;
+			}
+
 			if (this.#reasoning && full) {
 				data.reasoning = this.#reasoning;
 			}
@@ -365,7 +437,7 @@
 				data.tags = this.#tags;
 			}
 
-			if (this.#statistics) {
+			if (this.#statistics && full) {
 				data.statistics = this.#statistics;
 			}
 
@@ -425,9 +497,21 @@
 
 			if (state) {
 				this.#_message.classList.add(state);
+			} else {
+				if (this.#tool && !this.#tool.result) {
+					this.#tool.result = "failed to run tool";
+
+					this.#render("tool");
+				}
 			}
 
 			this.#state = state;
+		}
+
+		setTool(tool) {
+			this.#tool = tool;
+
+			this.#render("tool");
 		}
 
 		addReasoning(chunk) {
@@ -652,19 +736,23 @@
 				obj.showError(message.error);
 			}
 
-			if (message.statistics) {
-				obj.setStatistics(message.statistics);
-			}
-
 			if (message.tags) {
 				message.tags.forEach((tag) => obj.addTag(tag));
 			}
+
+			if (message.tool) {
+				obj.setTool(message.tool);
+			}
+
+			if (message.statistics) {
+				obj.setStatistics(message.statistics);
+			}
 		});
 
-		scroll(true);
+		scroll();
 
 		// small fix, sometimes when hard reloading we don't scroll all the way
-		setTimeout(scroll, 250, true);
+		setTimeout(scroll, 250);
 	}
 
 	function pushMessage() {
@@ -691,9 +779,7 @@
 	});
 
 	$bottom.addEventListener("click", () => {
-		interacted = true;
-
-		scroll(true);
+		scroll();
 	});
 
 	$role.addEventListener("change", () => {
@@ -702,11 +788,12 @@
 
 	$model.addEventListener("change", () => {
 		const model = $model.value,
-			data = model ? models[model] : null;
+			data = model ? models[model] : null,
+			tags = data?.tags || [];
 
 		storeValue("model", model);
 
-		if (data?.tags.includes("reasoning")) {
+		if (tags.includes("reasoning")) {
 			$reasoningEffort.parentNode.classList.remove("none");
 			$reasoningTokens.parentNode.classList.toggle(
 				"none",
@@ -717,7 +804,13 @@
 			$reasoningTokens.parentNode.classList.add("none");
 		}
 
-		$json.classList.toggle("none", !data?.tags.includes("json"));
+		const hasJson = tags.includes("json"),
+			hasTools = tags.includes("tools");
+
+		$json.classList.toggle("none", !hasJson);
+		$search.classList.toggle("none", !hasTools);
+
+		$search.parentNode.classList.toggle("none", !hasJson && !hasTools);
 	});
 
 	$prompt.addEventListener("change", () => {
@@ -862,19 +955,36 @@
 				.filter((data) => data?.text),
 		};
 
-		const message = new Message("assistant", "", "");
+		let message, generationID;
 
-		message.setState("waiting");
+		function finish() {
+			if (!message) {
+				return;
+			}
 
-		if (jsonMode) {
-			message.addTag("json");
+			message.setState(false);
+
+			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+
+			message = null;
+			generationID = null;
 		}
 
-		if (searchTool) {
-			message.addTag("search");
+		function start() {
+			message = new Message("assistant", "", "");
+
+			message.setState("waiting");
+
+			if (jsonMode) {
+				message.addTag("json");
+			}
+
+			if (searchTool) {
+				message.addTag("search");
+			}
 		}
 
-		let generationID;
+		start();
 
 		stream(
 			"/-/chat",
@@ -890,20 +1000,29 @@
 				if (!chunk) {
 					controller = null;
 
-					message.setState(false);
+					finish();
 
 					$chat.classList.remove("completing");
 
-					setTimeout(() => {
-						message.loadGenerationData(generationID);
-					}, 750);
-
 					return;
+				}
+
+				if (!message && chunk.type !== "end") {
+					start();
 				}
 
 				switch (chunk.type) {
 					case "id":
 						generationID = chunk.text;
+
+						break;
+					case "tool":
+						message.setState("tooling");
+						message.setTool(chunk.text);
+
+						if (chunk.text.result) {
+							finish();
+						}
 
 						break;
 					case "reason":

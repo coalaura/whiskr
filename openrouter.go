@@ -55,6 +55,12 @@ func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletio
 	return stream, nil
 }
 
+func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest) (openrouter.ChatCompletionResponse, error) {
+	client := OpenRouterClient()
+
+	return client.CreateChatCompletion(ctx, request)
+}
+
 func OpenRouterGetGeneration(ctx context.Context, id string) (*Generation, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://openrouter.ai/api/v1/generation?id=%s", id), nil)
 	if err != nil {

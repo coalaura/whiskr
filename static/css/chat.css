@@ -193,11 +193,11 @@ body.loading #version {
 	display: none;
 }
 
-#messages .message .tag-json {
+.message .tag-json {
 	background-image: url(icons/json-mode.svg);
 }
 
-#messages .message .tag-search {
+.message .tag-search {
 	background-image: url(icons/search-tool.svg);
 }
 
@@ -218,6 +218,7 @@ body.loading #version {
 }
 
 .message .reasoning,
+.message .tool,
 .message .text {
 	display: block;
 	background: transparent;
@@ -234,12 +235,13 @@ body.loading #version {
 	display: none;
 }
 
-#messages .message .reasoning,
-#messages .message div.text {
+.message .reasoning,
+.message .tool,
+.message div.text {
 	background: #24273a;
 }
 
-#messages .message textarea.text {
+.message textarea.text {
 	background: #181926;
 }
 
@@ -260,6 +262,7 @@ body.loading #version {
 	background: #1b1d2a;
 }
 
+.message .tool .result,
 .message .reasoning-text {
 	background: #1e2030;
 	border-radius: 6px;
@@ -282,11 +285,15 @@ body.loading #version {
 }
 
 .message.has-reasoning:not(.has-text) div.text,
+.message.has-tool:not(.has-text) div.text,
+.message:not(.has-tool) .tool,
 .message:not(.has-reasoning) .reasoning {
 	display: none;
 }
 
-#messages .message div.text {
+.message .tool,
+.message:not(.has-tool):not(.has-text) .reasoning,
+.message:not(.has-tool) div.text {
 	border-bottom-left-radius: 6px;
 	border-bottom-right-radius: 6px;
 }
@@ -295,6 +302,7 @@ body.loading #version {
 	padding-top: 4px;
 }
 
+.tool .call,
 .reasoning .toggle {
 	position: relative;
 	padding: 0 22px;
@@ -303,6 +311,8 @@ body.loading #version {
 	font-size: 14px;
 }
 
+.tool .call .name::after,
+.tool .call::before,
 .reasoning .toggle::after,
 .reasoning .toggle::before {
 	content: "";
@@ -314,6 +324,7 @@ body.loading #version {
 	height: 20px;
 }
 
+.tool .call .name::after,
 .reasoning .toggle::after {
 	background-image: url(icons/chevron.svg);
 	left: unset;
@@ -323,6 +334,65 @@ body.loading #version {
 
 .message.expanded .reasoning .toggle::after {
 	transform: rotate(180deg);
+}
+
+.message.has-tool .text {
+	padding-bottom: 4px;
+}
+
+.message .tool {
+	--height: 0px;
+	overflow: hidden;
+	transition: 150ms;
+	height: calc(90px + var(--height));
+}
+
+.message .tool:not(.expanded) {
+	height: 62px;
+}
+
+.tool .call {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	cursor: pointer;
+	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-size: 13px;
+}
+
+.tool .call .arguments {
+	font-style: italic;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tool .call .name::after,
+.tool .call::before {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.tool .call .name::after {
+	right: -22px;
+}
+
+.tool.expanded .call .name::after {
+	transform: translateY(-50%) rotate(180deg);
+}
+
+.tool .call::before {
+	background-image: url(icons/tool.svg);
+}
+
+.tool .call .name {
+	position: relative;
+	width: max-content;
+}
+
+.message .tool .result {
+	margin-top: 16px;
 }
 
 .message .options {
@@ -351,6 +421,13 @@ body.loading #version {
 	animation: rotating 1.2s linear infinite;
 	background-image: url(icons/spinner.svg);
 	top: -1px;
+	width: 18px;
+	height: 18px;
+}
+
+.message.tooling .tool .call::before {
+	animation: rotating-y 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
 	width: 18px;
 	height: 18px;
 }
@@ -510,13 +587,15 @@ body.loading #version,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
 #bottom,
-#messages .message .role::before,
-#messages .message .tag-json,
-#messages .message .tag-search,
-#messages .message .copy,
-#messages .message .edit,
-#messages .message .delete,
+.message .role::before,
+.message .tag-json,
+.message .tag-search,
+.message .copy,
+.message .edit,
+.message .delete,
 .pre-copy,
+.tool .call .name::after,
+.tool .call::before,
 .message .statistics .provider::before,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
@@ -540,9 +619,9 @@ body.loading #version,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
-#messages .message .tag-json,
-#messages .message .tag-search,
-#messages .message .role::before {
+.message .tag-json,
+.message .tag-search,
+.message .role::before {
 	content: "";
 	width: 16px;
 	height: 16px;
@@ -553,7 +632,7 @@ input.invalid {
 }
 
 .pre-copy,
-#messages .message .copy {
+.message .copy {
 	background-image: url(icons/copy.svg);
 }
 
@@ -562,15 +641,15 @@ input.invalid {
 	background-image: url(icons/check.svg);
 }
 
-#messages .message .edit {
+.message .edit {
 	background-image: url(icons/edit.svg);
 }
 
-#messages .message.editing .edit {
+.message.editing .edit {
 	background-image: url(icons/save.svg);
 }
 
-#messages .message .delete {
+.message .delete {
 	background-image: url(icons/delete.svg);
 }
 
@@ -691,5 +770,15 @@ label[for="reasoning-tokens"] {
 
 	to {
 		transform: rotate(360deg);
+	}
+}
+
+@keyframes rotating-y {
+	from {
+		transform: translateY(-50%) rotate(0deg);
+	}
+
+	to {
+		transform: translateY(-50%) rotate(360deg);
 	}
 }

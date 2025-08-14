@@ -16,6 +16,7 @@ type Model struct {
 
 	Reasoning bool `json:"-"`
 	JSON      bool `json:"-"`
+	Tools     bool `json:"-"`
 }
 
 var ModelMap = make(map[string]*Model)
@@ -41,17 +42,13 @@ func LoadModels() ([]*Model, error) {
 			name = name[index+2:]
 		}
 
-		tags, reasoning, json := GetModelTags(model)
-
 		m := &Model{
 			ID:          model.ID,
 			Name:        name,
 			Description: model.Description,
-			Tags:        tags,
-
-			Reasoning: reasoning,
-			JSON:      json,
 		}
+
+		GetModelTags(model, m)
 
 		models[index] = m
 
@@ -61,35 +58,29 @@ func LoadModels() ([]*Model, error) {
 	return models, nil
 }
 
-func GetModelTags(model openrouter.Model) ([]string, bool, bool) {
-	var (
-		reasoning bool
-		json      bool
-		tags      []string
-	)
-
+func GetModelTags(model openrouter.Model, m *Model) {
 	for _, parameter := range model.SupportedParameters {
 		switch parameter {
 		case "reasoning":
-			reasoning = true
+			m.Reasoning = true
 
-			tags = append(tags, "reasoning")
+			m.Tags = append(m.Tags, "reasoning")
 		case "response_format":
-			json = true
+			m.JSON = true
 
-			tags = append(tags, "json")
+			m.Tags = append(m.Tags, "json")
 		case "tools":
-			tags = append(tags, "tools")
+			m.Tools = true
+
+			m.Tags = append(m.Tags, "tools")
 		}
 	}
 
 	for _, modality := range model.Architecture.InputModalities {
 		if modality == "image" {
-			tags = append(tags, "vision")
+			m.Tags = append(m.Tags, "vision")
 		}
 	}
 
-	sort.Strings(tags)
-
-	return tags, reasoning, json
+	sort.Strings(m.Tags)
 }

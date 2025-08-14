@@ -176,6 +176,10 @@
 	padding-left: 28px;
 }
 
+.markdown> :first-child {
+	margin-top: 0;
+}
+
 .markdown blockquote>*,
 .markdown td>*,
 .markdown th>*,
