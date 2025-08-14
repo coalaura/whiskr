@@ -18,7 +18,9 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - Search field with fuzzy matching to quickly find models
   - Models are listed newest -> oldest
 - Reasoning effort control
-- Web search tool
+- Web search tools (set the `EXA_TOKEN` to enable):
+  - `search_web`: search via Exa in auto mode; returns up to 10 results with short summaries
+  - `fetch_contents`: fetch page contents for one or more URLs via Exa /contents
 - Structured JSON output
 - Statistics for messages (provider, ttft, tps and token count)
 
@@ -42,6 +44,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 **Backend**
 - Go
 - [OpenRouter](https://openrouter.ai/) for model list and completions
+- [Exa](https://exa.ai/) for web search and content retrieval (`/search`, `/contents`)
 
 ## Getting Started
 
