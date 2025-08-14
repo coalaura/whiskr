@@ -10,16 +10,29 @@ import (
 )
 
 var (
-	Debug           bool
-	MaxIterations   int
+	Debug bool
+
+	CleanContent  bool
+	MaxIterations int
+
 	OpenRouterToken string
+	ExaToken        string
 )
 
 func init() {
 	log.MustPanic(godotenv.Load())
 
+	// enable debug logs & prints
 	Debug = os.Getenv("DEBUG") == "true"
 
+	if Debug {
+		log.Warning("Debug mode enabled")
+	}
+
+	// de-ai assistant response content
+	CleanContent = os.Getenv("DEBUG") == "true"
+
+	// maximum amount of iterations per turn
 	if env := os.Getenv("MAX_ITERATIONS"); env != "" {
 		iterations, err := strconv.Atoi(env)
 		if err != nil {
@@ -35,11 +48,13 @@ func init() {
 		MaxIterations = 3
 	}
 
+	// openrouter token used for all completions & model list
 	if OpenRouterToken = os.Getenv("OPENROUTER_TOKEN"); OpenRouterToken == "" {
 		log.Panic(errors.New("missing openrouter token"))
 	}
 
-	if Debug {
-		log.Warning("Debug mode enabled")
+	// optional exa token used for search tools
+	if ExaToken = os.Getenv("EXA_TOKEN"); ExaToken == "" {
+		log.Warning("missing exa token, web search unavailable")
 	}
 }

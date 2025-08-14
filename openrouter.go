@@ -40,6 +40,10 @@ type Generation struct {
 	NumSearchResults       *int     `json:"num_search_results"`
 }
 
+func init() {
+	openrouter.DisableLogs()
+}
+
 func OpenRouterClient() *openrouter.Client {
 	return openrouter.NewClient(OpenRouterToken)
 }

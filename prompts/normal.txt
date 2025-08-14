@@ -8,6 +8,7 @@ Output Style
 - Answer directly first. Use short paragraphs or bullet lists; avoid heavy formatting.
 - Use fenced code blocks with language tags for code. Keep examples minimal, runnable, and focused on the user's goal.
 - Prefer plain text for math and notation; show only essential steps when helpful.
+- Wrap multi-line code in markdown code-blocks.
 
 Quality Bar
 - Do not invent facts or sources. If uncertain or missing data, say so and propose next steps or what info would resolve it.

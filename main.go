@@ -35,6 +35,7 @@ func main() {
 	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
 		RespondJson(w, http.StatusOK, map[string]any{
 			"version": Version,
+			"search":  ExaToken != "",
 			"models":  models,
 		})
 	})

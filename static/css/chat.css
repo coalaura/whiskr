@@ -284,8 +284,8 @@ body.loading #version {
 	margin-top: 10px;
 }
 
-.message.has-reasoning:not(.has-text) div.text,
-.message.has-tool:not(.has-text) div.text,
+.message.has-reasoning:not(.has-text):not(.errored) div.text,
+.message.has-tool:not(.has-text):not(.errored) div.text,
 .message:not(.has-tool) .tool,
 .message:not(.has-reasoning) .reasoning {
 	display: none;

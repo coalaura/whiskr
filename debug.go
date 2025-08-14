@@ -1,23 +1,17 @@
 package main
 
-import (
-	"encoding/json"
-	"os"
-)
-
-func dump(v any) {
+func debug(format string, args ...any) {
 	if !Debug {
 		return
 	}
 
-	b, _ := json.MarshalIndent(v, "", "\t")
-	os.WriteFile("debug.json", b, 0644)
+	log.Debugf(format+"\n", args...)
 }
 
-func debug(v any) {
-	if !Debug {
+func debugIf(cond bool, format string, args ...any) {
+	if !cond {
 		return
 	}
 
-	log.Debugf("%#v\n", v)
+	debug(format, args)
 }

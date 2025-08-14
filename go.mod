@@ -6,7 +6,7 @@ require (
 	github.com/coalaura/logger v1.5.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/joho/godotenv v1.5.1
-	github.com/revrost/go-openrouter v0.1.11-0.20250804020417-b3d94f4f6b46
+	github.com/revrost/go-openrouter v0.2.1
 )
 
 require (
@@ -16,6 +16,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 )

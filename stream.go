@@ -37,6 +37,8 @@ func NewStream(w http.ResponseWriter) (*Stream, error) {
 }
 
 func (s *Stream) Send(ch Chunk) error {
+	debugIf(ch.Type == "error", "error: %v", ch.Text)
+
 	if err := s.en.Encode(ch); err != nil {
 		return err
 	}
@@ -60,7 +62,7 @@ func ReasoningChunk(text string) Chunk {
 func TextChunk(text string) Chunk {
 	return Chunk{
 		Type: "text",
-		Text: text,
+		Text: CleanChunk(text),
 	}
 }
 

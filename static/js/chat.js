@@ -21,6 +21,7 @@
 		models = {};
 
 	let autoScrolling = false,
+		searchAvailable = false,
 		jsonMode = false,
 		searchTool = false;
 
@@ -441,6 +442,10 @@
 				data.statistics = this.#statistics;
 			}
 
+			if (!data.reasoning && !data.text && !data.tool) {
+				return false;
+			}
+
 			return data;
 		}
 
@@ -512,6 +517,7 @@
 			this.#tool = tool;
 
 			this.#render("tool");
+			this.#save();
 		}
 
 		addReasoning(chunk) {
@@ -687,6 +693,9 @@
 			$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> <a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`;
 		}
 
+		// update search availability
+		searchAvailable = data.search;
+
 		// render models
 		$model.innerHTML = "";
 
@@ -805,12 +814,12 @@
 		}
 
 		const hasJson = tags.includes("json"),
-			hasTools = tags.includes("tools");
+			hasSearch = searchAvailable && tags.includes("tools");
 
 		$json.classList.toggle("none", !hasJson);
-		$search.classList.toggle("none", !hasTools);
+		$search.classList.toggle("none", !hasSearch);
 
-		$search.parentNode.classList.toggle("none", !hasJson && !hasTools);
+		$search.parentNode.classList.toggle("none", !hasJson && !hasSearch);
 	});
 
 	$prompt.addEventListener("change", () => {
@@ -952,7 +961,7 @@
 			search: searchTool,
 			messages: messages
 				.map((message) => message.getData())
-				.filter((data) => data?.text),
+				.filter(Boolean),
 		};
 
 		let message, generationID;
@@ -1012,6 +1021,10 @@
 				}
 
 				switch (chunk.type) {
+					case "end":
+						finish();
+
+						break;
 					case "id":
 						generationID = chunk.text;
 
@@ -1020,7 +1033,7 @@
 						message.setState("tooling");
 						message.setTool(chunk.text);
 
-						if (chunk.text.result) {
+						if (chunk.text.done) {
 							finish();
 						}
 
