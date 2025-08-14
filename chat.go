@@ -245,9 +245,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 				break
 			}
 
-			log.Warning("stream error")
-			log.WarningE(err)
-
 			return nil, "", err
 		}
 
