@@ -124,10 +124,11 @@ body.loading #version {
 }
 
 #messages:empty::before {
-	content: "no messages";
+	content: "whiskr - no messages";
 	color: #a5adcb;
 	font-style: italic;
 	align-self: center;
+	margin-top: 5px;
 }
 
 #message,
