@@ -959,9 +959,7 @@
 			},
 			json: jsonMode,
 			search: searchTool,
-			messages: messages
-				.map((message) => message.getData())
-				.filter(Boolean),
+			messages: messages.map((message) => message.getData()).filter(Boolean),
 		};
 
 		let message, generationID;

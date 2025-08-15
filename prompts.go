@@ -18,20 +18,38 @@ var (
 	//go:embed prompts/normal.txt
 	PromptNormal string
 
-	PromptNormalTmpl = template.Must(template.New("normal").Parse(PromptNormal))
+	//go:embed prompts/reviewer.txt
+	PromptReviewer string
+
+	//go:embed prompts/engineer.txt
+	PromptEngineer string
+
+	//go:embed prompts/scripts.txt
+	PromptScripts string
+
+	//go:embed prompts/physics.txt
+	PromptPhysics string
+
+	Templates = map[string]*template.Template{
+		"normal":   NewTemplate("normal", PromptNormal),
+		"reviewer": NewTemplate("reviewer", PromptReviewer),
+		"engineer": NewTemplate("engineer", PromptEngineer),
+		"scripts":  NewTemplate("scripts", PromptScripts),
+		"physics":  NewTemplate("physics", PromptPhysics),
+	}
 )
+
+func NewTemplate(name, text string) *template.Template {
+	return template.Must(template.New(name).Parse(text))
+}
 
 func BuildPrompt(name string, model *Model) (string, error) {
 	if name == "" {
 		return "", nil
 	}
 
-	var tmpl *template.Template
-
-	switch name {
-	case "normal":
-		tmpl = PromptNormalTmpl
-	default:
+	tmpl, ok := Templates[name]
+	if !ok {
 		return "", fmt.Errorf("unknown prompt: %q", name)
 	}
 
