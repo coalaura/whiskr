@@ -15,6 +15,7 @@ type Model struct {
 	Tags        []string `json:"tags,omitempty"`
 
 	Reasoning bool `json:"-"`
+	Vision    bool `json:"-"`
 	JSON      bool `json:"-"`
 	Tools     bool `json:"-"`
 }
@@ -78,6 +79,8 @@ func GetModelTags(model openrouter.Model, m *Model) {
 
 	for _, modality := range model.Architecture.InputModalities {
 		if modality == "image" {
+			m.Vision = true
+
 			m.Tags = append(m.Tags, "vision")
 		}
 	}

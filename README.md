@@ -67,6 +67,7 @@ go build -o whiskr
 - Adjust model, temperature, prompt, or message role from the controls in the bottom-left
 - Use the model search field to quickly find models (supports fuzzy matching)
 - Look for tags in the model list to see if a model supports tools, vision, or reasoning
+- Use `![alt](url)` in your message to display an image inline. If the model supports vision, the same image URL is passed to the model for multimodal input.
 
 ## License
 

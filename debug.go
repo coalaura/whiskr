@@ -1,5 +1,19 @@
 package main
 
+import (
+	"encoding/json"
+	"os"
+)
+
+func dump(name string, val any) {
+	if !Debug {
+		return
+	}
+
+	b, _ := json.MarshalIndent(val, "", "\t")
+	os.WriteFile(name, b, 0644)
+}
+
 func debug(format string, args ...any) {
 	if !Debug {
 		return

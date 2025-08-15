@@ -10,7 +10,13 @@
 		walkTokens: (token) => {
 			const { type, lang, text } = token;
 
-			if (type !== "code") {
+			if (type === "html") {
+				token.text = token.text.replace(/&/g, "&amp;")
+				token.text = token.text.replace(/</g, "&lt;")
+				token.text = token.text.replace(/>/g, "&gt;")
+
+				return;
+			} else if (type !== "code") {
 				return;
 			}
 
