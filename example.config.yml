@@ -1,14 +1,24 @@
-# Enable verbose logging and extra diagnostics
+# enable verbose logging and diagnostics
 debug: false
 
 tokens:
-  # Your openrouter.ai token (required)
+  # server secret for signing auth tokens; auto-generated if empty
+  secret: ""
+  # openrouter.ai api token (required)
   openrouter: ""
-  # Your exa-search token (optional, for search tools)
+  # exa search api token (optional; used by search tools)
   exa: ""
 
 settings:
-  # Replace unicode quotes, dashes, etc. in the assistants output (optional, default: false)
+  # normalize unicode in assistant output (optional; default: false)
   cleanup: true
-  # How many messages/tool calls before the model is cut off (optional, default: 3)
+  # max model turns per request (optional; default: 3)
   iterations: 3
+
+authentication:
+  # require login with username and password
+  enabled: false
+  # list of users with bcrypt password hashes
+  users:
+  - username: admin
+    password: $2a$12$eH6Du2grC7aOUDmff2SrC.yKPWea/fq0d76c3JsvhGxhGCEOnWTRy
