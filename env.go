@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type EnvTokens struct {
@@ -29,8 +28,10 @@ type EnvUser struct {
 }
 
 type EnvAuthentication struct {
-	Enabled bool      `json:"enabled"`
-	Users   []EnvUser `json:"users"`
+	lookup map[string]*EnvUser
+
+	Enabled bool       `json:"enabled"`
+	Users   []*EnvUser `json:"users"`
 }
 
 type Environment struct {
@@ -94,17 +95,14 @@ func (e *Environment) Init() error {
 		log.Warning("Missing token.exa, web search unavailable")
 	}
 
-	return nil
-}
+	// create user lookup map
+	e.Authentication.lookup = make(map[string]*EnvUser)
 
-func (e *Environment) Authenticate(username, password string) bool {
 	for _, user := range e.Authentication.Users {
-		if user.Username == username {
-			return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil
-		}
+		e.Authentication.lookup[user.Username] = user
 	}
 
-	return false
+	return nil
 }
 
 func (e *Environment) Store() error {

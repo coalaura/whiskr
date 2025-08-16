@@ -17,11 +17,18 @@
 		$scrolling = document.getElementById("scrolling"),
 		$export = document.getElementById("export"),
 		$import = document.getElementById("import"),
-		$clear = document.getElementById("clear");
+		$clear = document.getElementById("clear"),
+		$authentication = document.getElementById("authentication"),
+		$authError = document.getElementById("auth-error"),
+		$username = document.getElementById("username"),
+		$password = document.getElementById("password"),
+		$login = document.getElementById("login");
 
 	const messages = [],
 		models = {},
 		modelList = [];
+
+	let authToken;
 
 	let autoScrolling = false,
 		searchAvailable = false,
@@ -879,6 +886,30 @@
 		);
 	}
 
+	async function login() {
+		const username = $username.value.trim(),
+			password = $password.value.trim();
+
+		if (!username || !password) {
+			throw new Error("missing username or password");
+		}
+
+		const data = await fetch("/-/auth", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				username: username,
+				password: password,
+			}),
+		}).then((response) => response.json());
+
+		if (!data?.authenticated) {
+			throw new Error(data.error || "authentication failed");
+		}
+	}
+
 	async function loadData() {
 		const data = await json("/-/data");
 
@@ -897,6 +928,11 @@
 
 		// update search availability
 		searchAvailable = data.search;
+
+		// show login modal
+		if (data.authentication && !data.authenticated) {
+			$authentication.classList.add("open");
+		}
 
 		// render models
 		$model.innerHTML = "";
@@ -924,7 +960,7 @@
 
 	function clearMessages() {
 		while (messages.length) {
-			console.log("delete", messages.length)
+			console.log("delete", messages.length);
 			messages[0].delete();
 		}
 	}
@@ -1167,6 +1203,32 @@
 
 	$send.addEventListener("click", () => {
 		generate(true);
+	});
+
+	$login.addEventListener("click", async () => {
+		$authentication.classList.remove("errored");
+		$authentication.classList.add("loading");
+
+		try {
+			await login();
+
+			$authentication.classList.remove("open");
+		} catch(err) {
+			$authError.textContent =`Error: ${err.message}`;
+			$authentication.classList.add("errored");
+
+			$password.value = "";
+		}
+
+		$authentication.classList.remove("loading");
+	});
+
+	$username.addEventListener("input", () => {
+		$authentication.classList.remove("errored");
+	});
+
+	$password.addEventListener("input", () => {
+		$authentication.classList.remove("errored");
 	});
 
 	$message.addEventListener("keydown", (event) => {

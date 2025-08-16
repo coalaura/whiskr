@@ -605,6 +605,7 @@ select {
 }
 
 body.loading #version,
+.modal.loading .content::after,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
 #bottom,
@@ -799,6 +800,129 @@ label[for="reasoning-tokens"] {
 
 .completing #send {
 	background-image: url(icons/stop.svg);
+}
+
+.modal .background,
+.modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 20;
+}
+
+.modal:not(.open) {
+	display: none;
+}
+
+.modal .background {
+	background: rgba(24, 25, 38, 0.25);
+	backdrop-filter: blur(10px);
+}
+
+.modal .content,
+.modal .body {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	overflow: hidden;
+}
+
+.modal .content {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	gap: 14px;
+	background: #24273a;
+	padding: 18px 20px;
+	border-radius: 6px;
+	box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.1);
+	z-index: 30;
+}
+
+.modal .header {
+	background: #363a4f;
+	height: 42px;
+	margin: -18px -20px;
+	padding: 10px 20px;
+	margin-bottom: 0;
+	font-weight: 500;
+	font-size: 18px;
+}
+
+.modal.loading .content::after,
+.modal.loading .content::before {
+	content: "";
+	position: absolute;
+	top: 42px;
+	left: 0;
+	z-index: 10;
+}
+
+.modal.loading .content::before {
+	right: 0;
+	bottom: 0;
+	backdrop-filter: blur(4px);
+}
+
+.modal.loading .content::after {
+	top: 85px;
+	left: 50%;
+	transform: translateX(-50%);
+	animation: rotating 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
+}
+
+.modal .error {
+	background: #ed8796;
+	font-weight: 500;
+	font-style: italic;
+	margin-bottom: 6px;
+	font-size: 14px;
+	color: #11111b;
+	padding: 5px 10px;
+	border-radius: 2px;
+}
+
+.modal:not(.errored) .error {
+	display: none;
+}
+
+.modal.errored input {
+	border: 1px solid #ed8796;
+}
+
+.modal .form-group {
+	display: flex;
+	gap: 6px;
+}
+
+.modal .form-group label {
+	width: 80px;
+}
+
+.modal .form-group input {
+	padding: 4px 6px;
+}
+
+.modal .buttons {
+	display: flex;
+	justify-content: end;
+}
+
+#login {
+	background: #a6da95;
+	color: #11111b;
+	padding: 4px 10px;
+	border-radius: 2px;
+	font-weight: 500;
+	transition: 150ms;
+}
+
+#login:hover {
+	background: #89bb77;
 }
 
 @keyframes rotating {

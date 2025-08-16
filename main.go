@@ -34,14 +34,22 @@ func main() {
 
 	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
 		RespondJson(w, http.StatusOK, map[string]any{
-			"version": Version,
-			"search":  env.Tokens.Exa != "",
-			"models":  models,
+			"authentication": env.Authentication.Enabled,
+			"authenticated":  IsAuthenticated(r),
+			"search":         env.Tokens.Exa != "",
+			"models":         models,
+			"version":        Version,
 		})
 	})
 
-	r.Get("/-/stats/{id}", HandleStats)
-	r.Post("/-/chat", HandleChat)
+	r.Post("/-/auth", HandleAuthentication)
+
+	r.Group(func(gr chi.Router) {
+		gr.Use(Authenticate)
+
+		gr.Get("/-/stats/{id}", HandleStats)
+		gr.Post("/-/chat", HandleChat)
+	})
 
 	log.Info("Listening at http://localhost:3443/")
 	http.ListenAndServe(":3443", r)
