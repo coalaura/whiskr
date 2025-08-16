@@ -74,3 +74,66 @@ function formatMilliseconds(ms) {
 function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(/\.?0+$/m, "");
 }
+
+function download(name, type, data) {
+	let blob;
+
+	if (data instanceof Blob) {
+		blob = data;
+	} else {
+		blob = new Blob([data], {
+			type: type,
+		});
+	}
+
+	const a = document.createElement("a"),
+		url = URL.createObjectURL(blob);
+
+	a.setAttribute("download", name);
+	a.style.display = "none";
+	a.href = url;
+
+	document.body.appendChild(a);
+
+	a.click();
+
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
+function selectFile(accept) {
+	return new Promise((resolve) => {
+		const input = make("input");
+
+		input.type = "file";
+		input.accept = accept;
+
+		input.onchange = () => {
+			const file = input.files[0];
+
+			if (!file) {
+				resolve(false);
+
+				return;
+			}
+
+			const reader = new FileReader();
+
+			reader.onload = () => {
+				try {
+					const data = JSON.parse(reader.result);
+
+					resolve(data);
+				} catch {
+					resolve(false);
+				}
+			};
+
+			reader.onerror = () => resolve(false);
+
+			reader.readAsText(file);
+		};
+
+		input.click();
+	});
+}

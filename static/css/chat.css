@@ -625,6 +625,8 @@ body.loading #version,
 #json,
 #search,
 #scrolling,
+#import,
+#export,
 #clear,
 #add,
 #send,
@@ -749,6 +751,8 @@ label[for="reasoning-tokens"] {
 #json,
 #search,
 #scrolling,
+#import,
+#export,
 #clear {
 	position: unset !important;
 }
@@ -775,6 +779,14 @@ label[for="reasoning-tokens"] {
 
 #search.on {
 	background-image: url(icons/search-on.svg);
+}
+
+#import {
+	background-image: url(icons/import.svg);
+}
+
+#export {
+	background-image: url(icons/export.svg);
 }
 
 #clear {

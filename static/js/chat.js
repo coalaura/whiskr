@@ -15,10 +15,13 @@
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$scrolling = document.getElementById("scrolling"),
+		$export = document.getElementById("export"),
+		$import = document.getElementById("import"),
 		$clear = document.getElementById("clear");
 
 	const messages = [],
-		models = {};
+		models = {},
+		modelList = [];
 
 	let autoScrolling = false,
 		searchAvailable = false,
@@ -899,6 +902,8 @@
 		$model.innerHTML = "";
 
 		for (const model of data.models) {
+			modelList.push(model);
+
 			const el = document.createElement("option");
 
 			el.value = model.id;
@@ -917,7 +922,15 @@
 		return data;
 	}
 
-	function restore(modelList) {
+	function clearMessages() {
+		while (messages.length) {
+			console.log("delete", messages.length)
+			messages[0].delete();
+		}
+	}
+
+	function restore() {
+		$message.value = loadValue("message", "");
 		$role.value = loadValue("role", "user");
 		$model.value = loadValue("model", modelList[0].id);
 		$prompt.value = loadValue("prompt", "normal");
@@ -971,6 +984,7 @@
 		}
 
 		$message.value = "";
+		storeValue("message", "");
 
 		return new Message($role.value, "", text);
 	}
@@ -1086,9 +1100,53 @@
 			return;
 		}
 
-		for (let x = messages.length - 1; x >= 0; x--) {
-			messages[x].delete();
+		clearMessages();
+	});
+
+	$export.addEventListener("click", () => {
+		const data = JSON.stringify({
+			message: $message.value,
+			role: $role.value,
+			model: $model.value,
+			prompt: $prompt.value,
+			temperature: $temperature.value,
+			reasoning: {
+				effort: $reasoningEffort.value,
+				tokens: $reasoningTokens.value,
+			},
+			json: jsonMode,
+			search: searchTool,
+			messages: messages.map((message) => message.getData()).filter(Boolean),
+		});
+
+		download("chat.json", "application/json", data);
+	});
+
+	$import.addEventListener("click", async () => {
+		if (!modelList.length) {
+			return;
 		}
+
+		const data = await selectFile("application/json");
+
+		if (!data) {
+			return;
+		}
+
+		clearMessages();
+
+		storeValue("message", data.message);
+		storeValue("role", data.role);
+		storeValue("model", data.model);
+		storeValue("prompt", data.prompt);
+		storeValue("temperature", data.temperature);
+		storeValue("reasoning", data.reasoning);
+		storeValue("reasoning", data.reasoning);
+		storeValue("json", data.json);
+		storeValue("search", data.search);
+		storeValue("messages", data.messages);
+
+		restore();
 	});
 
 	$scrolling.addEventListener("click", () => {
@@ -1123,8 +1181,8 @@
 	dropdown($prompt);
 	dropdown($reasoningEffort);
 
-	loadData().then((data) => {
-		restore(data?.models || []);
+	loadData().then(() => {
+		restore();
 
 		document.body.classList.remove("loading");
 	});
