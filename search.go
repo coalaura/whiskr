@@ -59,7 +59,6 @@ func GetSearchTools() []openrouter.Tool {
 							"type":        "array",
 							"description": "List of URLs (1..N) to fetch.",
 							"items":       map[string]any{"type": "string"},
-							"minItems":    1,
 						},
 					},
 					"additionalProperties": false,

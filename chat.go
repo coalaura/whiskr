@@ -42,13 +42,26 @@ type Request struct {
 	Messages    []Message `json:"messages"`
 }
 
-func (t *ToolCall) AsToolCall() openrouter.ToolCall {
-	return openrouter.ToolCall{
-		ID:   t.ID,
-		Type: openrouter.ToolTypeFunction,
-		Function: openrouter.FunctionCall{
-			Name:      t.Name,
-			Arguments: t.Args,
+func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
+	// Some models require there to be content
+	if content == "" {
+		content = " "
+	}
+
+	return openrouter.ChatCompletionMessage{
+		Role: openrouter.ChatMessageRoleAssistant,
+		Content: openrouter.Content{
+			Text: content,
+		},
+		ToolCalls: []openrouter.ToolCall{
+			{
+				ID:   t.ID,
+				Type: openrouter.ToolTypeFunction,
+				Function: openrouter.FunctionCall{
+					Name:      t.Name,
+					Arguments: t.Args,
+				},
+			},
 		},
 	}
 }
@@ -100,13 +113,6 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 	}
 
-	if model.Tools && r.Search && ExaToken != "" {
-		request.Tools = GetSearchTools()
-		request.ToolChoice = "auto"
-
-		request.Messages = append(request.Messages, openrouter.SystemMessage("You have access to web search tools. Use `search_web` with `query` (string) and `num_results` (1-10) to find current information and get result summaries. Use `fetch_contents` with `urls` (array) to read full page content. Always specify all parameters for each tool call. Call only one tool per response."))
-	}
-
 	prompt, err := BuildPrompt(r.Prompt, model)
 	if err != nil {
 		return nil, err
@@ -114,6 +120,13 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	if prompt != "" {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
+	}
+
+	if model.Tools && r.Search && ExaToken != "" {
+		request.Tools = GetSearchTools()
+		request.ToolChoice = "auto"
+
+		request.Messages = append(request.Messages, openrouter.SystemMessage("You have access to web search tools. Use `search_web` with `query` (string) and `num_results` (1-10) to find current information and get result summaries. Use `fetch_contents` with `urls` (array) to read full page content. Always specify all parameters for each tool call. Call only one tool per response."))
 	}
 
 	for index, message := range r.Messages {
@@ -148,7 +161,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 			tool := message.Tool
 			if tool != nil {
-				msg.ToolCalls = []openrouter.ToolCall{tool.AsToolCall()}
+				msg = tool.AsAssistantToolCall(message.Text)
 
 				request.Messages = append(request.Messages, msg)
 
@@ -188,7 +201,6 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	request.Stream = true
 
-	dump("debug.json", request)
 	debug("preparing stream")
 
 	response, err := NewStream(w)
@@ -215,6 +227,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 			request.Messages = append(request.Messages, openrouter.SystemMessage("You have reached the maximum number of tool calls for this conversation. Provide your final response based on the information you have gathered."))
 		}
+
+		dump("debug.json", request)
 
 		tool, message, err := RunCompletion(ctx, response, request)
 		if err != nil {
@@ -259,13 +273,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		response.Send(ToolChunk(tool))
 
 		request.Messages = append(request.Messages,
-			openrouter.ChatCompletionMessage{
-				Role: openrouter.ChatMessageRoleAssistant,
-				Content: openrouter.Content{
-					Text: message,
-				},
-				ToolCalls: []openrouter.ToolCall{tool.AsToolCall()},
-			},
+			tool.AsAssistantToolCall(message),
 			tool.AsToolMessage(),
 		)
 	}

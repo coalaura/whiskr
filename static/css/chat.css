@@ -244,7 +244,7 @@ body.loading #version {
 
 .message textarea.text {
 	background: #181926;
-	min-width: 100%;
+	min-width: 480px;
 	min-height: 100px;
 }
 
