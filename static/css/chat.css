@@ -150,6 +150,24 @@ body.loading #version {
 	flex-shrink: 0;
 }
 
+.message::after {
+	content: "";
+	position: absolute;
+	pointer-events: none;
+	background: rgba(237, 135, 150, 0.2);
+	opacity: 0;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	transition: opacity 150ms;
+	border-radius: 6px;
+}
+
+.message.marked::after {
+	opacity: 1;
+}
+
 .message.user {
 	align-self: end;
 }

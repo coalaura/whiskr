@@ -38,6 +38,12 @@
 		}, 0);
 	}
 
+	function mark(index) {
+		for (let x = 0; x < messages.length; x++) {
+			messages[x].mark(Number.isInteger(index) && x >= index);
+		}
+	}
+
 	class Message {
 		#id;
 		#role;
@@ -225,20 +231,28 @@
 
 			_opts.appendChild(_optRetry);
 
+			_optRetry.addEventListener("mouseenter", () => {
+				const index = this.index(!_assistant ? 1 : 0);
+
+				mark(index);
+			});
+
+			_optRetry.addEventListener("mouseleave", () => {
+				mark(false);
+			});
+
 			_optRetry.addEventListener("click", () => {
-				let index = messages.findIndex((message) => message.#id === this.#id);
+				const index = this.index(!_assistant ? 1 : 0);
 
-				if (index === -1) {
+				if (index === false) {
 					return;
-				}
-
-				if (!_assistant) {
-					index++;
 				}
 
 				while (messages.length > index) {
 					messages[messages.length - 1].delete();
 				}
+
+				mark(false);
 
 				generate(false);
 			});
@@ -444,6 +458,20 @@
 				"messages",
 				messages.map((message) => message.getData(true)).filter(Boolean),
 			);
+		}
+
+		index(offset = 0) {
+			const index = messages.findIndex((message) => message.#id === this.#id);
+
+			if (index === -1) {
+				return false;
+			}
+
+			return index + offset;
+		}
+
+		mark(state = false) {
+			this.#_message.classList.toggle("marked", state);
 		}
 
 		getData(full = false) {
