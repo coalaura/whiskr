@@ -12,7 +12,7 @@ var cleaner = strings.NewReplacer(
 )
 
 func CleanChunk(chunk string) string {
-	if !CleanContent {
+	if !env.Settings.CleanContent {
 		return chunk
 	}
 

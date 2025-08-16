@@ -6,7 +6,7 @@ import (
 )
 
 func dump(name string, val any) {
-	if !Debug {
+	if !env.Debug {
 		return
 	}
 
@@ -15,7 +15,7 @@ func dump(name string, val any) {
 }
 
 func debug(format string, args ...any) {
-	if !Debug {
+	if !env.Debug {
 		return
 	}
 

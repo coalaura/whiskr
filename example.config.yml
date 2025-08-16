@@ -1,0 +1,14 @@
+# Enable verbose logging and extra diagnostics
+debug: false
+
+tokens:
+  # Your openrouter.ai token (required)
+  openrouter: ""
+  # Your exa-search token (optional, for search tools)
+  exa: ""
+
+settings:
+  # Replace unicode quotes, dashes, etc. in the assistants output (optional, default: false)
+  cleanContent: true
+  # How many messages/tool calls before the model is cut off (optional, default: 3)
+  maxIterations: 3

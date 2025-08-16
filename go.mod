@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/coalaura/logger v1.5.1
 	github.com/go-chi/chi/v5 v5.2.2
-	github.com/joho/godotenv v1.5.1
+	github.com/goccy/go-yaml v1.18.0
 	github.com/revrost/go-openrouter v0.2.1
 )
 
@@ -17,5 +17,5 @@ require (
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/term v0.32.0 // indirect
+	golang.org/x/term v0.34.0 // indirect
 )

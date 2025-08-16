@@ -2,59 +2,59 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"strconv"
 
-	"github.com/joho/godotenv"
+	"github.com/goccy/go-yaml"
 )
 
-var (
-	Debug bool
+type EnvTokens struct {
+	OpenRouter string `json:"openrouter"`
+	Exa        string `json:"exa"`
+}
 
-	CleanContent  bool
-	MaxIterations int
+type EnvSettings struct {
+	CleanContent  bool `json:"cleanContent"`
+	MaxIterations uint `json:"maxIterations"`
+}
 
-	OpenRouterToken string
-	ExaToken        string
-)
+type Environment struct {
+	Debug    bool        `json:"debug"`
+	Tokens   EnvTokens   `json:"tokens"`
+	Settings EnvSettings `json:"settings"`
+}
+
+var env Environment
 
 func init() {
-	log.MustPanic(godotenv.Load())
+	file, err := os.OpenFile("config.yml", os.O_RDONLY, 0)
+	log.MustPanic(err)
 
-	// enable debug logs & prints
-	Debug = os.Getenv("DEBUG") == "true"
+	defer file.Close()
 
-	if Debug {
+	err = yaml.NewDecoder(file).Decode(&env)
+	log.MustPanic(err)
+
+	log.MustPanic(env.Init())
+}
+
+func (e *Environment) Init() error {
+	// print if debug is enabled
+	if e.Debug {
 		log.Warning("Debug mode enabled")
 	}
 
-	// de-ai assistant response content
-	CleanContent = os.Getenv("DEBUG") == "true"
+	// check max iterations
+	e.Settings.MaxIterations = max(e.Settings.MaxIterations, 1)
 
-	// maximum amount of iterations per turn
-	if env := os.Getenv("MAX_ITERATIONS"); env != "" {
-		iterations, err := strconv.Atoi(env)
-		if err != nil {
-			log.Panic(fmt.Errorf("invalid max iterations: %v", err))
-		}
-
-		if iterations < 1 {
-			log.Panic(errors.New("max iterations has to be 1 or more"))
-		}
-
-		MaxIterations = iterations
-	} else {
-		MaxIterations = 3
+	// check if openrouter token is set
+	if e.Tokens.OpenRouter == "" {
+		return errors.New("missing tokens.openrouter")
 	}
 
-	// openrouter token used for all completions & model list
-	if OpenRouterToken = os.Getenv("OPENROUTER_TOKEN"); OpenRouterToken == "" {
-		log.Panic(errors.New("missing openrouter token"))
+	// check if exa token is set
+	if e.Tokens.Exa == "" {
+		log.Warning("missing token.exa, web search unavailable")
 	}
 
-	// optional exa token used for search tools
-	if ExaToken = os.Getenv("EXA_TOKEN"); ExaToken == "" {
-		log.Warning("missing exa token, web search unavailable")
-	}
+	return nil
 }

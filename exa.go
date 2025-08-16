@@ -71,7 +71,7 @@ func NewExaRequest(ctx context.Context, path string, data any) (*http.Request, e
 	req = req.WithContext(ctx)
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Api-Key", ExaToken)
+	req.Header.Set("X-Api-Key", env.Tokens.Exa)
 
 	return req, nil
 }

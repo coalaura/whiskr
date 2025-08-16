@@ -122,7 +122,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
 
-	if model.Tools && r.Search && ExaToken != "" {
+	if model.Tools && r.Search && env.Tokens.Exa != "" {
 		request.Tools = GetSearchTools()
 		request.ToolChoice = "auto"
 
@@ -216,10 +216,10 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	for iteration := range MaxIterations {
-		debug("iteration %d of %d", iteration+1, MaxIterations)
+	for iteration := range env.Settings.MaxIterations {
+		debug("iteration %d of %d", iteration+1, env.Settings.MaxIterations)
 
-		if iteration == MaxIterations-1 {
+		if iteration == env.Settings.MaxIterations-1 {
 			debug("no more tool calls")
 
 			request.Tools = nil
