@@ -9,6 +9,6 @@ tokens:
 
 settings:
   # Replace unicode quotes, dashes, etc. in the assistants output (optional, default: false)
-  cleanContent: true
+  cleanup: true
   # How many messages/tool calls before the model is cut off (optional, default: 3)
-  maxIterations: 3
+  iterations: 3

@@ -13,8 +13,8 @@ type EnvTokens struct {
 }
 
 type EnvSettings struct {
-	CleanContent  bool `json:"cleanContent"`
-	MaxIterations uint `json:"maxIterations"`
+	CleanContent  bool `json:"cleanup"`
+	MaxIterations uint `json:"iterations"`
 }
 
 type Environment struct {
