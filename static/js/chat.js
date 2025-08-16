@@ -28,8 +28,6 @@
 		models = {},
 		modelList = [];
 
-	let authToken;
-
 	let autoScrolling = false,
 		searchAvailable = false,
 		jsonMode = false,
@@ -688,6 +686,10 @@
 			if (!response.ok) {
 				const err = await response.json();
 
+				if (err?.error === "unauthorized") {
+					showLogin();
+				}
+
 				throw new Error(err?.error || response.statusText);
 			}
 
@@ -908,6 +910,12 @@
 		if (!data?.authenticated) {
 			throw new Error(data.error || "authentication failed");
 		}
+	}
+
+	function showLogin() {
+		$password.value = "";
+
+		$authentication.classList.add("open");
 	}
 
 	async function loadData() {
