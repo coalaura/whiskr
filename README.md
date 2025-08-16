@@ -48,9 +48,9 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## Getting Started
 
-1. Copy `.example.env` to `.env` and set `OPENROUTER_TOKEN`:
+1. Copy `example.config.yml` to `config.yml` and set `tokens.openrouter`:
 ```bash
-cp .example.env .env
+cp example.config.yml config.yml
 ```
 2. Build and run:
 ```bash
