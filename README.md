@@ -23,10 +23,10 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - `fetch_contents`: fetch page contents for one or more URLs via Exa /contents
 - Structured JSON output
 - Statistics for messages (provider, ttft, tps and token count)
+- Import and export of chats as JSON files
 
 ## TODO
 
-- Import and export of chats
 - Image and file attachments
 
 ## Built With
