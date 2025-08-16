@@ -133,7 +133,7 @@ go build -o whiskr
 
 ## Authentication (optional)
 
-whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt (12 rounds).
+whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt (12 rounds). If `authentication.enabled` is set to `false`, whiskr will not prompt for authentication at all.
 
 ```yaml
 authentication:
@@ -146,10 +146,6 @@ authentication:
 ```
 
 After a successful login, whiskr issues a signed (HMAC-SHA256) token, using the server secret (`tokens.secret` in `config.yml`). This is stored as a cookie and re-used for future authentications.
-
-### 5. Disabling authentication
-
-Set `authentication.enabled: false` in `config.yml` to allow open access.
 
 ## Usage
 
