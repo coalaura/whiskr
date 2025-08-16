@@ -213,6 +213,36 @@
 				}, 1000);
 			});
 
+			// retry option
+			const _assistant = this.#role === "assistant",
+				_retryLabel = _assistant
+					? "Delete message and messages after this one and try again"
+					: "Delete messages after this one and try again";
+
+			const _optRetry = make("button", "retry");
+
+			_optRetry.title = _retryLabel;
+
+			_opts.appendChild(_optRetry);
+
+			_optRetry.addEventListener("click", () => {
+				let index = messages.findIndex((message) => message.#id === this.#id);
+
+				if (index === -1) {
+					return;
+				}
+
+				if (!_assistant) {
+					index++;
+				}
+
+				while (messages.length > index) {
+					messages[messages.length - 1].delete();
+				}
+
+				generate(false);
+			});
+
 			// edit option
 			const _optEdit = make("button", "edit");
 
@@ -677,6 +707,147 @@
 		}
 	}
 
+	function generate(cancel = false) {
+		if (controller) {
+			controller.abort();
+
+			if (cancel) {
+				return;
+			}
+		}
+
+		if (!$temperature.value) {
+			$temperature.value = 0.85;
+		}
+
+		const temperature = parseFloat($temperature.value);
+
+		if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
+			return;
+		}
+
+		const effort = $reasoningEffort.value,
+			tokens = parseInt($reasoningTokens.value);
+
+		if (
+			!effort &&
+			(Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)
+		) {
+			return;
+		}
+
+		pushMessage();
+
+		controller = new AbortController();
+
+		$chat.classList.add("completing");
+
+		const body = {
+			prompt: $prompt.value,
+			model: $model.value,
+			temperature: temperature,
+			reasoning: {
+				effort: effort,
+				tokens: tokens || 0,
+			},
+			json: jsonMode,
+			search: searchTool,
+			messages: messages.map((message) => message.getData()).filter(Boolean),
+		};
+
+		let message, generationID;
+
+		function finish() {
+			if (!message) {
+				return;
+			}
+
+			message.setState(false);
+
+			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+
+			message = null;
+			generationID = null;
+		}
+
+		function start() {
+			message = new Message("assistant", "", "");
+
+			message.setState("waiting");
+
+			if (jsonMode) {
+				message.addTag("json");
+			}
+
+			if (searchTool) {
+				message.addTag("search");
+			}
+		}
+
+		start();
+
+		stream(
+			"/-/chat",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+				signal: controller.signal,
+			},
+			(chunk) => {
+				if (!chunk) {
+					controller = null;
+
+					finish();
+
+					$chat.classList.remove("completing");
+
+					return;
+				}
+
+				if (!message && chunk.type !== "end") {
+					start();
+				}
+
+				switch (chunk.type) {
+					case "end":
+						finish();
+
+						break;
+					case "id":
+						generationID = chunk.text;
+
+						break;
+					case "tool":
+						message.setState("tooling");
+						message.setTool(chunk.text);
+
+						if (chunk.text.done) {
+							finish();
+						}
+
+						break;
+					case "reason":
+						message.setState("reasoning");
+						message.addReasoning(chunk.text);
+
+						break;
+					case "text":
+						message.setState("receiving");
+						message.addText(chunk.text);
+
+						break;
+					case "error":
+						message.showError(chunk.text);
+
+						break;
+				}
+			},
+		);
+	}
+
 	async function loadData() {
 		const data = await json("/-/data");
 
@@ -879,8 +1050,6 @@
 	});
 
 	$add.addEventListener("click", () => {
-		interacted = true;
-
 		pushMessage();
 	});
 
@@ -889,16 +1058,12 @@
 			return;
 		}
 
-		interacted = true;
-
 		for (let x = messages.length - 1; x >= 0; x--) {
 			messages[x].delete();
 		}
 	});
 
 	$scrolling.addEventListener("click", () => {
-		interacted = true;
-
 		autoScrolling = !autoScrolling;
 
 		if (autoScrolling) {
@@ -915,144 +1080,7 @@
 	});
 
 	$send.addEventListener("click", () => {
-		interacted = true;
-
-		if (controller) {
-			controller.abort();
-
-			return;
-		}
-
-		if (!$temperature.value) {
-			$temperature.value = 0.85;
-		}
-
-		const temperature = parseFloat($temperature.value);
-
-		if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
-			return;
-		}
-
-		const effort = $reasoningEffort.value,
-			tokens = parseInt($reasoningTokens.value);
-
-		if (
-			!effort &&
-			(Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)
-		) {
-			return;
-		}
-
-		pushMessage();
-
-		controller = new AbortController();
-
-		$chat.classList.add("completing");
-
-		const body = {
-			prompt: $prompt.value,
-			model: $model.value,
-			temperature: temperature,
-			reasoning: {
-				effort: effort,
-				tokens: tokens || 0,
-			},
-			json: jsonMode,
-			search: searchTool,
-			messages: messages.map((message) => message.getData()).filter(Boolean),
-		};
-
-		let message, generationID;
-
-		function finish() {
-			if (!message) {
-				return;
-			}
-
-			message.setState(false);
-
-			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
-
-			message = null;
-			generationID = null;
-		}
-
-		function start() {
-			message = new Message("assistant", "", "");
-
-			message.setState("waiting");
-
-			if (jsonMode) {
-				message.addTag("json");
-			}
-
-			if (searchTool) {
-				message.addTag("search");
-			}
-		}
-
-		start();
-
-		stream(
-			"/-/chat",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(body),
-				signal: controller.signal,
-			},
-			(chunk) => {
-				if (!chunk) {
-					controller = null;
-
-					finish();
-
-					$chat.classList.remove("completing");
-
-					return;
-				}
-
-				if (!message && chunk.type !== "end") {
-					start();
-				}
-
-				switch (chunk.type) {
-					case "end":
-						finish();
-
-						break;
-					case "id":
-						generationID = chunk.text;
-
-						break;
-					case "tool":
-						message.setState("tooling");
-						message.setTool(chunk.text);
-
-						if (chunk.text.done) {
-							finish();
-						}
-
-						break;
-					case "reason":
-						message.setState("reasoning");
-						message.addReasoning(chunk.text);
-
-						break;
-					case "text":
-						message.setState("receiving");
-						message.addText(chunk.text);
-
-						break;
-					case "error":
-						message.showError(chunk.text);
-
-						break;
-				}
-			},
-		);
+		generate(true);
 	});
 
 	$message.addEventListener("keydown", (event) => {
@@ -1061,10 +1089,6 @@
 		}
 
 		$send.click();
-	});
-
-	addEventListener("wheel", () => {
-		interacted = true;
 	});
 
 	dropdown($role);
