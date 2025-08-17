@@ -33,8 +33,8 @@
 		jsonMode = false,
 		searchTool = false;
 
-	function scroll() {
-		if (!autoScrolling) {
+	function scroll(force = false) {
+		if (!autoScrolling && !force) {
 			return;
 		}
 
@@ -1045,7 +1045,7 @@
 	});
 
 	$bottom.addEventListener("click", () => {
-		scroll();
+		scroll(true);
 	});
 
 	$role.addEventListener("change", () => {

@@ -2,6 +2,8 @@
 	font-size: 15px;
 	line-height: 23px;
 	color: #CAD3F5;
+	overflow: hidden;
+	word-wrap: break-word;
 }
 
 .markdown h1,
