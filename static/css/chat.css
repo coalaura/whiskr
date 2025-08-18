@@ -303,6 +303,7 @@ body.loading #version {
 
 .message.has-reasoning:not(.has-text):not(.errored) div.text,
 .message.has-tool:not(.has-text):not(.errored) div.text,
+.message.has-files:not(.has-text):not(.errored) div.text,
 .message:not(.has-tool) .tool,
 .message:not(.has-reasoning) .reasoning {
 	display: none;

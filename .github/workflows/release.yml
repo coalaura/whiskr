@@ -57,9 +57,10 @@ jobs:
           -o "build/whiskr${EXT}" .
 
         cp -r static build/static
+        cp -r prompts build/prompts
         cp example.config.yml build/config.yml
-        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" static
-        rm -rf build/static build/config.yml "build/whiskr${EXT}"
+        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" static prompts config.yml
+        rm -rf build/static build/prompts build/config.yml "build/whiskr${EXT}"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

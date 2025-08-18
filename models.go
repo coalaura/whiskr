@@ -23,6 +23,8 @@ type Model struct {
 var ModelMap = make(map[string]*Model)
 
 func LoadModels() ([]*Model, error) {
+	log.Info("Loading models...")
+
 	client := OpenRouterClient()
 
 	list, err := client.ListUserModels(context.Background())
@@ -55,6 +57,8 @@ func LoadModels() ([]*Model, error) {
 
 		ModelMap[model.ID] = m
 	}
+
+	log.Infof("Loaded %d models\n", len(models))
 
 	return models, nil
 }

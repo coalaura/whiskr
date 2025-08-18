@@ -54,6 +54,18 @@ function make(tag, ...classes) {
 	return el;
 }
 
+function fillSelect($select, options, callback) {
+	$select.innerHTML = "";
+
+	for (const option of options) {
+		const el = document.createElement("option");
+
+		callback(el, option);
+
+		$select.appendChild(el);
+	}
+}
+
 function escapeHtml(text) {
 	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

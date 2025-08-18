@@ -28,7 +28,8 @@
 
 	const messages = [],
 		models = {},
-		modelList = [];
+		modelList = [],
+		promptList = [];
 
 	let autoScrolling = false,
 		jsonMode = false,
@@ -525,7 +526,7 @@
 				data.statistics = this.#statistics;
 			}
 
-			if (!data.reasoning && !data.text && !data.tool) {
+			if (!data.files?.length && !data.reasoning && !data.text && !data.tool) {
 				return false;
 			}
 
@@ -590,12 +591,14 @@
 					el.remove();
 
 					this.#_files.classList.toggle("has-files", !!this.#files.length);
+					this.#_message.classList.toggle("has-files", !!this.#files.length);
 
 					this.#save();
 				})
 			);
 
 			this.#_files.classList.add("has-files");
+			this.#_message.classList.add("has-files");
 
 			this.#save();
 		}
@@ -987,25 +990,28 @@
 		}
 
 		// render models
-		$model.innerHTML = "";
-
-		for (const model of data.models) {
-			modelList.push(model);
-
-			const el = document.createElement("option");
-
+		fillSelect($model, data.models, (el, model) => {
 			el.value = model.id;
 			el.title = model.description;
 			el.textContent = model.name;
 
 			el.dataset.tags = (model.tags || []).join(",");
 
-			$model.appendChild(el);
-
 			models[model.id] = model;
-		}
+			modelList.push(model);
+		})
 
 		dropdown($model, 4);
+
+		// render prompts
+		fillSelect($prompt, data.prompts, (el, prompt) => {
+			el.value = prompt.key;
+			el.textContent = prompt.name;
+
+			promptList.push(prompt);
+		})
+
+		dropdown($prompt);
 
 		return data;
 	}
@@ -1021,7 +1027,7 @@
 		$message.value = loadValue("message", "");
 		$role.value = loadValue("role", "user");
 		$model.value = loadValue("model", modelList[0].id);
-		$prompt.value = loadValue("prompt", "normal");
+		$prompt.value = loadValue("prompt", promptList[0].key);
 		$temperature.value = loadValue("temperature", 0.85);
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
@@ -1142,7 +1148,7 @@
 	function pushMessage() {
 		const text = $message.value.trim();
 
-		if (!text) {
+		if (!text && !attachments.length) {
 			return false;
 		}
 
@@ -1396,7 +1402,6 @@
 	});
 
 	dropdown($role);
-	dropdown($prompt);
 	dropdown($reasoningEffort);
 
 	loadData().then(() => {

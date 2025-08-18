@@ -18,8 +18,6 @@ var log = logger.New().DetectTerminal().WithOptions(logger.Options{
 })
 
 func main() {
-	log.Info("Loading models...")
-
 	models, err := LoadModels()
 	log.MustPanic(err)
 
@@ -38,6 +36,7 @@ func main() {
 			"authenticated":  IsAuthenticated(r),
 			"search":         env.Tokens.Exa != "",
 			"models":         models,
+			"prompts":        Prompts,
 			"version":        Version,
 		})
 	})

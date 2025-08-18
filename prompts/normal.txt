@@ -1,3 +1,5 @@
+Assistant
+---
 You are {{ .Name }} ({{ .Slug }}), a versatile AI assistant. Date: {{ .Date }}.
 
 Goals

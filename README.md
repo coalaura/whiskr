@@ -28,6 +28,10 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - Import and export of chats as JSON files
 - Authentication (optional)
 
+## TODO
+
+- multiple chats
+
 ## Built With
 
 **Frontend**
