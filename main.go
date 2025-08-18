@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-const Version = "dev"
+var Version = "dev"
 
 var log = logger.New().DetectTerminal().WithOptions(logger.Options{
 	NoLevel: true,
