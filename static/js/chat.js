@@ -1007,6 +1007,11 @@
 		dropdown($model, 4);
 
 		// render prompts
+		data.prompts.unshift({
+			key: "",
+			name: "No Prompt",
+		});
+
 		fillSelect($prompt, data.prompts, (el, prompt) => {
 			el.value = prompt.key;
 			el.textContent = prompt.name;
