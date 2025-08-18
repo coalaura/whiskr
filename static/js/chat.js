@@ -503,7 +503,10 @@
 			};
 
 			if (this.#files.length) {
-				data.files = this.#files;
+				data.files = this.#files.map(file => ({
+					name: file.name,
+					content: file.content,
+				}));
 			}
 
 			if (this.#tool) {
@@ -999,7 +1002,7 @@
 
 			models[model.id] = model;
 			modelList.push(model);
-		})
+		});
 
 		dropdown($model, 4);
 
@@ -1009,7 +1012,7 @@
 			el.textContent = prompt.name;
 
 			promptList.push(prompt);
-		})
+		});
 
 		dropdown($prompt);
 
@@ -1281,7 +1284,7 @@
 			}
 
 			pushAttachment(file);
-		} catch(err) {
+		} catch (err) {
 			alert(err.message);
 		}
 	});
