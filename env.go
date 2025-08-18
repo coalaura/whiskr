@@ -41,7 +41,13 @@ type Environment struct {
 	Authentication EnvAuthentication `json:"authentication"`
 }
 
-var env Environment
+var env = Environment{
+	// defaults
+	Settings: EnvSettings{
+		CleanContent:  true,
+		MaxIterations: 3,
+	},
+}
 
 func init() {
 	file, err := os.OpenFile("config.yml", os.O_RDONLY, 0)
@@ -119,7 +125,7 @@ func (e *Environment) Store() error {
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 
-			"$.settings.cleanup":    {yaml.HeadComment(" normalize unicode in assistant output (optional; default: false)")},
+			"$.settings.cleanup":    {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.iterations": {yaml.HeadComment(" max model turns per request (optional; default: 3)")},
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},

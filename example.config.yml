@@ -10,7 +10,7 @@ tokens:
   exa: ""
 
 settings:
-  # normalize unicode in assistant output (optional; default: false)
+  # normalize unicode in assistant output (optional; default: true)
   cleanup: true
   # max model turns per request (optional; default: 3)
   iterations: 3
