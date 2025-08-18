@@ -4,6 +4,7 @@
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
 		$bottom = document.getElementById("bottom"),
+		$attachments = document.getElementById("attachments"),
 		$role = document.getElementById("role"),
 		$model = document.getElementById("model"),
 		$prompt = document.getElementById("prompt"),
@@ -12,6 +13,7 @@
 		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$json = document.getElementById("json"),
 		$search = document.getElementById("search"),
+		$upload = document.getElementById("upload"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$scrolling = document.getElementById("scrolling"),
@@ -29,9 +31,11 @@
 		modelList = [];
 
 	let autoScrolling = false,
-		searchAvailable = false,
 		jsonMode = false,
 		searchTool = false;
+
+	let searchAvailable = false,
+		activeMessage;
 
 	function scroll(force = false) {
 		if (!autoScrolling && !force) {
@@ -57,6 +61,7 @@
 		#role;
 		#reasoning;
 		#text;
+		#files = [];
 
 		#tool;
 		#tags = [];
@@ -73,13 +78,14 @@
 
 		#_message;
 		#_tags;
+		#_files;
 		#_reasoning;
 		#_text;
 		#_edit;
 		#_tool;
 		#_statistics;
 
-		constructor(role, reasoning, text) {
+		constructor(role, reasoning, text, files = []) {
 			this.#id = uid();
 			this.#role = role;
 			this.#reasoning = reasoning || "";
@@ -89,6 +95,10 @@
 
 			this.#build();
 			this.#render();
+
+			for (const file of files) {
+				this.addFile(file);
+			}
 
 			messages.push(this);
 
@@ -118,10 +128,19 @@
 
 			_wrapper.appendChild(this.#_tags);
 
+			const _body = make("div", "body");
+
+			this.#_message.appendChild(_body);
+
+			// message files
+			this.#_files = make("div", "files");
+
+			_body.appendChild(this.#_files);
+
 			// message reasoning (wrapper)
 			const _reasoning = make("div", "reasoning");
 
-			this.#_message.appendChild(_reasoning);
+			_body.appendChild(_reasoning);
 
 			// message reasoning (toggle)
 			const _toggle = make("button", "toggle");
@@ -155,14 +174,14 @@
 			// message content
 			this.#_text = make("div", "text", "markdown");
 
-			this.#_message.appendChild(this.#_text);
+			_body.appendChild(this.#_text);
 
 			// message edit textarea
 			this.#_edit = make("textarea", "text");
 
-			this.#_message.appendChild(this.#_edit);
+			_body.appendChild(this.#_edit);
 
-			this.#_edit.addEventListener("keydown", (event) => {
+			this.#_edit.addEventListener("keydown", event => {
 				if (event.ctrlKey && event.key === "Enter") {
 					this.toggleEdit();
 				} else if (event.key === "Escape") {
@@ -175,7 +194,7 @@
 			// message tool
 			this.#_tool = make("div", "tool");
 
-			this.#_message.appendChild(this.#_tool);
+			_body.appendChild(this.#_tool);
 
 			// tool call
 			const _call = make("div", "call");
@@ -229,9 +248,7 @@
 
 			// retry option
 			const _assistant = this.#role === "assistant",
-				_retryLabel = _assistant
-					? "Delete message and messages after this one and try again"
-					: "Delete messages after this one and try again";
+				_retryLabel = _assistant ? "Delete message and messages after this one and try again" : "Delete messages after this one and try again";
 
 			const _optRetry = make("button", "retry");
 
@@ -299,7 +316,7 @@
 		}
 
 		#handleImages(element) {
-			element.querySelectorAll("img:not(.image)").forEach((img) => {
+			element.querySelectorAll("img:not(.image)").forEach(img => {
 				img.classList.add("image");
 
 				img.addEventListener("load", () => {
@@ -309,10 +326,7 @@
 		}
 
 		#updateReasoningHeight() {
-			this.#_reasoning.parentNode.style.setProperty(
-				"--height",
-				`${this.#_reasoning.scrollHeight}px`,
-			);
+			this.#_reasoning.parentNode.style.setProperty("--height", `${this.#_reasoning.scrollHeight}px`);
 		}
 
 		#updateToolHeight() {
@@ -368,9 +382,7 @@
 
 		#render(only = false, noScroll = false) {
 			if (!only || only === "tags") {
-				const tags = this.#tags.map(
-					(tag) => `<div class="tag-${tag}" title="${tag}"></div>`,
-				);
+				const tags = this.#tags.map(tag => `<div class="tag-${tag}" title="${tag}"></div>`);
 
 				this.#_tags.innerHTML = tags.join("");
 
@@ -409,12 +421,12 @@
 				let html = "";
 
 				if (this.#statistics) {
-					const { provider, ttft, time, input, output } = this.#statistics;
+					const { provider, model, ttft, time, input, output } = this.#statistics;
 
 					const tps = output / (time / 1000);
 
 					html = [
-						provider ? `<div class="provider">${provider}</div>` : "",
+						provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
 						`<div class="ttft">${formatMilliseconds(ttft)}</div>`,
 						`<div class="tps">${fixed(tps, 2)} t/s</div>`,
 						`<div class="tokens">
@@ -462,14 +474,15 @@
 		}
 
 		#save() {
-			storeValue(
-				"messages",
-				messages.map((message) => message.getData(true)).filter(Boolean),
-			);
+			storeValue("messages", messages.map(message => message.getData(true)).filter(Boolean));
+		}
+
+		isUser() {
+			return this.#role === "user";
 		}
 
 		index(offset = 0) {
-			const index = messages.findIndex((message) => message.#id === this.#id);
+			const index = messages.findIndex(message => message.#id === this.#id);
 
 			if (index === -1) {
 				return false;
@@ -487,6 +500,10 @@
 				role: this.#role,
 				text: this.#text,
 			};
+
+			if (this.#files.length) {
+				data.files = this.#files;
+			}
 
 			if (this.#tool) {
 				data.tool = this.#tool;
@@ -553,6 +570,32 @@
 			if (tag === "json") {
 				this.#render("text");
 			}
+
+			this.#save();
+		}
+
+		addFile(file) {
+			this.#files.push(file);
+
+			this.#_files.appendChild(
+				buildFileElement(file, el => {
+					const index = this.#files.findIndex(attachment => attachment.id === file.id);
+
+					if (index === -1) {
+						return;
+					}
+
+					this.#files.splice(index, 1);
+
+					el.remove();
+
+					this.#_files.classList.toggle("has-files", !!this.#files.length);
+
+					this.#save();
+				})
+			);
+
+			this.#_files.classList.add("has-files");
 
 			this.#save();
 		}
@@ -626,6 +669,8 @@
 			this.#editing = !this.#editing;
 
 			if (this.#editing) {
+				activeMessage = this;
+
 				this.#_edit.value = this.#text;
 
 				this.#_edit.style.height = `${this.#_text.offsetHeight}px`;
@@ -635,6 +680,8 @@
 
 				this.#_edit.focus();
 			} else {
+				activeMessage = null;
+
 				this.#text = this.#_edit.value;
 
 				this.setState(false);
@@ -645,7 +692,7 @@
 		}
 
 		delete() {
-			const index = messages.findIndex((msg) => msg.#id === this.#id);
+			const index = messages.findIndex(msg => msg.#id === this.#id);
 
 			if (index === -1) {
 				return;
@@ -769,10 +816,7 @@
 		const effort = $reasoningEffort.value,
 			tokens = parseInt($reasoningTokens.value);
 
-		if (
-			!effort &&
-			(Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)
-		) {
+		if (!effort && (Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)) {
 			return;
 		}
 
@@ -792,7 +836,7 @@
 			},
 			json: jsonMode,
 			search: searchTool,
-			messages: messages.map((message) => message.getData()).filter(Boolean),
+			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
 
 		let message, generationID;
@@ -836,7 +880,7 @@
 				body: JSON.stringify(body),
 				signal: controller.signal,
 			},
-			(chunk) => {
+			chunk => {
 				if (!chunk) {
 					controller = null;
 
@@ -884,7 +928,7 @@
 
 						break;
 				}
-			},
+			}
 		);
 	}
 
@@ -905,7 +949,7 @@
 				username: username,
 				password: password,
 			}),
-		}).then((response) => response.json());
+		}).then(response => response.json());
 
 		if (!data?.authenticated) {
 			throw new Error(data.error || "authentication failed");
@@ -982,6 +1026,12 @@
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
+		const files = loadValue("attachments", []);
+
+		for (const file of files) {
+			pushAttachment(file);
+		}
+
 		if (loadValue("json")) {
 			$json.click();
 		}
@@ -994,15 +1044,15 @@
 			$scrolling.click();
 		}
 
-		loadValue("messages", []).forEach((message) => {
-			const obj = new Message(message.role, message.reasoning, message.text);
+		loadValue("messages", []).forEach(message => {
+			const obj = new Message(message.role, message.reasoning, message.text, message.files || []);
 
 			if (message.error) {
 				obj.showError(message.error);
 			}
 
 			if (message.tags) {
-				message.tags.forEach((tag) => obj.addTag(tag));
+				message.tags.forEach(tag => obj.addTag(tag));
 			}
 
 			if (message.tool) {
@@ -1020,6 +1070,75 @@
 		setTimeout(scroll, 250);
 	}
 
+	let attachments = [];
+
+	function buildFileElement(file, callback) {
+		// file wrapper
+		const _file = make("div", "file");
+
+		// file name
+		const _name = make("div", "name");
+
+		_name.title = `FILE ${JSON.stringify(file.name)} LINES ${lines(file.content)}`;
+		_name.textContent = file.name;
+
+		_file.appendChild(_name);
+
+		// remove button
+		const _remove = make("button", "remove");
+
+		_remove.title = "Remove attachment";
+
+		_file.appendChild(_remove);
+
+		_remove.addEventListener("click", () => {
+			callback(_file);
+		});
+
+		return _file;
+	}
+
+	function pushAttachment(file) {
+		file.id = uid();
+
+		if (activeMessage?.isUser()) {
+			activeMessage.addFile(file);
+
+			return;
+		}
+
+		attachments.push(file);
+
+		storeValue("attachments", attachments);
+
+		$attachments.appendChild(
+			buildFileElement(file, el => {
+				const index = attachments.findIndex(attachment => attachment.id === file.id);
+
+				if (index === -1) {
+					return;
+				}
+
+				attachments.splice(index, 1);
+
+				el.remove();
+
+				$attachments.classList.toggle("has-files", !!attachments.length);
+			})
+		);
+
+		$attachments.classList.add("has-files");
+	}
+
+	function clearAttachments() {
+		attachments = [];
+
+		$attachments.innerHTML = "";
+		$attachments.classList.remove("has-files");
+
+		storeValue("attachments", []);
+	}
+
 	function pushMessage() {
 		const text = $message.value.trim();
 
@@ -1030,12 +1149,15 @@
 		$message.value = "";
 		storeValue("message", "");
 
-		return new Message($role.value, "", text);
+		const message = new Message($role.value, "", text, attachments);
+
+		clearAttachments();
+
+		return message;
 	}
 
 	$messages.addEventListener("scroll", () => {
-		const bottom =
-			$messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
+		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
 
 		if (bottom >= 80) {
 			$bottom.classList.remove("hidden");
@@ -1061,10 +1183,7 @@
 
 		if (tags.includes("reasoning")) {
 			$reasoningEffort.parentNode.classList.remove("none");
-			$reasoningTokens.parentNode.classList.toggle(
-				"none",
-				!!$reasoningEffort.value,
-			);
+			$reasoningTokens.parentNode.classList.toggle("none", !!$reasoningEffort.value);
 		} else {
 			$reasoningEffort.parentNode.classList.add("none");
 			$reasoningTokens.parentNode.classList.add("none");
@@ -1089,10 +1208,7 @@
 
 		storeValue("temperature", value);
 
-		$temperature.classList.toggle(
-			"invalid",
-			Number.isNaN(temperature) || temperature < 0 || temperature > 2,
-		);
+		$temperature.classList.toggle("invalid", Number.isNaN(temperature) || temperature < 0 || temperature > 2);
 	});
 
 	$reasoningEffort.addEventListener("change", () => {
@@ -1109,10 +1225,7 @@
 
 		storeValue("reasoning-tokens", value);
 
-		$reasoningTokens.classList.toggle(
-			"invalid",
-			Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024,
-		);
+		$reasoningTokens.classList.toggle("invalid", Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024);
 	});
 
 	$json.addEventListener("click", () => {
@@ -1135,6 +1248,38 @@
 		storeValue("message", $message.value);
 	});
 
+	$upload.addEventListener("click", async () => {
+		const file = await selectFile(
+			// the ultimate list
+			".adoc,.bash,.bashrc,.bat,.c,.cc,.cfg,.cjs,.cmd,.conf,.cpp,.cs,.css,.csv,.cxx,.dockerfile,.dockerignore,.editorconfig,.env,.fish,.fs,.fsx,.gitattributes,.gitignore,.go,.gradle,.groovy,.h,.hh,.hpp,.htm,.html,.ini,.ipynb,.java,.jl,.js,.json,.jsonc,.jsx,.kt,.kts,.less,.log,.lua,.m,.makefile,.markdown,.md,.mjs,.mk,.mm,.php,.phtml,.pl,.pm,.profile,.properties,.ps1,.psql,.py,.pyw,.r,.rb,.rs,.rst,.sass,.scala,.scss,.sh,.sql,.svelte,.swift,.t,.toml,.ts,.tsv,.tsx,.txt,.vb,.vue,.xhtml,.xml,.xsd,.xsl,.xslt,.yaml,.yml,.zig,.zsh",
+			false
+		);
+
+		if (!file) {
+			return;
+		}
+
+		try {
+			if (!file.name) {
+				file.name = "unknown.txt";
+			} else if (file.name.length > 512) {
+				throw new Error("File name too long (max 512 characters)");
+			}
+
+			if (typeof file.content !== "string") {
+				throw new Error("File is not a text file");
+			} else if (!file.content) {
+				throw new Error("File is empty");
+			} else if (file.content.length > 4 * 1024 * 1024) {
+				throw new Error("File is too big (max 4MB)");
+			}
+
+			pushAttachment(file);
+		} catch(err) {
+			alert(err.message);
+		}
+	});
+
 	$add.addEventListener("click", () => {
 		pushMessage();
 	});
@@ -1150,6 +1295,7 @@
 	$export.addEventListener("click", () => {
 		const data = JSON.stringify({
 			message: $message.value,
+			attachments: attachments,
 			role: $role.value,
 			model: $model.value,
 			prompt: $prompt.value,
@@ -1160,7 +1306,7 @@
 			},
 			json: jsonMode,
 			search: searchTool,
-			messages: messages.map((message) => message.getData()).filter(Boolean),
+			messages: messages.map(message => message.getData()).filter(Boolean),
 		});
 
 		download("chat.json", "application/json", data);
@@ -1171,7 +1317,8 @@
 			return;
 		}
 
-		const data = await selectFile("application/json");
+		const file = await selectFile("application/json", true),
+			data = file?.content;
 
 		if (!data) {
 			return;
@@ -1180,6 +1327,7 @@
 		clearMessages();
 
 		storeValue("message", data.message);
+		storeValue("attachments", data.attachments);
 		storeValue("role", data.role);
 		storeValue("model", data.model);
 		storeValue("prompt", data.prompt);
@@ -1221,8 +1369,8 @@
 			await login();
 
 			$authentication.classList.remove("open");
-		} catch(err) {
-			$authError.textContent =`Error: ${err.message}`;
+		} catch (err) {
+			$authError.textContent = `Error: ${err.message}`;
 			$authentication.classList.add("errored");
 
 			$password.value = "";
@@ -1239,7 +1387,7 @@
 		$authentication.classList.remove("errored");
 	});
 
-	$message.addEventListener("keydown", (event) => {
+	$message.addEventListener("keydown", event => {
 		if (!event.ctrlKey || event.key !== "Enter") {
 			return;
 		}

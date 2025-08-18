@@ -55,10 +55,7 @@ function make(tag, ...classes) {
 }
 
 function escapeHtml(text) {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
+	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function formatMilliseconds(ms) {
@@ -101,8 +98,26 @@ function download(name, type, data) {
 	URL.revokeObjectURL(url);
 }
 
-function selectFile(accept) {
-	return new Promise((resolve) => {
+function lines(text) {
+	let count = 0,
+		index = 0;
+
+	while (index < text.length) {
+		index = text.indexOf("\n", index);
+
+		if (index === -1) {
+			break;
+		}
+
+		count++;
+		index++;
+	}
+
+	return count + 1;
+}
+
+function selectFile(accept, asJson = false) {
+	return new Promise(resolve => {
 		const input = make("input");
 
 		input.type = "file";
@@ -120,13 +135,22 @@ function selectFile(accept) {
 			const reader = new FileReader();
 
 			reader.onload = () => {
-				try {
-					const data = JSON.parse(reader.result);
+				let content = reader.result;
 
-					resolve(data);
-				} catch {
-					resolve(false);
+				if (asJson) {
+					try {
+						content = JSON.parse(content);
+					} catch {
+						resolve(false);
+
+						return;
+					}
 				}
+
+				resolve({
+					name: file.name,
+					content: content,
+				});
 			};
 
 			reader.onerror = () => resolve(false);

@@ -21,10 +21,16 @@ type ToolCall struct {
 	Done   bool   `json:"done,omitempty"`
 }
 
+type TextFile struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
 type Message struct {
-	Role string    `json:"role"`
-	Text string    `json:"text"`
-	Tool *ToolCall `json:"tool"`
+	Role  string     `json:"role"`
+	Text  string     `json:"text"`
+	Tool  *ToolCall  `json:"tool"`
+	Files []TextFile `json:"files"`
 }
 
 type Reasoning struct {
@@ -145,6 +151,37 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 				content.Multi = SplitImagePairs(message.Text)
 			} else {
 				content.Text = message.Text
+			}
+
+			if len(message.Files) > 0 {
+				if content.Text != "" {
+					content.Multi = append(content.Multi, openrouter.ChatMessagePart{
+						Type: openrouter.ChatMessagePartTypeText,
+						Text: content.Text,
+					})
+
+					content.Text = ""
+				}
+
+				for i, file := range message.Files {
+					if len(file.Name) > 512 {
+						return nil, fmt.Errorf("file %d is invalid (name too long, max 512 characters)", i)
+					} else if len(file.Content) > 4*1024*1024 {
+						return nil, fmt.Errorf("file %d is invalid (too big, max 4MB)", i)
+					}
+
+					lines := strings.Count(file.Content, "\n") + 1
+
+					content.Multi = append(content.Multi, openrouter.ChatMessagePart{
+						Type: openrouter.ChatMessagePartTypeText,
+						Text: fmt.Sprintf(
+							"FILE %q LINES %d\n<<CONTENT>>\n%s\n<<END>>",
+							file.Name,
+							lines,
+							file.Content,
+						),
+					})
+				}
 			}
 
 			request.Messages = append(request.Messages, openrouter.ChatCompletionMessage{

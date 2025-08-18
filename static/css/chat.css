@@ -121,6 +121,7 @@ body.loading #version {
 	height: 100%;
 	overflow-y: auto;
 	padding: 14px 12px;
+	padding-bottom: 20px;
 }
 
 #messages:empty::before {
@@ -307,11 +308,10 @@ body.loading #version {
 	display: none;
 }
 
-.message .tool,
-.message:not(.has-tool):not(.has-text) .reasoning,
-.message:not(.has-tool) .text {
+.message .body {
 	border-bottom-left-radius: 6px;
 	border-bottom-right-radius: 6px;
+	overflow: hidden;
 }
 
 .message.has-reasoning .text {
@@ -535,6 +535,64 @@ body.loading #version {
 	background: #24273a;
 }
 
+#chat:has(.has-files) {
+	padding-top: 50px;
+}
+
+#attachments {
+	position: absolute;
+	top: 2px;
+	left: 12px;
+}
+
+.files {
+	display: flex;
+	gap: 6px;
+}
+
+.files:not(.has-files) {
+	display: none;
+}
+
+.message .files {
+	background: #181926;
+	padding: 10px 12px;
+}
+
+.files .file {
+	position: relative;
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	background: #24273a;
+	box-shadow: 0px 0px 10px 6px rgba(0, 0, 0, 0.1);
+	padding: 8px 10px;
+	padding-right: 14px;
+	border-radius: 6px;
+	border: 1px solid #363a4f;
+}
+
+.files .file::before {
+	content: "";
+	background-image: url(icons/file.svg);
+}
+
+.files .file button.remove {
+	content: "";
+	position: absolute;
+	background-image: url(icons/remove.svg);
+	width: 16px;
+	height: 16px;
+	top: 1px;
+	right: 1px;
+	opacity: 0;
+	transition: 150ms;
+}
+
+.files .file:hover button.remove {
+	opacity: 1;
+}
+
 #message {
 	border-bottom-left-radius: 0px;
 	border-bottom-right-radius: 0px;
@@ -609,6 +667,8 @@ body.loading #version,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
 #bottom,
+.files .file::before,
+.files .file .remove,
 .message .role::before,
 .message .tag-json,
 .message .tag-search,
@@ -629,6 +689,7 @@ body.loading #version,
 #import,
 #export,
 #clear,
+#upload,
 #add,
 #send,
 #chat .option label {
@@ -725,14 +786,14 @@ label[for="reasoning-tokens"] {
 
 #bottom {
 	top: -38px;
-	left: 50%;
-	transform: translateX(-50%);
+	right: 20px;
 	width: 28px;
 	height: 28px;
 	background-image: url(icons/down.svg);
 	transition: 150ms;
 }
 
+#upload,
 #add,
 #send {
 	bottom: 4px;
@@ -744,9 +805,13 @@ label[for="reasoning-tokens"] {
 }
 
 #add {
-	bottom: 4px;
 	right: 52px;
 	background-image: url(icons/add.svg);
+}
+
+#upload {
+	right: 84px;
+	background-image: url(icons/attach.svg);
 }
 
 #json,
@@ -794,6 +859,7 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/trash.svg);
 }
 
+.completing #upload,
 .completing #add {
 	display: none;
 }
