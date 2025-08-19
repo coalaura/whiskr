@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/fs"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -18,6 +19,9 @@ var log = logger.New().DetectTerminal().WithOptions(logger.Options{
 })
 
 func main() {
+	icons, err := LoadIcons()
+	log.MustPanic(err)
+
 	models, err := LoadModels()
 	log.MustPanic(err)
 
@@ -35,6 +39,7 @@ func main() {
 			"authentication": env.Authentication.Enabled,
 			"authenticated":  IsAuthenticated(r),
 			"search":         env.Tokens.Exa != "",
+			"icons":          icons,
 			"models":         models,
 			"prompts":        Prompts,
 			"version":        Version,
@@ -65,4 +70,33 @@ func cache(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func LoadIcons() ([]string, error) {
+	var icons []string
+
+	directory := filepath.Join("static", "css", "icons")
+
+	err := filepath.Walk(directory, func(path string, info fs.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+
+		if strings.HasSuffix(path, ".svg") {
+			rel, err := filepath.Rel(directory, path)
+			if err != nil {
+				return err
+			}
+
+			icons = append(icons, filepath.ToSlash(rel))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return icons, nil
 }

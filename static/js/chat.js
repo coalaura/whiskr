@@ -51,6 +51,12 @@
 		}, 0);
 	}
 
+	function preloadIcons(icons) {
+		for (const icon of icons) {
+			new Image().src = `/css/icons/${icon}`;
+		}
+	}
+
 	function mark(index) {
 		for (let x = 0; x < messages.length; x++) {
 			messages[x].mark(Number.isInteger(index) && x >= index);
@@ -977,6 +983,9 @@
 			return false;
 		}
 
+		// start icon preload
+		preloadIcons(data.icons);
+
 		// render version
 		if (data.version === "dev") {
 			$version.remove();
@@ -1416,5 +1425,9 @@
 		restore();
 
 		document.body.classList.remove("loading");
+
+		setTimeout(() => {
+			document.getElementById("loading").remove();
+		}, 500);
 	});
 })();

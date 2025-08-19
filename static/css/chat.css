@@ -91,6 +91,40 @@ body.loading #version {
 	top: 6px;
 }
 
+#loading {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 50;
+	backdrop-filter: blur(10px);
+	transition: opacity 250ms;
+}
+
+#loading .inner {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	font-weight: 500;
+	font-size: 22px;
+	line-height: 22px;
+}
+
+#loading img {
+	width: 50px;
+	animation: wiggling 750ms ease-in-out infinite;
+}
+
+body:not(.loading) #loading {
+	opacity: 0;
+	pointer-events: none;
+}
+
 #page {
 	display: flex;
 	flex-direction: column;
@@ -664,6 +698,7 @@ select {
 }
 
 body.loading #version,
+#loading .inner::after,
 .modal.loading .content::after,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
@@ -990,6 +1025,20 @@ label[for="reasoning-tokens"] {
 
 #login:hover {
 	background: #89bb77;
+}
+
+@keyframes wiggling {
+	0% {
+		transform: translate(0px);
+	}
+
+	50% {
+		transform: translate(-10px, 0px);
+	}
+
+	100% {
+		transform: translate(0px);
+	}
 }
 
 @keyframes rotating {

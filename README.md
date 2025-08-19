@@ -30,8 +30,6 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## TODO
 
-- proper loading screen
-- preload icons
 - multiple chats
 
 ## Built With
