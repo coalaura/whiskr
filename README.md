@@ -79,6 +79,37 @@ authentication:
 
 After a successful login, whiskr issues a signed (HMAC-SHA256) token, using the server secret (`tokens.secret` in `config.yml`). This is stored as a cookie and re-used for future authentications.
 
+## Nginx (optional)
+
+When running behind a reverse proxy like nginx, you can have the proxy serve static files.
+
+```ngnix
+server {
+    listen 443 ssl;
+    server_name chat.example.com;
+    http2 on;
+
+    root /path/to/whiskr/static;
+
+    location / {
+        index index.html index.htm;
+
+        etag on;
+        add_header Cache-Control "public, max-age=2592000, must-revalidate";
+        expires 30d;
+    }
+
+    location ~ ^/- {
+        proxy_pass       http://127.0.0.1:3443;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host            $host;
+    }
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+}
+```
+
 ## Usage
 
 - Send a message with `Ctrl+Enter` or the send button
