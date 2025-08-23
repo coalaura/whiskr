@@ -3,6 +3,7 @@
 		$messages = document.getElementById("messages"),
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
+		$top = document.getElementById("top"),
 		$bottom = document.getElementById("bottom"),
 		$resizeBar = document.getElementById("resize-bar"),
 		$attachments = document.getElementById("attachments"),
@@ -45,11 +46,8 @@
 	function updateScrollButton() {
 		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
 
-		if (bottom >= 80) {
-			$bottom.classList.remove("hidden");
-		} else {
-			$bottom.classList.add("hidden");
-		}
+		$top.classList.toggle("hidden", $messages.scrollTop < 80);
+		$bottom.classList.toggle("hidden", bottom < 80);
 	}
 
 	function scroll(force = false, instant = false) {
@@ -1230,7 +1228,17 @@
 	});
 
 	$bottom.addEventListener("click", () => {
-		scroll(true);
+		$messages.scroll({
+			top: $messages.scrollHeight,
+			behavior: "smooth",
+		});
+	});
+
+	$top.addEventListener("click", () => {
+		$messages.scroll({
+			top: 0,
+			behavior: "smooth",
+		});
 	});
 
 	$resizeBar.addEventListener("mousedown", event => {

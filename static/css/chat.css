@@ -724,6 +724,7 @@ body.loading #version,
 .modal.loading .content::after,
 .reasoning .toggle::before,
 .reasoning .toggle::after,
+#top,
 #bottom,
 .files .file::before,
 .files .file .remove,
@@ -853,13 +854,22 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/amount.svg);
 }
 
+#top,
 #bottom {
 	top: -38px;
 	right: 20px;
-	width: 28px;
-	height: 28px;
-	background-image: url(icons/down.svg);
+	width: 20px;
+	height: 20px;
+	background-image: url(icons/up.svg);
 	transition: 150ms;
+}
+
+#bottom {
+	transform: rotate(180deg);
+}
+
+#top:not(.hidden)+#bottom {
+	right: 40px;
 }
 
 #upload,
