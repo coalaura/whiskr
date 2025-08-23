@@ -48,6 +48,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 **Backend**
 - Go
+- [chi/v5](https://go-chi.io/) for the http routing/server
 - [OpenRouter](https://openrouter.ai/) for model list and completions
 - [Exa](https://exa.ai/) for web search and content retrieval (`/search`, `/contents`)
 
