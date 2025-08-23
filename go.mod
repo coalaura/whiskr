@@ -6,8 +6,8 @@ require (
 	github.com/coalaura/logger v1.5.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/goccy/go-yaml v1.18.0
-	github.com/revrost/go-openrouter v0.2.1
-	golang.org/x/crypto v0.38.0
+	github.com/revrost/go-openrouter v0.2.2
+	golang.org/x/crypto v0.41.0
 )
 
 require (
