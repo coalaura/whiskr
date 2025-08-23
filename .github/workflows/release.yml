@@ -44,6 +44,15 @@ jobs:
     - name: Build ${{ matrix.goos }}_${{ matrix.goarch }}
       shell: bash
       run: |
+        for f in static/css/*.css static/js/*.js static/lib/*.css static/lib/*.js; do
+          [ -f "$f" ] || continue
+
+          hash=$(sha1sum "$f" | cut -c1-8)
+          filepath=${f#static/}
+
+          sed -i "s|\([\"']$filepath\)[\"']|\1?v=$hash\"|g" static/index.html
+        done
+
         mkdir -p build
         [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
 
