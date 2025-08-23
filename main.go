@@ -64,8 +64,10 @@ func cache(next http.Handler) http.Handler {
 		path := strings.ToLower(r.URL.Path)
 		ext := filepath.Ext(path)
 
-		if ext == ".svg" || ext == ".ttf" || strings.HasSuffix(path, ".min.js") || strings.HasSuffix(path, ".min.css") {
+		if ext == ".png" || ext == ".svg" || ext == ".ttf" || strings.HasSuffix(path, ".min.js") || strings.HasSuffix(path, ".min.css") {
 			w.Header().Set("Cache-Control", "public, max-age=3024000, immutable")
+		} else if env.Debug {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		}
 
 		next.ServeHTTP(w, r)

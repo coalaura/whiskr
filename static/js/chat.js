@@ -9,6 +9,7 @@
 		$model = document.getElementById("model"),
 		$prompt = document.getElementById("prompt"),
 		$temperature = document.getElementById("temperature"),
+		$iterations = document.getElementById("iterations"),
 		$reasoningEffort = document.getElementById("reasoning-effort"),
 		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$json = document.getElementById("json"),
@@ -816,20 +817,32 @@
 		}
 
 		if (!$temperature.value) {
-			$temperature.value = 0.85;
 		}
 
-		const temperature = parseFloat($temperature.value);
+		let temperature = parseFloat($temperature.value);
 
 		if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
-			return;
+			temperature = 0.85;
+
+			$temperature.value = temperature;
 		}
 
-		const effort = $reasoningEffort.value,
-			tokens = parseInt($reasoningTokens.value);
+		let iterations = parseInt($iterations.value);
+
+		if (Number.isNaN(iterations) || iterations < 1 || iterations > 50) {
+			iterations = 3;
+
+			$iterations.value = iterations;
+		}
+
+		const effort = $reasoningEffort.value;
+
+		let tokens = parseInt($reasoningTokens.value);
 
 		if (!effort && (Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)) {
-			return;
+			tokens = 1024;
+
+			$reasoningTokens.value = tokens;
 		}
 
 		pushMessage();
@@ -842,6 +855,7 @@
 			prompt: $prompt.value,
 			model: $model.value,
 			temperature: temperature,
+			iterations: iterations,
 			reasoning: {
 				effort: effort,
 				tokens: tokens || 0,

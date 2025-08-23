@@ -532,7 +532,7 @@ body:not(.loading) #loading {
 }
 
 .statistics .ttft::before {
-	background-image: url(icons/ttft.svg);
+	background-image: url(icons/time.svg);
 }
 
 .statistics .tps::before {
@@ -789,11 +789,16 @@ input.invalid {
 }
 
 #reasoning-tokens,
-#temperature {
+#temperature,
+#iterations {
 	appearance: textfield;
 	width: 48px;
 	padding: 2px 4px;
 	text-align: right;
+}
+
+#iterations {
+	width: 30px;
 }
 
 label[for="role"] {
@@ -810,6 +815,10 @@ label[for="prompt"] {
 
 label[for="temperature"] {
 	background-image: url(icons/temperature.svg);
+}
+
+label[for="iterations"] {
+	background-image: url(icons/time.svg);
 }
 
 label[for="reasoning-effort"] {

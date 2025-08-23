@@ -12,8 +12,6 @@ tokens:
 settings:
   # normalize unicode in assistant output (optional; default: true)
   cleanup: true
-  # max model turns per request (optional; default: 3)
-  iterations: 3
 
 authentication:
   # require login with username and password

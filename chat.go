@@ -42,6 +42,7 @@ type Request struct {
 	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
 	Temperature float64   `json:"temperature"`
+	Iterations  int64     `json:"iterations"`
 	JSON        bool      `json:"json"`
 	Search      bool      `json:"search"`
 	Reasoning   Reasoning `json:"reasoning"`
@@ -91,6 +92,10 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 	}
 
 	request.Model = r.Model
+
+	if r.Iterations < 1 || r.Iterations > 50 {
+		return nil, fmt.Errorf("invalid iterations (1-50): %d", r.Iterations)
+	}
 
 	if r.Temperature < 0 || r.Temperature > 2 {
 		return nil, fmt.Errorf("invalid temperature (0-2): %f", r.Temperature)
@@ -253,10 +258,10 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	for iteration := range env.Settings.MaxIterations {
-		debug("iteration %d of %d", iteration+1, env.Settings.MaxIterations)
+	for iteration := range raw.Iterations {
+		debug("iteration %d of %d", iteration+1, raw.Iterations)
 
-		if iteration == env.Settings.MaxIterations-1 {
+		if iteration == raw.Iterations-1 {
 			debug("no more tool calls")
 
 			request.Tools = nil

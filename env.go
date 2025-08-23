@@ -18,8 +18,7 @@ type EnvTokens struct {
 }
 
 type EnvSettings struct {
-	CleanContent  bool `json:"cleanup"`
-	MaxIterations uint `json:"iterations"`
+	CleanContent bool `json:"cleanup"`
 }
 
 type EnvUser struct {
@@ -44,8 +43,7 @@ type Environment struct {
 var env = Environment{
 	// defaults
 	Settings: EnvSettings{
-		CleanContent:  true,
-		MaxIterations: 3,
+		CleanContent: true,
 	},
 }
 
@@ -66,9 +64,6 @@ func (e *Environment) Init() error {
 	if e.Debug {
 		log.Warning("Debug mode enabled")
 	}
-
-	// check max iterations
-	e.Settings.MaxIterations = max(e.Settings.MaxIterations, 1)
 
 	// check if server secret is set
 	if e.Tokens.Secret == "" {
@@ -125,8 +120,7 @@ func (e *Environment) Store() error {
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 
-			"$.settings.cleanup":    {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
-			"$.settings.iterations": {yaml.HeadComment(" max model turns per request (optional; default: 3)")},
+			"$.settings.cleanup": {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},
