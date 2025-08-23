@@ -11,7 +11,7 @@ func init() {
 }
 
 func OpenRouterClient() *openrouter.Client {
-	return openrouter.NewClient(env.Tokens.OpenRouter)
+	return openrouter.NewClient(env.Tokens.OpenRouter, openrouter.WithXTitle("Whiskr"), openrouter.WithHTTPReferer("https://github.com/coalaura/whiskr"))
 }
 
 func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletionRequest) (*openrouter.ChatCompletionStream, error) {
