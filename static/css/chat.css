@@ -68,6 +68,11 @@ body {
 	overflow: hidden;
 }
 
+body.resizing * {
+	user-select: none !important;
+	cursor: grabbing !important;
+}
+
 #version {
 	position: absolute;
 	font-size: 12px;
@@ -565,6 +570,7 @@ body:not(.loading) #loading {
 	padding: 0 12px;
 	height: 320px;
 	padding-bottom: 36px;
+	flex-shrink: 0;
 }
 
 #chat::after {
@@ -579,6 +585,15 @@ body:not(.loading) #loading {
 
 #chat:has(.has-files) {
 	padding-top: 50px;
+}
+
+#resize-bar {
+	position: absolute;
+	top: -4px;
+	left: 0;
+	right: 0;
+	height: 8px;
+	cursor: n-resize;
 }
 
 #attachments {

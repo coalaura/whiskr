@@ -84,6 +84,10 @@ function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(/\.?0+$/m, "");
 }
 
+function clamp(num, min, max) {
+	return Math.min(Math.max(num, min), max);
+}
+
 function download(name, type, data) {
 	let blob;
 

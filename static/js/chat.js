@@ -4,6 +4,7 @@
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
 		$bottom = document.getElementById("bottom"),
+		$resizeBar = document.getElementById("resize-bar"),
 		$attachments = document.getElementById("attachments"),
 		$role = document.getElementById("role"),
 		$model = document.getElementById("model"),
@@ -37,7 +38,9 @@
 		searchTool = false;
 
 	let searchAvailable = false,
-		activeMessage;
+		activeMessage = null,
+		isResizing = false,
+		scrollResize = false;
 
 	function updateScrollButton() {
 		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
@@ -49,7 +52,7 @@
 		}
 	}
 
-	function scroll(force = false) {
+	function scroll(force = false, instant = false) {
 		if (!autoScrolling && !force) {
 			updateScrollButton();
 
@@ -59,7 +62,7 @@
 		setTimeout(() => {
 			$messages.scroll({
 				top: $messages.scrollHeight,
-				behavior: "smooth",
+				behavior: instant ? "instant" : "smooth",
 			});
 		}, 0);
 	}
@@ -1230,6 +1233,27 @@
 		scroll(true);
 	});
 
+	$resizeBar.addEventListener("mousedown", event => {
+		const isAtBottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight) <= 10;
+
+		if (event.buttons === 4) {
+			$chat.style.height = "";
+
+			storeValue("resized", false);
+
+			scroll(isAtBottom, true);
+
+			return;
+		} else if (event.buttons !== 1) {
+			return;
+		}
+
+		isResizing = true;
+		scrollResize = isAtBottom;
+
+		document.body.classList.add("resizing");
+	});
+
 	$role.addEventListener("change", () => {
 		storeValue("role", $role.value);
 	});
@@ -1468,8 +1492,35 @@
 		}
 	});
 
+	addEventListener("mousemove", event => {
+		if (!isResizing) {
+			return;
+		}
+
+		const total = window.innerHeight,
+			height = clamp(window.innerHeight - event.clientY, 100, total - 240);
+
+		$chat.style.height = `${height}px`;
+
+		storeValue("resized", height);
+
+		scroll(scrollResize, true);
+	});
+
+	addEventListener("mouseup", () => {
+		isResizing = false;
+
+		document.body.classList.remove("resizing");
+	});
+
 	dropdown($role);
 	dropdown($reasoningEffort);
+
+	const resizedHeight = loadValue("resized");
+
+	if (resizedHeight) {
+		$chat.style.height = `${resizedHeight}px`;
+	}
 
 	loadData().then(() => {
 		restore();
