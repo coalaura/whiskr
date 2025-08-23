@@ -39,8 +39,20 @@
 	let searchAvailable = false,
 		activeMessage;
 
+	function updateScrollButton() {
+		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
+
+		if (bottom >= 80) {
+			$bottom.classList.remove("hidden");
+		} else {
+			$bottom.classList.add("hidden");
+		}
+	}
+
 	function scroll(force = false) {
 		if (!autoScrolling && !force) {
+			updateScrollButton();
+
 			return;
 		}
 
@@ -160,13 +172,13 @@
 			_toggle.addEventListener("click", () => {
 				this.#expanded = !this.#expanded;
 
+				this.#_message.classList.toggle("expanded", this.#expanded);
+
 				if (this.#expanded) {
 					this.#updateReasoningHeight();
-
-					this.#_message.classList.add("expanded");
-				} else {
-					this.#_message.classList.remove("expanded");
 				}
+
+				updateScrollButton();
 			});
 
 			// message reasoning (height wrapper)
@@ -211,6 +223,8 @@
 
 			_call.addEventListener("click", () => {
 				this.#_tool.classList.toggle("expanded");
+
+				updateScrollButton();
 			});
 
 			// tool call name
@@ -423,6 +437,8 @@
 				this.#updateToolHeight();
 
 				noScroll || scroll();
+
+				updateScrollButton();
 			}
 
 			if (!only || only === "statistics") {
@@ -435,7 +451,7 @@
 						price = cost < 1 ? `${fixed(cost * 100, 1)}ct` : `$${fixed(cost, 2)}`;
 
 					html = [
-						provider ? `<div class="provider">${provider} (<span class="mono">${model.split("/").pop()}</span>)</div>` : "",
+						provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
 						`<div class="ttft">${formatMilliseconds(ttft)}</div>`,
 						`<div class="tps">${fixed(tps, 2)} t/s</div>`,
 						`<div class="tokens">
@@ -463,6 +479,8 @@
 					this.#updateReasoningHeight();
 
 					noScroll || scroll();
+
+					updateScrollButton();
 				});
 
 				this.#_message.classList.toggle("has-reasoning", !!this.#reasoning);
@@ -477,6 +495,8 @@
 
 				this.#patch("text", this.#_text, text, () => {
 					noScroll || scroll();
+
+					updateScrollButton();
 				});
 
 				this.#_message.classList.toggle("has-text", !!this.#text);
@@ -552,7 +572,7 @@
 			this.#save();
 		}
 
-		async loadGenerationData(generationID) {
+		async loadGenerationData(generationID, retrying = false) {
 			if (!generationID) {
 				return;
 			}
@@ -568,6 +588,10 @@
 				this.setStatistics(data);
 			} catch (err) {
 				console.error(err);
+
+				if (!retrying && err.message.includes("not found")) {
+					setTimeout(this.loadGenerationData.bind(this), 750, generationID, true);
+				}
 			}
 		}
 
@@ -879,7 +903,7 @@
 
 			message.setState(false);
 
-			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+			setTimeout(message.loadGenerationData.bind(message), 500, generationID);
 
 			message = null;
 			generationID = null;
@@ -912,7 +936,6 @@
 				signal: controller.signal,
 			},
 			chunk => {
-				console.log(chunk);
 				if (!chunk) {
 					controller = null;
 
@@ -1200,13 +1223,7 @@
 	}
 
 	$messages.addEventListener("scroll", () => {
-		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
-
-		if (bottom >= 80) {
-			$bottom.classList.remove("hidden");
-		} else {
-			$bottom.classList.add("hidden");
-		}
+		updateScrollButton();
 	});
 
 	$bottom.addEventListener("click", () => {
