@@ -906,7 +906,7 @@
 
 			message.setState(false);
 
-			setTimeout(message.loadGenerationData.bind(message), 500, generationID);
+			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
 
 			message = null;
 			generationID = null;
