@@ -30,7 +30,6 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## TODO
 
-- total cost tracker
 - settings
   - auto-retry on edit
   - ctrl+enter vs enter for sending

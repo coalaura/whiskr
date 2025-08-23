@@ -73,27 +73,24 @@ body.resizing * {
 	cursor: grabbing !important;
 }
 
+#total,
 #version {
 	position: absolute;
 	font-size: 12px;
 	font-style: italic;
 	top: 3px;
-	right: 6px;
+	right: 4px;
 	color: #a5adcb;
+}
+
+#total {
+	right: unset;
+	left: 4px;
 }
 
 #version a {
 	color: #a5adcb;
 	text-decoration: none;
-}
-
-body.loading #version {
-	font-size: 0;
-	animation: rotating 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
-	width: 16px;
-	height: 16px;
-	top: 6px;
 }
 
 #loading {

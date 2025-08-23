@@ -1,5 +1,6 @@
 (() => {
 	const $version = document.getElementById("version"),
+		$total = document.getElementById("total"),
 		$messages = document.getElementById("messages"),
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
@@ -41,7 +42,14 @@
 	let searchAvailable = false,
 		activeMessage = null,
 		isResizing = false,
-		scrollResize = false;
+		scrollResize = false,
+		totalCost = 0;
+
+	function updateTotalCost() {
+		storeValue("total-cost", totalCost);
+
+		$total.textContent = formatMoney(totalCost);
+	}
 
 	function updateScrollButton() {
 		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
@@ -448,8 +456,7 @@
 				if (this.#statistics) {
 					const { provider, model, ttft, time, input, output, cost } = this.#statistics;
 
-					const tps = output / (time / 1000),
-						price = cost < 1 ? `${fixed(cost * 100, 1)}ct` : `$${fixed(cost, 2)}`;
+					const tps = output / (time / 1000);
 
 					html = [
 						provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
@@ -462,7 +469,7 @@
 							=
 							<div class="total">${input + output}t</div>
 						</div>`,
-						`<div class="cost">${price}</div>`,
+						`<div class="cost">${formatMoney(cost)}</div>`,
 					].join("");
 				}
 
@@ -587,6 +594,10 @@
 				}
 
 				this.setStatistics(data);
+
+				totalCost += data.cost;
+
+				updateTotalCost();
 			} catch (err) {
 				console.error(err);
 
@@ -1030,6 +1041,11 @@
 		// start icon preload
 		preloadIcons(data.icons);
 
+		// render total cost
+		totalCost = loadValue("total-cost", 0);
+
+		updateTotalCost();
+
 		// render version
 		if (data.version === "dev") {
 			$version.remove();
@@ -1223,6 +1239,16 @@
 		return message;
 	}
 
+	$total.addEventListener("auxclick", (event) => {
+		if (event.button !== 1) {
+			return;
+		}
+
+		totalCost = 0;
+
+		updateTotalCost();
+	});
+
 	$messages.addEventListener("scroll", () => {
 		updateScrollButton();
 	});
@@ -1244,7 +1270,7 @@
 	$resizeBar.addEventListener("mousedown", event => {
 		const isAtBottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight) <= 10;
 
-		if (event.buttons === 4) {
+		if (event.button === 1) {
 			$chat.style.height = "";
 
 			storeValue("resized", false);
@@ -1252,7 +1278,7 @@
 			scroll(isAtBottom, true);
 
 			return;
-		} else if (event.buttons !== 1) {
+		} else if (event.button !== 0) {
 			return;
 		}
 

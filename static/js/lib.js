@@ -84,6 +84,26 @@ function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(/\.?0+$/m, "");
 }
 
+function formatMoney(num) {
+	if (num === 0) {
+		return "0ct";
+	}
+
+	if (num < 1) {
+		let decimals = 1;
+
+		if (num < 0.0001) {
+			decimals = 3;
+		} else if (num < 0.001) {
+			decimals = 2;
+		}
+
+		return `${fixed(num * 100, decimals)}ct`;
+	}
+
+	return `$${fixed(num, 2)}`;
+}
+
 function clamp(num, min, max) {
 	return Math.min(Math.max(num, min), max);
 }
