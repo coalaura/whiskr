@@ -30,6 +30,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## TODO
 
+- tool for github repo overviews (included in search tools)
 - settings
   - auto-retry on edit
   - ctrl+enter vs enter for sending
