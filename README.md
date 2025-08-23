@@ -24,13 +24,13 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - Text/Code file attachments
 - Reasoning effort control
 - Structured JSON output
-- Statistics for messages (provider, ttft, tps and token count)
+- Statistics for messages (provider, ttft, tps, token count and cost)
 - Import and export of chats as JSON files
 - Authentication (optional)
 
 ## TODO
 
-- cost tracker
+- total cost tracker
 - settings
   - auto-retry on edit
   - ctrl+enter vs enter for sending
