@@ -226,6 +226,7 @@ body:not(.loading) #loading {
 .statistics .provider::after,
 .statistics .ttft::after,
 .statistics .tps::after,
+.statistics .tokens::after,
 .message .tags::before {
 	content: "";
 	position: absolute;
@@ -513,6 +514,7 @@ body:not(.loading) #loading {
 .statistics .provider,
 .statistics .ttft,
 .statistics .tps,
+.statistics .cost,
 .statistics .tokens {
 	position: relative;
 	display: flex;
@@ -522,7 +524,8 @@ body:not(.loading) #loading {
 
 .statistics .provider::after,
 .statistics .ttft::after,
-.statistics .tps::after {
+.statistics .tps::after,
+.statistics .tokens::after {
 	left: unset;
 	right: -14px;
 }
@@ -540,7 +543,11 @@ body:not(.loading) #loading {
 }
 
 .statistics .tokens::before {
-	background-image: url(icons/amount.svg);
+	background-image: url(icons/tokens.svg);
+}
+
+.statistics .cost::before {
+	background-image: url(icons/money.svg);
 }
 
 .message:not(:hover) .statistics {
@@ -719,6 +726,7 @@ body.loading #version,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
+.message .statistics .cost::before,
 #json,
 #search,
 #scrolling,
@@ -741,6 +749,7 @@ body.loading #version,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
+.message .statistics .cost::before,
 .message .tag-json,
 .message .tag-search,
 .message .role::before {
@@ -818,7 +827,7 @@ label[for="temperature"] {
 }
 
 label[for="iterations"] {
-	background-image: url(icons/time.svg);
+	background-image: url(icons/iterations.svg);
 }
 
 label[for="reasoning-effort"] {

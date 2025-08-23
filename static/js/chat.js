@@ -429,12 +429,13 @@
 				let html = "";
 
 				if (this.#statistics) {
-					const { provider, model, ttft, time, input, output } = this.#statistics;
+					const { provider, model, ttft, time, input, output, cost } = this.#statistics;
 
-					const tps = output / (time / 1000);
+					const tps = output / (time / 1000),
+						price = cost < 1 ? `${fixed(cost * 100, 1)}ct` : `$${fixed(cost, 2)}`;
 
 					html = [
-						provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
+						provider ? `<div class="provider">${provider} (<span class="mono">${model.split("/").pop()}</span>)</div>` : "",
 						`<div class="ttft">${formatMilliseconds(ttft)}</div>`,
 						`<div class="tps">${fixed(tps, 2)} t/s</div>`,
 						`<div class="tokens">
@@ -442,8 +443,9 @@
 							+
 							<div class="output">${output}</div>
 							=
-							<div class="total">${input + output}</div>
+							<div class="total">${input + output}t</div>
 						</div>`,
+						`<div class="cost">${price}</div>`,
 					].join("");
 				}
 
@@ -825,6 +827,7 @@
 			temperature = 0.85;
 
 			$temperature.value = temperature;
+			$temperature.classList.remove("invalid");
 		}
 
 		let iterations = parseInt($iterations.value);
@@ -833,6 +836,7 @@
 			iterations = 3;
 
 			$iterations.value = iterations;
+			$iterations.classList.remove("invalid");
 		}
 
 		const effort = $reasoningEffort.value;
@@ -843,6 +847,7 @@
 			tokens = 1024;
 
 			$reasoningTokens.value = tokens;
+			$reasoningTokens.classList.remove("invalid");
 		}
 
 		pushMessage();
@@ -907,6 +912,7 @@
 				signal: controller.signal,
 			},
 			chunk => {
+				console.log(chunk);
 				if (!chunk) {
 					controller = null;
 
@@ -1049,7 +1055,6 @@
 
 	function clearMessages() {
 		while (messages.length) {
-			console.log("delete", messages.length);
 			messages[0].delete();
 		}
 	}
@@ -1060,6 +1065,7 @@
 		$model.value = loadValue("model", modelList[0].id);
 		$prompt.value = loadValue("prompt", promptList[0].key);
 		$temperature.value = loadValue("temperature", 0.85);
+		$iterations.value = loadValue("iterations", 3);
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
@@ -1248,6 +1254,15 @@
 		$temperature.classList.toggle("invalid", Number.isNaN(temperature) || temperature < 0 || temperature > 2);
 	});
 
+	$iterations.addEventListener("input", () => {
+		const value = $iterations.value,
+			iterations = parseFloat(value);
+
+		storeValue("iterations", value);
+
+		$iterations.classList.toggle("invalid", Number.isNaN(iterations) || iterations < 1 || iterations > 50);
+	});
+
 	$reasoningEffort.addEventListener("change", () => {
 		const effort = $reasoningEffort.value;
 
@@ -1337,6 +1352,7 @@
 			model: $model.value,
 			prompt: $prompt.value,
 			temperature: $temperature.value,
+			iterations: $iterations.value,
 			reasoning: {
 				effort: $reasoningEffort.value,
 				tokens: $reasoningTokens.value,
@@ -1369,8 +1385,9 @@
 		storeValue("model", data.model);
 		storeValue("prompt", data.prompt);
 		storeValue("temperature", data.temperature);
-		storeValue("reasoning", data.reasoning);
-		storeValue("reasoning", data.reasoning);
+		storeValue("iterations", data.iterations);
+		storeValue("reasoning-effort", data.reasoning?.effort);
+		storeValue("reasoning-tokens", data.reasoning?.tokens);
 		storeValue("json", data.json);
 		storeValue("search", data.search);
 		storeValue("messages", data.messages);
@@ -1425,11 +1442,13 @@
 	});
 
 	$message.addEventListener("keydown", event => {
-		if (!event.ctrlKey || event.key !== "Enter") {
+		if (event.shiftKey) {
 			return;
 		}
 
-		$send.click();
+		if (event.ctrlKey && event.key === "Enter") {
+			$send.click();
+		}
 	});
 
 	dropdown($role);

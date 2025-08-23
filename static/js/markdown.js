@@ -8,7 +8,7 @@
 		pedantic: false,
 
 		walkTokens: (token) => {
-			const { type, lang, text } = token;
+			const { type, text } = token;
 
 			if (type === "html") {
 				token.text = token.text.replace(/&/g, "&amp;")
@@ -19,6 +19,8 @@
 			} else if (type !== "code") {
 				return;
 			}
+
+			const lang = token.lang || "plaintext";
 
 			let code;
 

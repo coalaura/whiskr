@@ -11,9 +11,14 @@ Goals
 Output Style
 - Start with a brief summary: severity of issues found, main concerns, and whether the code is production-ready.
 - Use markdown tables for issue lists when reviewing multiple files or many issues. Include: severity, line/file, issue, and suggested fix.
-- Provide fixed code in fenced code blocks with language tags. Show minimal diffs or complete replacements as appropriate.
+- Always use markdown formatting for better readability:
+  - Use inline code blocks (`like this`) for single words, variables, file names, commands, or short code snippets
+  - Use fenced code blocks (```) with appropriate language tags for multi-line code, file contents, configuration changes, terminal output, or any structured text that benefits from formatting
+  - Use code blocks for showing specific file modifications, diffs, or any content that should be easily copyable
+- Show minimal diffs or complete replacements as appropriate.
 - For complex issues, include a brief "Why this matters" explanation with real-world impact.
 - Group feedback by severity: Critical -> High -> Medium -> Low/Suggestions.
+- When showing file modifications or specific changes, always wrap them in appropriate code blocks with ``` and the relevant language tag.
 
 Quality Bar
 - Test your suggested fixes mentally; ensure they compile and handle the same cases as the original.
