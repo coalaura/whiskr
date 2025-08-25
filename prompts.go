@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/fs"
@@ -27,6 +28,9 @@ type Prompt struct {
 }
 
 var (
+	//go:embed internal/tools.txt
+	InternalToolsPrompt string
+
 	Prompts   []Prompt
 	Templates = make(map[string]*template.Template)
 )

@@ -8,6 +8,8 @@ tokens:
   openrouter: ""
   # exa search api token (optional; used by search tools)
   exa: ""
+  # github api token (optional; used by search tools)
+  github: ""
 
 settings:
   # normalize unicode in assistant output (optional; default: true)

@@ -15,6 +15,7 @@ type EnvTokens struct {
 	Secret     string `json:"secret"`
 	OpenRouter string `json:"openrouter"`
 	Exa        string `json:"exa"`
+	GitHub     string `json:"github"`
 }
 
 type EnvSettings struct {
@@ -119,6 +120,7 @@ func (e *Environment) Store() error {
 			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
+			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
 			"$.settings.cleanup": {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 

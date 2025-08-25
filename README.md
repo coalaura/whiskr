@@ -17,9 +17,10 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - Tags indicate if a model supports **tools**, **vision**, or **reasoning**
   - Search field with fuzzy matching to quickly find models
   - Models are listed newest -> oldest
-- Web search tools (set the `EXA_TOKEN` to enable):
+- Web search tools (set the `tokens.exa` to enable):
   - `search_web`: search via Exa in auto mode; returns up to 10 results with short summaries
   - `fetch_contents`: fetch page contents for one or more URLs via Exa /contents
+  - `github_repository`: get a quick overview of a GitHub repository (repo info, up to 20 branches, top-level files/dirs, and the README) without cloning (optionally set `tokens.github`)
 - Images attachments for vision models using simple markdown image tags
 - Text/Code file attachments
 - Reasoning effort control
@@ -30,7 +31,6 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## TODO
 
-- tool for github repo overviews (included in search tools)
 - settings
   - auto-retry on edit
   - ctrl+enter vs enter for sending

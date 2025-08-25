@@ -19,6 +19,11 @@ type FetchContentsArguments struct {
 	URLs []string `json:"urls"`
 }
 
+type GitHubRepositoryArguments struct {
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
+}
+
 func GetSearchTools() []openrouter.Tool {
 	return []openrouter.Tool{
 		{
@@ -59,6 +64,29 @@ func GetSearchTools() []openrouter.Tool {
 							"type":        "array",
 							"description": "List of URLs (1..N) to fetch.",
 							"items":       map[string]any{"type": "string"},
+						},
+					},
+					"additionalProperties": false,
+				},
+				Strict: true,
+			},
+		},
+		{
+			Type: openrouter.ToolTypeFunction,
+			Function: &openrouter.FunctionDefinition{
+				Name:        "github_repository",
+				Description: "Get a quick overview of a GitHub repository without cloning: repo info, up to 20 branches (popular first), top-level files/dirs, and the README.",
+				Parameters: map[string]any{
+					"type":     "object",
+					"required": []string{"owner", "repo"},
+					"properties": map[string]any{
+						"owner": map[string]any{
+							"type":        "string",
+							"description": "GitHub username or organization (e.g., 'torvalds').",
+						},
+						"repo": map[string]any{
+							"type":        "string",
+							"description": "Repository name (e.g., 'linux').",
 						},
 					},
 					"additionalProperties": false,
@@ -125,6 +153,26 @@ func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
 	}
 
 	tool.Result = results.String()
+
+	return nil
+}
+
+func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
+	var arguments GitHubRepositoryArguments
+
+	err := json.Unmarshal([]byte(tool.Args), &arguments)
+	if err != nil {
+		return err
+	}
+
+	result, err := RepoOverview(ctx, arguments)
+	if err != nil {
+		tool.Result = fmt.Sprintf("error: %v", err)
+
+		return nil
+	}
+
+	tool.Result = result
 
 	return nil
 }

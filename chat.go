@@ -137,7 +137,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Tools = GetSearchTools()
 		request.ToolChoice = "auto"
 
-		request.Messages = append(request.Messages, openrouter.SystemMessage("You have access to web search tools. Use `search_web` with `query` (string) and `num_results` (1-10) to find current information and get result summaries. Use `fetch_contents` with `urls` (array) to read full page content. Always specify all parameters for each tool call. Call only one tool per response."))
+		request.Messages = append(request.Messages, openrouter.SystemMessage(InternalToolsPrompt))
 	}
 
 	for index, message := range r.Messages {
@@ -299,6 +299,13 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			}
 		case "fetch_contents":
 			err = HandleFetchContentsTool(ctx, tool)
+			if err != nil {
+				response.Send(ErrorChunk(err))
+
+				return
+			}
+		case "github_repository":
+			err = HandleGitHubRepositoryTool(ctx, tool)
 			if err != nil {
 				response.Send(ErrorChunk(err))
 
