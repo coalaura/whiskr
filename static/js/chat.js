@@ -1,6 +1,7 @@
 (() => {
 	const $version = document.getElementById("version"),
 		$total = document.getElementById("total"),
+		$notifications = document.getElementById("notifications"),
 		$title = document.getElementById("title"),
 		$titleRefresh = document.getElementById("title-refresh"),
 		$titleText = document.getElementById("title-text"),
@@ -54,6 +55,36 @@
 
 		$total.textContent = formatMoney(totalCost);
 	}
+
+	async function notify(msg, persistent = false) {
+		console.warn(msg);
+
+		const notification = make("div", "notification", "off-screen");
+
+		notification.textContent = msg;
+
+		$notifications.appendChild(notification);
+
+		await wait(250);
+
+		notification.classList.remove("off-screen");
+
+		if (persistent) {
+			return;
+		}
+
+		await wait(5000);
+
+		notification.style.height = `${notification.getBoundingClientRect().height}px`;
+
+		notification.classList.add("off-screen");
+
+		await wait(250);
+
+		notification.remove();
+	}
+
+	window.notify = notify;
 
 	function updateTitle() {
 		$title.classList.toggle("hidden", !messages.length);
@@ -1077,7 +1108,7 @@
 				return;
 			}
 
-			alert(err.message);
+			notify(err.message);
 		}
 
 		titleController = null;
@@ -1121,9 +1152,9 @@
 		const data = await json("/-/data");
 
 		if (!data) {
-			alert("Failed to load data.");
+			notify("Failed to load data.", true);
 
-			return false;
+			return;
 		}
 
 		// start icon preload
@@ -1177,8 +1208,6 @@
 		});
 
 		dropdown($prompt);
-
-		return data;
 	}
 
 	function clearMessages() {
@@ -1190,8 +1219,8 @@
 	function restore() {
 		$message.value = loadValue("message", "");
 		$role.value = loadValue("role", "user");
-		$model.value = loadValue("model", modelList[0].id);
-		$prompt.value = loadValue("prompt", promptList[0].key);
+		$model.value = loadValue("model", modelList.length ? modelList[0].id : "");
+		$prompt.value = loadValue("prompt", promptList.length ? promptList[0].key : "");
 		$temperature.value = loadValue("temperature", 0.85);
 		$iterations.value = loadValue("iterations", 3);
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
@@ -1500,7 +1529,7 @@
 
 			pushAttachment(file);
 		} catch (err) {
-			alert(err.message);
+			notify(err.message);
 		}
 	});
 
@@ -1661,9 +1690,5 @@
 		restore();
 
 		document.body.classList.remove("loading");
-
-		setTimeout(() => {
-			document.getElementById("loading").remove();
-		}, 500);
 	});
 })();

@@ -127,6 +127,44 @@ body:not(.loading) #loading {
 	pointer-events: none;
 }
 
+#notifications {
+	position: absolute;
+	top: 15px;
+	right: 20px;
+}
+
+.notification {
+	position: relative;
+	background: #24273a;
+	padding: 12px 15px;
+	border-radius: 6px;
+	width: 280px;
+	margin-bottom: 10px;
+	transition: 250ms;
+	color: #ed8796;
+	border: 2px solid #ed8796;
+	left: 0px;
+	overflow: hidden;
+}
+
+.notification.off-screen {
+	height: 0px !important;
+	border-width: 0px;
+	left: calc(100% + 20px);
+	padding: 0px 15px;
+	margin-bottom: 0px;
+}
+
+.notification::before {
+	content: "";
+	background-image: url(icons/error.svg);
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 16px !important;
+	height: 16px !important;
+}
+
 #page {
 	display: flex;
 	flex-direction: column;
@@ -752,6 +790,7 @@ select {
 }
 
 body.loading #version,
+.notification::before,
 #title-refresh,
 #loading .inner::after,
 .modal.loading .content::after,
