@@ -93,7 +93,7 @@
 
 		$titleText.textContent = title;
 
-		document.title = title || "whiskr";
+		document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
 
 		storeValue("title", chatTitle);
 	}
