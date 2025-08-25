@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -28,7 +29,16 @@ func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletio
 func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest) (openrouter.ChatCompletionResponse, error) {
 	client := OpenRouterClient()
 
-	return client.CreateChatCompletion(ctx, request)
+	response, err := client.CreateChatCompletion(ctx, request)
+	if err != nil {
+		return response, err
+	}
+
+	if len(response.Choices) == 0 {
+		return response, errors.New("no choices")
+	}
+
+	return response, nil
 }
 
 func OpenRouterGetGeneration(ctx context.Context, id string) (openrouter.Generation, error) {

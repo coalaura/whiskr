@@ -140,7 +140,9 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(InternalToolsPrompt))
 	}
 
-	for index, message := range r.Messages {
+	for _, message := range r.Messages {
+		message.Text = strings.ReplaceAll(message.Text, "\r", "")
+
 		switch message.Role {
 		case "system":
 			request.Messages = append(request.Messages, openrouter.ChatCompletionMessage{
@@ -211,8 +213,6 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 			}
 
 			request.Messages = append(request.Messages, msg)
-		default:
-			return nil, fmt.Errorf("[%d] invalid role: %q", index+1, message.Role)
 		}
 	}
 
@@ -270,7 +270,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			request.Messages = append(request.Messages, openrouter.SystemMessage("You have reached the maximum number of tool calls for this conversation. Provide your final response based on the information you have gathered."))
 		}
 
-		dump("debug.json", request)
+		dump("chat.json", request)
 
 		tool, message, err := RunCompletion(ctx, response, request)
 		if err != nil {

@@ -12,6 +12,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - Edit, delete, or copy any message
 - Persistent settings for model, temperature, and other parameters
 - Full conversation control including clearing and modifying messages
+- Title generation (and refresh)
 - Smooth UI updates with [morphdom](https://github.com/patrick-steele-idem/morphdom), selections, images, and other state are preserved during updates
 - Easy model selection:
   - Tags indicate if a model supports **tools**, **vision**, or **reasoning**

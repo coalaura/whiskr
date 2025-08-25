@@ -1,6 +1,9 @@
 (() => {
 	const $version = document.getElementById("version"),
 		$total = document.getElementById("total"),
+		$title = document.getElementById("title"),
+		$titleRefresh = document.getElementById("title-refresh"),
+		$titleText = document.getElementById("title-text"),
 		$messages = document.getElementById("messages"),
 		$chat = document.getElementById("chat"),
 		$message = document.getElementById("message"),
@@ -37,7 +40,8 @@
 
 	let autoScrolling = false,
 		jsonMode = false,
-		searchTool = false;
+		searchTool = false,
+		chatTitle = false;
 
 	let searchAvailable = false,
 		activeMessage = null,
@@ -49,6 +53,14 @@
 		storeValue("total-cost", totalCost);
 
 		$total.textContent = formatMoney(totalCost);
+	}
+
+	function updateTitle() {
+		$title.classList.toggle("hidden", !messages.length);
+
+		$titleText.textContent = chatTitle || (messages.length ? "New Chat" : "");
+
+		storeValue("title", chatTitle);
 	}
 
 	function updateScrollButton() {
@@ -266,6 +278,8 @@
 			let timeout;
 
 			_optCopy.addEventListener("click", () => {
+				this.stopEdit();
+
 				clearTimeout(timeout);
 
 				navigator.clipboard.writeText(this.#text);
@@ -303,6 +317,8 @@
 				if (index === false) {
 					return;
 				}
+
+				this.stopEdit();
 
 				while (messages.length > index) {
 					messages[messages.length - 1].delete();
@@ -759,8 +775,6 @@
 		}
 	}
 
-	let controller;
-
 	async function json(url) {
 		try {
 			const response = await fetch(url);
@@ -778,6 +792,8 @@
 	}
 
 	async function stream(url, options, callback) {
+		let aborted;
+
 		try {
 			const response = await fetch(url, options);
 
@@ -834,27 +850,30 @@
 				}
 			}
 		} catch (err) {
-			if (err.name !== "AbortError") {
-				callback({
-					type: "error",
-					text: err.message,
-				});
+			if (err.name === "AbortError") {
+				aborted = true;
+
+				return;
 			}
+
+			callback({
+				type: "error",
+				text: err.message,
+			});
 		} finally {
-			callback(false);
+			callback(aborted ? "aborted" : "done");
 		}
 	}
 
+	let chatController;
+
 	function generate(cancel = false) {
-		if (controller) {
-			controller.abort();
+		if (chatController) {
+			chatController.abort();
 
 			if (cancel) {
 				return;
 			}
-		}
-
-		if (!$temperature.value) {
 		}
 
 		let temperature = parseFloat($temperature.value);
@@ -888,7 +907,7 @@
 
 		pushMessage();
 
-		controller = new AbortController();
+		chatController = new AbortController();
 
 		$chat.classList.add("completing");
 
@@ -908,14 +927,16 @@
 
 		let message, generationID;
 
-		function finish() {
+		function finish(aborted = false) {
 			if (!message) {
 				return;
 			}
 
 			message.setState(false);
 
-			setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+			if (!aborted) {
+				setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+			}
 
 			message = null;
 			generationID = null;
@@ -945,15 +966,23 @@
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify(body),
-				signal: controller.signal,
+				signal: chatController.signal,
 			},
 			chunk => {
-				if (!chunk) {
-					controller = null;
+				if (chunk === "aborted") {
+					finish(true);
+
+					return;
+				} else if (chunk === "done") {
+					chatController = null;
 
 					finish();
 
 					$chat.classList.remove("completing");
+
+					if (!chatTitle && !titleController) {
+						refreshTitle();
+					}
 
 					return;
 				}
@@ -997,6 +1026,65 @@
 				}
 			}
 		);
+	}
+
+	let titleController;
+
+	async function refreshTitle() {
+		if (titleController) {
+			titleController.abort();
+		}
+
+		titleController = new AbortController();
+
+		const body = {
+			title: chatTitle || null,
+			messages: messages.map(message => message.getData()).filter(Boolean),
+		};
+
+		if (!body.messages.length) {
+			updateTitle();
+
+			return;
+		}
+
+		$title.classList.add("refreshing");
+
+		try {
+			const response = await fetch("/-/title", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(body),
+					signal: titleController.signal,
+				}),
+				result = await response.json();
+
+			if (result.cost) {
+				totalCost += result.cost;
+
+				updateTotalCost();
+			}
+
+			if (!response.ok || !result?.title) {
+				throw new Error(result?.error || response.statusText);
+			}
+
+			chatTitle = result.title;
+		} catch (err) {
+			if (err.name === "AbortError") {
+				return;
+			}
+
+			alert(err.message);
+		}
+
+		titleController = null;
+
+		updateTitle();
+
+		$title.classList.remove("refreshing");
 	}
 
 	async function login() {
@@ -1147,6 +1235,10 @@
 			}
 		});
 
+		chatTitle = loadValue("title");
+
+		updateTitle();
+
 		scroll();
 
 		// small fix, sometimes when hard reloading we don't scroll all the way
@@ -1235,11 +1327,12 @@
 		const message = new Message($role.value, "", text, attachments);
 
 		clearAttachments();
+		updateTitle();
 
 		return message;
 	}
 
-	$total.addEventListener("auxclick", (event) => {
+	$total.addEventListener("auxclick", event => {
 		if (event.button !== 1) {
 			return;
 		}
@@ -1247,6 +1340,10 @@
 		totalCost = 0;
 
 		updateTotalCost();
+	});
+
+	$titleRefresh.addEventListener("click", () => {
+		refreshTitle();
 	});
 
 	$messages.addEventListener("scroll", () => {
@@ -1417,6 +1514,10 @@
 		}
 
 		clearMessages();
+
+		chatTitle = false;
+
+		updateTitle();
 	});
 
 	$export.addEventListener("click", () => {

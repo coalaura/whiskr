@@ -52,6 +52,7 @@ func main() {
 		gr.Use(Authenticate)
 
 		gr.Get("/-/stats/{id}", HandleStats)
+		gr.Post("/-/title", HandleTitle)
 		gr.Post("/-/chat", HandleChat)
 	})
 

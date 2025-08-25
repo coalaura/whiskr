@@ -19,7 +19,8 @@ type EnvTokens struct {
 }
 
 type EnvSettings struct {
-	CleanContent bool `json:"cleanup"`
+	CleanContent bool   `json:"cleanup"`
+	TitleModel   string `json:"title-model"`
 }
 
 type EnvUser struct {
@@ -97,6 +98,16 @@ func (e *Environment) Init() error {
 		log.Warning("Missing token.exa, web search unavailable")
 	}
 
+	// check if github token is set
+	if e.Tokens.GitHub == "" {
+		log.Warning("Missing token.github, limited api requests")
+	}
+
+	// default title model
+	if e.Settings.TitleModel == "" {
+		e.Settings.TitleModel = "google/gemini-2.5-flash-lite"
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
@@ -122,7 +133,8 @@ func (e *Environment) Store() error {
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
-			"$.settings.cleanup": {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
+			"$.settings.cleanup":     {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
+			"$.settings.title-model": {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},

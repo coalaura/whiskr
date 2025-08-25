@@ -133,12 +133,13 @@ body:not(.loading) #loading {
 	gap: 5px;
 	background: #1e2030;
 	margin: auto;
-	margin-top: 30px;
+	margin-top: 40px;
 	width: 100%;
 	max-width: 1200px;
-	height: calc(100% - 30px);
+	height: calc(100% - 40px);
 	border-top-left-radius: 6px;
 	border-top-right-radius: 6px;
+	position: relative;
 }
 
 .hidden {
@@ -148,6 +149,40 @@ body:not(.loading) #loading {
 
 .none {
 	display: none !important;
+}
+
+#title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	position: absolute;
+	top: -22px;
+	left: -4px;
+	font-style: italic;
+	padding-left: 22px;
+	transition: 150ms opacity;
+}
+
+#title-text {
+	transition: 150ms;
+}
+
+#title #title-refresh {
+	background-image: url(icons/refresh.svg);
+	width: 16px;
+	height: 16px;
+	position: absolute;
+	top: 50%;
+	left: 0;
+	transform: translateY(-50%);
+}
+
+#title.refreshing #title-refresh {
+	animation: rotating-y 1.2s linear infinite;
+}
+
+#title.refreshing #title-text {
+	filter: blur(3px);
 }
 
 #messages {
@@ -717,6 +752,7 @@ select {
 }
 
 body.loading #version,
+#title-refresh,
 #loading .inner::after,
 .modal.loading .content::after,
 .reasoning .toggle::before,

@@ -31,11 +31,18 @@ var (
 	//go:embed internal/tools.txt
 	InternalToolsPrompt string
 
+	//go:embed internal/title.txt
+	InternalTitlePrompt string
+
+	InternalTitleTmpl *template.Template
+
 	Prompts   []Prompt
 	Templates = make(map[string]*template.Template)
 )
 
 func init() {
+	InternalTitleTmpl = NewTemplate("internal-title", InternalTitlePrompt)
+
 	var err error
 
 	Prompts, err = LoadPrompts()
@@ -43,6 +50,8 @@ func init() {
 }
 
 func NewTemplate(name, text string) *template.Template {
+	text = strings.ReplaceAll(text, "\r", "")
+
 	return template.Must(template.New(name).Parse(text))
 }
 
