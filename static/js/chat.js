@@ -61,7 +61,7 @@
 
 		const notification = make("div", "notification", "off-screen");
 
-		notification.textContent = msg;
+		notification.textContent = msg instanceof Error ? msg.message : msg;
 
 		$notifications.appendChild(notification);
 
@@ -83,8 +83,6 @@
 
 		notification.remove();
 	}
-
-	window.notify = notify;
 
 	function updateTitle() {
 		const title = chatTitle || (messages.length ? "New Chat" : "");
@@ -1112,7 +1110,7 @@
 				return;
 			}
 
-			notify(err.message);
+			notify(err);
 		}
 
 		titleController = null;
@@ -1329,6 +1327,8 @@
 
 				attachments.splice(index, 1);
 
+				storeValue("attachments", attachments);
+
 				el.remove();
 
 				$attachments.classList.toggle("has-files", !!attachments.length);
@@ -1506,34 +1506,34 @@
 	});
 
 	$upload.addEventListener("click", async () => {
-		const file = await selectFile(
+		const files = await selectFile(
 			// the ultimate list
 			".adoc,.bash,.bashrc,.bat,.c,.cc,.cfg,.cjs,.cmd,.conf,.cpp,.cs,.css,.csv,.cxx,.dockerfile,.dockerignore,.editorconfig,.env,.fish,.fs,.fsx,.gitattributes,.gitignore,.go,.gradle,.groovy,.h,.hh,.hpp,.htm,.html,.ini,.ipynb,.java,.jl,.js,.json,.jsonc,.jsx,.kt,.kts,.less,.log,.lua,.m,.makefile,.markdown,.md,.mjs,.mk,.mm,.php,.phtml,.pl,.pm,.profile,.properties,.ps1,.psql,.py,.pyw,.r,.rb,.rs,.rst,.sass,.scala,.scss,.sh,.sql,.svelte,.swift,.t,.toml,.ts,.tsv,.tsx,.txt,.vb,.vue,.xhtml,.xml,.xsd,.xsl,.xslt,.yaml,.yml,.zig,.zsh",
-			false
+			true,
+			file => {
+				if (!file.name) {
+					file.name = "unknown.txt";
+				} else if (file.name.length > 512) {
+					throw new Error("File name too long (max 512 characters)");
+				}
+
+				if (typeof file.content !== "string") {
+					throw new Error("File is not a text file");
+				} else if (!file.content) {
+					throw new Error("File is empty");
+				} else if (file.content.length > 4 * 1024 * 1024) {
+					throw new Error("File is too big (max 4MB)");
+				}
+			},
+			notify
 		);
 
-		if (!file) {
+		if (!files.length) {
 			return;
 		}
 
-		try {
-			if (!file.name) {
-				file.name = "unknown.txt";
-			} else if (file.name.length > 512) {
-				throw new Error("File name too long (max 512 characters)");
-			}
-
-			if (typeof file.content !== "string") {
-				throw new Error("File is not a text file");
-			} else if (!file.content) {
-				throw new Error("File is empty");
-			} else if (file.content.length > 4 * 1024 * 1024) {
-				throw new Error("File is too big (max 4MB)");
-			}
-
+		for (const file of files) {
 			pushAttachment(file);
-		} catch (err) {
-			notify(err.message);
 		}
 	});
 
@@ -1579,7 +1579,14 @@
 			return;
 		}
 
-		const file = await selectFile("application/json", true),
+		const file = await selectFile(
+				"application/json",
+				false,
+				file => {
+					file.content = JSON.parse(file.content);
+				},
+				notify
+			),
 			data = file?.content;
 
 		if (!data) {

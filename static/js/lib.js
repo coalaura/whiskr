@@ -156,46 +156,67 @@ function lines(text) {
 	return count + 1;
 }
 
-function selectFile(accept, asJson = false) {
+function readFile(file, handler, onError = false) {
+	return new Promise(resolve => {
+		const reader = new FileReader();
+
+		reader.onload = () => {
+			try {
+				const result = {
+					name: file.name,
+					content: reader.result,
+				};
+
+				handler(result);
+
+				resolve(result);
+			} catch (err) {
+				onError?.(`${file.name}: ${err.message}`);
+
+				resolve(false);
+			}
+		};
+
+		reader.onerror = () => resolve(false);
+
+		reader.readAsText(file);
+	});
+}
+
+function selectFile(accept, multiple, handler, onError = false) {
 	return new Promise(resolve => {
 		const input = make("input");
 
 		input.type = "file";
 		input.accept = accept;
+		input.multiple = multiple;
 
-		input.onchange = () => {
-			const file = input.files[0];
+		input.onchange = async () => {
+			const files = input.files;
 
-			if (!file) {
+			if (!files.length) {
 				resolve(false);
 
 				return;
 			}
 
-			const reader = new FileReader();
+			const results = [];
 
-			reader.onload = () => {
-				let content = reader.result;
+			for (const file of files) {
+				const result = await readFile(file, handler, onError);
 
-				if (asJson) {
-					try {
-						content = JSON.parse(content);
-					} catch {
-						resolve(false);
-
-						return;
-					}
+				if (result) {
+					results.push(result);
 				}
+			}
 
-				resolve({
-					name: file.name,
-					content: content,
-				});
-			};
+			if (!results.length) {
+				resolve(false);
 
-			reader.onerror = () => resolve(false);
+				return;
+			}
 
-			reader.readAsText(file);
+			resolve(multiple ? results : results[0]);
 		};
 
 		input.click();
