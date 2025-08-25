@@ -41,8 +41,8 @@ func GetSearchTools() []openrouter.Tool {
 						},
 						"num_results": map[string]any{
 							"type":        "integer",
-							"description": "Number of results to return (1-10). Default 10.",
-							"minimum":     1,
+							"description": "Number of results to return (3-10). Default to 6.",
+							"minimum":     3,
 							"maximum":     10,
 						},
 					},

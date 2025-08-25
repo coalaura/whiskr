@@ -87,9 +87,13 @@
 	window.notify = notify;
 
 	function updateTitle() {
+		const title = chatTitle || (messages.length ? "New Chat" : "");
+
 		$title.classList.toggle("hidden", !messages.length);
 
-		$titleText.textContent = chatTitle || (messages.length ? "New Chat" : "");
+		$titleText.textContent = title;
+
+		document.title = title || "whiskr";
 
 		storeValue("title", chatTitle);
 	}
