@@ -131,6 +131,7 @@ body:not(.loading) #loading {
 	position: absolute;
 	top: 15px;
 	right: 20px;
+	z-index: 45;
 }
 
 .notification {
