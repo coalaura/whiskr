@@ -5,6 +5,7 @@ import "strings"
 var cleaner = strings.NewReplacer(
 	"‑", "-",
 	"—", "-",
+	"–", "-",
 
 	"“", "\"",
 	"”", "\"",
