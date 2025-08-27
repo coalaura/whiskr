@@ -72,6 +72,10 @@
 	text-decoration-color: rgba(183, 189, 248, 0.6);
 }
 
+.markdown p {
+	white-space: pre-wrap;
+}
+
 .markdown img {
 	max-width: 100%;
 	border-radius: 6px;
