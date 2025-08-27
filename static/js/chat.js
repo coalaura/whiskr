@@ -905,6 +905,8 @@
 			chatController.abort();
 
 			if (cancel) {
+				$chat.classList.remove("completing");
+
 				return;
 			}
 		}
@@ -1003,6 +1005,8 @@
 			},
 			chunk => {
 				if (chunk === "aborted") {
+					chatController = null;
+
 					finish(true);
 
 					return;
