@@ -409,6 +409,10 @@ func SplitImagePairs(text string) []openrouter.ChatMessagePart {
 	)
 
 	push := func(str, end int) {
+		if str > end {
+			return
+		}
+
 		rest := text[str:end]
 
 		if rest == "" {
