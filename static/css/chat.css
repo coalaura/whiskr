@@ -541,7 +541,6 @@ body:not(.loading) #loading {
 
 .message.errored .options .copy,
 .message.errored .options .edit,
-.message.errored .options .retry,
 .message.waiting .options,
 .message.reasoning .options,
 .message.tooling .options,
