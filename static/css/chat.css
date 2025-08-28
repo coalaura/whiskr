@@ -412,6 +412,10 @@ body:not(.loading) #loading {
 	height: 32px;
 }
 
+.message.collapsed .body>* {
+	opacity: 0;
+}
+
 .message.collapsed .body::before {
 	position: absolute;
 	content: "collapsed...";
