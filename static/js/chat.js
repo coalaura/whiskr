@@ -34,6 +34,16 @@
 		$password = document.getElementById("password"),
 		$login = document.getElementById("login");
 
+	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+
+	let platform = "";
+
+	detectPlatform().then(result => {
+		platform = result;
+
+		console.info(`Detected platform: ${platform}`);
+	});
+
 	const messages = [],
 		models = {},
 		modelList = [],
@@ -143,7 +153,6 @@
 		#error = false;
 
 		#editing = false;
-		#expanded = false;
 		#state = false;
 
 		#_diff;
@@ -159,7 +168,7 @@
 		#_tool;
 		#_statistics;
 
-		constructor(role, reasoning, text, files = []) {
+		constructor(role, reasoning, text, files = [], collapsed = false) {
 			this.#id = uid();
 			this.#role = role;
 			this.#reasoning = reasoning || "";
@@ -167,7 +176,7 @@
 
 			this.#_diff = document.createElement("div");
 
-			this.#build();
+			this.#build(collapsed);
 			this.#render();
 
 			for (const file of files) {
@@ -181,9 +190,9 @@
 			}
 		}
 
-		#build() {
+		#build(collapsed) {
 			// main message div
-			this.#_message = make("div", "message", this.#role);
+			this.#_message = make("div", "message", this.#role, collapsed ? "collapsed" : "");
 
 			// message role (wrapper)
 			const _wrapper = make("div", "role", this.#role);
@@ -224,11 +233,9 @@
 			_reasoning.appendChild(_toggle);
 
 			_toggle.addEventListener("click", () => {
-				this.#expanded = !this.#expanded;
+				_reasoning.classList.toggle("expanded");
 
-				_reasoning.classList.toggle("expanded", this.#expanded);
-
-				if (this.#expanded) {
+				if (_reasoning.classList.contains("expanded")) {
 					this.#updateReasoningHeight();
 				}
 
@@ -302,6 +309,19 @@
 			const _opts = make("div", "options");
 
 			this.#_message.appendChild(_opts);
+
+			// collapse option
+			const _optCollapse = make("button", "collapse");
+
+			_optCollapse.title = "Collapse/Expand message";
+
+			_opts.appendChild(_optCollapse);
+
+			_optCollapse.addEventListener("click", () => {
+				this.#_message.classList.toggle("collapsed");
+
+				this.#save();
+			});
 
 			// copy option
 			const _optCopy = make("button", "copy");
@@ -620,6 +640,10 @@
 				data.statistics = this.#statistics;
 			}
 
+			if (this.#_message.classList.contains("collapsed") && full) {
+				data.collapsed = true;
+			}
+
 			if (!data.files?.length && !data.reasoning && !data.text && !data.tool) {
 				return false;
 			}
@@ -656,7 +680,7 @@
 				console.error(err);
 
 				if (!retrying && err.message.includes("not found")) {
-					setTimeout(this.loadGenerationData.bind(this), 750, generationID, true);
+					setTimeout(this.loadGenerationData.bind(this), 1500, generationID, true);
 				}
 			}
 		}
@@ -956,12 +980,18 @@
 			model: $model.value,
 			temperature: temperature,
 			iterations: iterations,
+			tools: {
+				json: jsonMode,
+				search: searchTool,
+			},
 			reasoning: {
 				effort: effort,
 				tokens: tokens || 0,
 			},
-			json: jsonMode,
-			search: searchTool,
+			metadata: {
+				timezone: timezone,
+				platform: platform,
+			},
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
 
@@ -975,7 +1005,7 @@
 			message.setState(false);
 
 			if (!aborted) {
-				setTimeout(message.loadGenerationData.bind(message), 750, generationID);
+				setTimeout(message.loadGenerationData.bind(message), 1000, generationID);
 			}
 
 			message = null;
@@ -1258,7 +1288,7 @@
 		}
 
 		loadValue("messages", []).forEach(message => {
-			const obj = new Message(message.role, message.reasoning, message.text, message.files || []);
+			const obj = new Message(message.role, message.reasoning, message.text, message.files || [], message.collapsed);
 
 			if (message.error) {
 				obj.showError(message.error);

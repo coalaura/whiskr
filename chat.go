@@ -39,14 +39,24 @@ type Reasoning struct {
 	Tokens int    `json:"tokens"`
 }
 
+type Tools struct {
+	JSON   bool `json:"json"`
+	Search bool `json:"search"`
+}
+
+type Metadata struct {
+	Timezone string `json:"timezone"`
+	Platform string `json:"platform"`
+}
+
 type Request struct {
 	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
 	Temperature float64   `json:"temperature"`
 	Iterations  int64     `json:"iterations"`
-	JSON        bool      `json:"json"`
-	Search      bool      `json:"search"`
+	Tools       Tools     `json:"tools"`
 	Reasoning   Reasoning `json:"reasoning"`
+	Metadata    Metadata  `json:"metadata"`
 	Messages    []Message `json:"messages"`
 }
 
@@ -119,13 +129,13 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 	}
 
-	if model.JSON && r.JSON {
+	if model.JSON && r.Tools.JSON {
 		request.ResponseFormat = &openrouter.ChatCompletionResponseFormat{
 			Type: openrouter.ChatCompletionResponseFormatTypeJSONObject,
 		}
 	}
 
-	prompt, err := BuildPrompt(r.Prompt, model)
+	prompt, err := BuildPrompt(r.Prompt, r.Metadata, model)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +144,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
 
-	if model.Tools && r.Search && env.Tokens.Exa != "" {
+	if model.Tools && r.Tools.Search && env.Tokens.Exa != "" {
 		request.Tools = GetSearchTools()
 		request.ToolChoice = "auto"
 

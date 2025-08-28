@@ -358,9 +358,14 @@ body:not(.loading) #loading {
 	background: #181926;
 	min-width: 480px;
 	min-height: 100px;
+	max-width: 100%;
 	padding: 10px 12px;
-	width: 100%;
+	width: calc(700px - 24px);
 	border-radius: 2px;
+}
+
+.message.assistant textarea.text {
+	width: calc(800px - 24px);
 }
 
 .message .text .error {
@@ -392,6 +397,7 @@ body:not(.loading) #loading {
 }
 
 .message .body {
+	position: relative;
 	border-bottom-left-radius: 6px;
 	border-bottom-right-radius: 6px;
 	overflow: hidden;
@@ -400,6 +406,21 @@ body:not(.loading) #loading {
 	flex-direction: column;
 	gap: 12px;
 	background: #24273a;
+}
+
+.message.collapsed .body {
+	height: 32px;
+}
+
+.message.collapsed .body::before {
+	position: absolute;
+	content: "collapsed...";
+	font-style: italic;
+	color: #939ab7;
+	font-size: 12px;
+	top: 50%;
+	left: 12px;
+	transform: translateY(-50%);
 }
 
 .tool .call,
@@ -419,7 +440,7 @@ body:not(.loading) #loading {
 	background-image: url(icons/reasoning.svg);
 	position: absolute;
 	top: -2px;
-	left: -2px;
+	left: 0px;
 	width: 20px;
 	height: 20px;
 }
@@ -481,11 +502,11 @@ body:not(.loading) #loading {
 }
 
 .reasoning.expanded .toggle::after {
-	transform: rotate(180deg);
+	transform: scaleY(-100%);
 }
 
 .tool.expanded .call .name::after {
-	transform: translateY(-50%) rotate(180deg);
+	transform: translateY(-50%) scaleY(-100%);
 }
 
 .tool .call::before {
@@ -526,6 +547,29 @@ body:not(.loading) #loading {
 .message:hover .options {
 	opacity: 1;
 	pointer-events: all;
+}
+
+.message .collapse {
+	position: relative;
+	margin-right: 14px;
+}
+
+.message .collapse::before {
+	content: "";
+	transition: 150ms;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.message.collapsed .collapse::before {
+	transform: scaleY(-100%);
+}
+
+.message .collapse::after {
+	position: absolute;
+	top: 4px;
+	right: -14px;
 }
 
 .message.errored .options .copy,
@@ -769,6 +813,7 @@ select {
 	gap: 4px;
 }
 
+.message .options .collapse::after,
 #chat .option+.option::before {
 	content: "";
 	display: block;
@@ -792,6 +837,8 @@ body.loading #version,
 .message .role::before,
 .message .tag-json,
 .message .tag-search,
+.message .collapse,
+.message .collapse::before,
 .message .copy,
 .message .edit,
 .message .retry,
@@ -837,6 +884,10 @@ body.loading #version,
 
 input.invalid {
 	border: 1px solid #ed8796;
+}
+
+.message .collapse::before {
+	background-image: url(icons/collapse.svg);
 }
 
 .pre-copy,

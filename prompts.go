@@ -15,9 +15,10 @@ import (
 )
 
 type PromptData struct {
-	Name string
-	Slug string
-	Date string
+	Name     string
+	Slug     string
+	Date     string
+	Platform string
 }
 
 type Prompt struct {
@@ -87,7 +88,7 @@ func LoadPrompts() ([]Prompt, error) {
 		prompt := Prompt{
 			Key:  strings.Replace(filepath.Base(path), ".txt", "", 1),
 			Name: strings.TrimSpace(string(body[:index])),
-			Text: strings.TrimSpace(string(body[:index+3])),
+			Text: strings.TrimSpace(string(body[index+3:])),
 		}
 
 		prompts = append(prompts, prompt)
@@ -110,7 +111,7 @@ func LoadPrompts() ([]Prompt, error) {
 	return prompts, nil
 }
 
-func BuildPrompt(name string, model *Model) (string, error) {
+func BuildPrompt(name string, metadata Metadata, model *Model) (string, error) {
 	if name == "" {
 		return "", nil
 	}
@@ -120,12 +121,26 @@ func BuildPrompt(name string, model *Model) (string, error) {
 		return "", fmt.Errorf("unknown prompt: %q", name)
 	}
 
+	tz := time.UTC
+
+	if metadata.Timezone != "" {
+		parsed, err := time.LoadLocation(metadata.Timezone)
+		if err == nil {
+			tz = parsed
+		}
+	}
+
+	if metadata.Platform == "" {
+		metadata.Platform = "Unknown"
+	}
+
 	var buf bytes.Buffer
 
 	err := tmpl.Execute(&buf, PromptData{
-		Name: model.Name,
-		Slug: model.ID,
-		Date: time.Now().Format(time.RFC1123),
+		Name:     model.Name,
+		Slug:     model.ID,
+		Date:     time.Now().In(tz).Format(time.RFC1123),
+		Platform: metadata.Platform,
 	})
 
 	if err != nil {
