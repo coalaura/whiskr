@@ -286,6 +286,13 @@
 
 			_call.appendChild(_callArguments);
 
+			// tool call cost
+			const _callCost = make("div", "cost");
+
+			_callCost.title = "Cost of this tool call";
+
+			this.#_tool.appendChild(_callCost);
+
 			// tool call result
 			const _callResult = make("div", "result", "markdown");
 
@@ -466,10 +473,11 @@
 
 			if (!only || only === "tool") {
 				if (this.#tool) {
-					const { name, args, result } = this.#tool;
+					const { name, args, result, cost } = this.#tool;
 
 					const _name = this.#_tool.querySelector(".name"),
 						_arguments = this.#_tool.querySelector(".arguments"),
+						_cost = this.#_tool.querySelector(".cost"),
 						_result = this.#_tool.querySelector(".result");
 
 					_name.title = `Show ${name} call result`;
@@ -477,6 +485,8 @@
 
 					_arguments.title = args;
 					_arguments.textContent = args;
+
+					_cost.textContent = cost ? `${formatMoney(cost)}` : "";
 
 					_result.innerHTML = render(result || "*processing*");
 

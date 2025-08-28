@@ -438,6 +438,7 @@ body:not(.loading) #loading {
 	overflow: hidden;
 	transition: 150ms;
 	height: calc(40px + 16px + var(--height));
+	position: relative;
 }
 
 .message .reasoning {
@@ -494,6 +495,21 @@ body:not(.loading) #loading {
 .tool .call .name {
 	position: relative;
 	width: max-content;
+}
+
+.tool .cost {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	font-size: 12px;
+	font-style: italic;
+	color: #a5adcb;
+	transition: 150ms opacity;
+	opacity: 0;
+}
+
+.tool:hover .cost {
+	opacity: 1;
 }
 
 .message .options {
