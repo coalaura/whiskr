@@ -14,11 +14,12 @@ import (
 )
 
 type ToolCall struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Args   string `json:"args"`
-	Result string `json:"result,omitempty"`
-	Done   bool   `json:"done,omitempty"`
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Args   string  `json:"args"`
+	Result string  `json:"result,omitempty"`
+	Done   bool    `json:"done,omitempty"`
+	Cost   float64 `json:"cost,omitempty"`
 }
 
 type TextFile struct {

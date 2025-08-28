@@ -407,16 +407,6 @@
 		#updateToolHeight() {
 			const result = this.#_tool.querySelector(".result");
 
-			try {
-				const clone = result.cloneNode();
-
-				setTimeout(() => {
-					console.log(clone, clone.getBoundingClientRect(), clone.scrollHeight, clone.height);
-				}, 0);
-			} catch(err) {
-				console.warn(err);
-			}
-
 			this.#_tool.style.setProperty("--height", `${result.scrollHeight}px`);
 		}
 
@@ -1047,6 +1037,8 @@
 						message.setTool(chunk.text);
 
 						if (chunk.text.done) {
+							totalCost += chunk.text.cost || 0;
+
 							finish();
 						}
 

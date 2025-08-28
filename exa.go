@@ -18,9 +18,14 @@ type ExaResult struct {
 	Summary string `json:"summary"`
 }
 
+type ExaCost struct {
+	Total float64 `json:"total"`
+}
+
 type ExaResults struct {
 	RequestID string      `json:"requestId"`
 	Results   []ExaResult `json:"results"`
+	Cost      ExaCost     `json:"costDollars"`
 }
 
 func (e *ExaResult) String() string {

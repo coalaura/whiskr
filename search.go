@@ -116,6 +116,8 @@ func HandleSearchWebTool(ctx context.Context, tool *ToolCall) error {
 		return nil
 	}
 
+	tool.Cost = results.Cost.Total
+
 	if len(results.Results) == 0 {
 		tool.Result = "error: no search results"
 
@@ -145,6 +147,8 @@ func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
 
 		return nil
 	}
+
+	tool.Cost = results.Cost.Total
 
 	if len(results.Results) == 0 {
 		tool.Result = "error: no search results"
