@@ -226,7 +226,7 @@
 			_toggle.addEventListener("click", () => {
 				this.#expanded = !this.#expanded;
 
-				this.#_message.classList.toggle("expanded", this.#expanded);
+				_reasoning.classList.toggle("expanded", this.#expanded);
 
 				if (this.#expanded) {
 					this.#updateReasoningHeight();
@@ -235,15 +235,10 @@
 				updateScrollButton();
 			});
 
-			// message reasoning (height wrapper)
-			const _height = make("div", "reasoning-wrapper");
-
-			_reasoning.appendChild(_height);
-
 			// message reasoning (content)
 			this.#_reasoning = make("div", "reasoning-text", "markdown");
 
-			_height.appendChild(this.#_reasoning);
+			_reasoning.appendChild(this.#_reasoning);
 
 			// message content
 			this.#_text = make("div", "text", "markdown");
@@ -411,6 +406,16 @@
 
 		#updateToolHeight() {
 			const result = this.#_tool.querySelector(".result");
+
+			try {
+				const clone = result.cloneNode();
+
+				setTimeout(() => {
+					console.log(clone, clone.getBoundingClientRect(), clone.scrollHeight, clone.height);
+				}, 0);
+			} catch(err) {
+				console.warn(err);
+			}
 
 			this.#_tool.style.setProperty("--height", `${result.scrollHeight}px`);
 		}
@@ -772,11 +777,11 @@
 				activeMessage = this;
 
 				this.#_edit.value = this.#text;
-
-				this.#_edit.style.height = `${this.#_text.offsetHeight}px`;
-				this.#_edit.style.width = `${this.#_text.offsetWidth}px`;
+				this.#_edit.style.height = "";
 
 				this.setState("editing");
+
+				this.#_edit.style.height = `${Math.max(100, this.#_edit.scrollHeight)}px`;
 
 				this.#_edit.focus();
 			} else {

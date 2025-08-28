@@ -348,34 +348,19 @@ body:not(.loading) #loading {
 	max-width: 800px;
 }
 
-.message .reasoning,
-.message .tool,
-.message .text {
-	display: block;
-	background: transparent;
-	padding: 10px 12px;
-	width: 100%;
-}
-
-.message .reasoning {
-	padding-top: 14px;
-}
-
 .message:not(.editing) textarea.text,
 .message.editing div.text {
 	display: none;
 }
 
-.message .reasoning,
-.message .tool,
-.message div.text {
-	background: #24273a;
-}
-
 .message textarea.text {
+	display: block;
 	background: #181926;
 	min-width: 480px;
 	min-height: 100px;
+	padding: 10px 12px;
+	width: 100%;
+	border-radius: 2px;
 }
 
 .message .text .error {
@@ -395,21 +380,7 @@ body:not(.loading) #loading {
 	background: #1e2030;
 	border-radius: 6px;
 	padding: 10px 12px;
-}
-
-.message .reasoning-wrapper {
-	--height: auto;
-	height: calc(var(--height) + 20px);
-	overflow: hidden;
-	transition: 150ms;
-}
-
-.message:not(.expanded) .reasoning-wrapper {
-	height: 0;
-}
-
-.message.expanded .reasoning-text {
-	margin-top: 10px;
+	margin-top: 16px;
 }
 
 .message.has-reasoning:not(.has-text):not(.errored) div.text,
@@ -424,10 +395,11 @@ body:not(.loading) #loading {
 	border-bottom-left-radius: 6px;
 	border-bottom-right-radius: 6px;
 	overflow: hidden;
-}
-
-.message.has-reasoning .text {
-	padding-top: 4px;
+	padding: 14px 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	background: #24273a;
 }
 
 .tool .call,
@@ -460,23 +432,24 @@ body:not(.loading) #loading {
 	transition: 150ms;
 }
 
-.message.expanded .reasoning .toggle::after {
-	transform: rotate(180deg);
-}
-
-.message.has-tool .text {
-	padding-bottom: 4px;
-}
-
+.message .reasoning,
 .message .tool {
 	--height: 0px;
 	overflow: hidden;
 	transition: 150ms;
-	height: calc(90px + var(--height));
+	height: calc(40px + 16px + var(--height));
+}
+
+.message .reasoning {
+	height: calc(18px + 16px + var(--height));
+}
+
+.message .reasoning:not(.expanded) {
+	height: 18px;
 }
 
 .message .tool:not(.expanded) {
-	height: 62px;
+	height: 40px;
 }
 
 .tool .call {
@@ -506,6 +479,10 @@ body:not(.loading) #loading {
 	right: -22px;
 }
 
+.reasoning.expanded .toggle::after {
+	transform: rotate(180deg);
+}
+
 .tool.expanded .call .name::after {
 	transform: translateY(-50%) rotate(180deg);
 }
@@ -517,10 +494,6 @@ body:not(.loading) #loading {
 .tool .call .name {
 	position: relative;
 	width: max-content;
-}
-
-.message .tool .result {
-	margin-top: 16px;
 }
 
 .message .options {
