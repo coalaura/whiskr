@@ -256,7 +256,9 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	debug("preparing stream")
 
-	response, err := NewStream(w)
+	ctx := r.Context()
+
+	response, err := NewStream(w, ctx)
 	if err != nil {
 		RespondJson(w, http.StatusBadRequest, map[string]any{
 			"error": err.Error(),
@@ -266,8 +268,6 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	debug("handling request")
-
-	ctx := r.Context()
 
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
