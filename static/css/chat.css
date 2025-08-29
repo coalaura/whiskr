@@ -368,6 +368,8 @@ body:not(.loading) #loading {
 	width: calc(800px - 24px);
 }
 
+.message .tool.invalid,
+.message .tool .result.error,
 .message .text .error {
 	color: #ed8796;
 }

@@ -14,12 +14,13 @@ import (
 )
 
 type ToolCall struct {
-	ID     string  `json:"id"`
-	Name   string  `json:"name"`
-	Args   string  `json:"args"`
-	Result string  `json:"result,omitempty"`
-	Done   bool    `json:"done,omitempty"`
-	Cost   float64 `json:"cost,omitempty"`
+	ID      string  `json:"id"`
+	Name    string  `json:"name"`
+	Args    string  `json:"args"`
+	Result  string  `json:"result,omitempty"`
+	Done    bool    `json:"done,omitempty"`
+	Invalid bool    `json:"invalid,omitempty"`
+	Cost    float64 `json:"cost,omitempty"`
 }
 
 type TextFile struct {
@@ -323,7 +324,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		default:
-			return
+			tool.Invalid = true
+			tool.Result = "error: invalid tool call"
 		}
 
 		tool.Done = true

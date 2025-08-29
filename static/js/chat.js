@@ -493,7 +493,7 @@
 
 			if (!only || only === "tool") {
 				if (this.#tool) {
-					const { name, args, result, cost } = this.#tool;
+					const { name, args, result, cost, invalid } = this.#tool;
 
 					const _name = this.#_tool.querySelector(".name"),
 						_arguments = this.#_tool.querySelector(".arguments"),
@@ -508,7 +508,10 @@
 
 					_cost.textContent = cost ? `${formatMoney(cost)}` : "";
 
+					_result.classList.toggle("error", result?.startsWith("error: "));
 					_result.innerHTML = render(result || "*processing*");
+
+					this.#_tool.classList.toggle("invalid", invalid);
 
 					this.#_tool.setAttribute("data-tool", name);
 				} else {
