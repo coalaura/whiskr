@@ -19,7 +19,7 @@ func debug(format string, args ...any) {
 		return
 	}
 
-	log.Debugf(format+"\n", args...)
+	log.Printf(format+"\n", args...)
 }
 
 func debugIf(cond bool, format string, args ...any) {

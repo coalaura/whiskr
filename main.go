@@ -6,30 +6,27 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coalaura/logger"
-	adapter "github.com/coalaura/logger/http"
+	"github.com/coalaura/plain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 var Version = "dev"
 
-var log = logger.New().DetectTerminal().WithOptions(logger.Options{
-	NoLevel: true,
-})
+var log = plain.New(plain.WithDate(plain.RFC3339Local))
 
 func main() {
 	icons, err := LoadIcons()
-	log.MustPanic(err)
+	log.MustFail(err)
 
 	models, err := LoadModels()
-	log.MustPanic(err)
+	log.MustFail(err)
 
-	log.Info("Preparing router...")
+	log.Println("Preparing router...")
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
-	r.Use(adapter.Middleware(log))
+	r.Use(log.Middleware())
 
 	fs := http.FileServer(http.Dir("./static"))
 	r.Handle("/*", cache(http.StripPrefix("/", fs)))
@@ -56,7 +53,7 @@ func main() {
 		gr.Post("/-/chat", HandleChat)
 	})
 
-	log.Info("Listening at http://localhost:3443/")
+	log.Println("Listening at http://localhost:3443/")
 	http.ListenAndServe(":3443", r)
 }
 

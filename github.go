@@ -162,14 +162,14 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 
 		readme, err := GitHubRepositoryReadmeJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
 		if err != nil {
-			log.Warningf("failed to get repository readme: %v\n", err)
+			log.Warnf("failed to get repository readme: %v\n", err)
 
 			return
 		}
 
 		markdown, err := readme.AsText()
 		if err != nil {
-			log.Warningf("failed to decode repository readme: %v\n", err)
+			log.Warnf("failed to decode repository readme: %v\n", err)
 
 			return
 		}
@@ -185,7 +185,7 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 
 		contents, err := GitHubRepositoryContentsJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
 		if err != nil {
-			log.Warningf("failed to get repository contents: %v\n", err)
+			log.Warnf("failed to get repository contents: %v\n", err)
 
 			return
 		}

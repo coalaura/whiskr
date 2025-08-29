@@ -51,25 +51,25 @@ var env = Environment{
 
 func init() {
 	file, err := os.OpenFile("config.yml", os.O_RDONLY, 0)
-	log.MustPanic(err)
+	log.MustFail(err)
 
 	defer file.Close()
 
 	err = yaml.NewDecoder(file).Decode(&env)
-	log.MustPanic(err)
+	log.MustFail(err)
 
-	log.MustPanic(env.Init())
+	log.MustFail(env.Init())
 }
 
 func (e *Environment) Init() error {
 	// print if debug is enabled
 	if e.Debug {
-		log.Warning("Debug mode enabled")
+		log.Warnln("Debug mode enabled")
 	}
 
 	// check if server secret is set
 	if e.Tokens.Secret == "" {
-		log.Warning("Missing tokens.secret, generating new...")
+		log.Warnln("Missing tokens.secret, generating new...")
 
 		key := make([]byte, 32)
 
@@ -85,7 +85,7 @@ func (e *Environment) Init() error {
 			return err
 		}
 
-		log.Info("Stored new tokens.secret")
+		log.Println("Stored new tokens.secret")
 	}
 
 	// check if openrouter token is set
@@ -95,12 +95,12 @@ func (e *Environment) Init() error {
 
 	// check if exa token is set
 	if e.Tokens.Exa == "" {
-		log.Warning("Missing token.exa, web search unavailable")
+		log.Warnln("Missing token.exa, web search unavailable")
 	}
 
 	// check if github token is set
 	if e.Tokens.GitHub == "" {
-		log.Warning("Missing token.github, limited api requests")
+		log.Warnln("Missing token.github, limited api requests")
 	}
 
 	// default title model

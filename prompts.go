@@ -47,7 +47,7 @@ func init() {
 	var err error
 
 	Prompts, err = LoadPrompts()
-	log.MustPanic(err)
+	log.MustFail(err)
 }
 
 func NewTemplate(name, text string) *template.Template {
@@ -59,7 +59,7 @@ func NewTemplate(name, text string) *template.Template {
 func LoadPrompts() ([]Prompt, error) {
 	var prompts []Prompt
 
-	log.Info("Loading prompts...")
+	log.Println("Loading prompts...")
 
 	err := filepath.Walk("prompts", func(path string, info fs.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
@@ -80,7 +80,7 @@ func LoadPrompts() ([]Prompt, error) {
 
 		index := bytes.Index(body, []byte("---"))
 		if index == -1 {
-			log.Warningf("Invalid prompt file: %q\n", path)
+			log.Warnf("Invalid prompt file: %q\n", path)
 
 			return nil
 		}
@@ -106,7 +106,7 @@ func LoadPrompts() ([]Prompt, error) {
 		return prompts[i].Name < prompts[j].Name
 	})
 
-	log.Infof("Loaded %d prompts\n", len(prompts))
+	log.Printf("Loaded %d prompts\n", len(prompts))
 
 	return prompts, nil
 }
