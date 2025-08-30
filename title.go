@@ -16,8 +16,7 @@ type TitleRequest struct {
 }
 
 type TitleResponse struct {
-	Title string  `json:"title"`
-	Cost  float64 `json:"cost,omitempty"`
+	Title string `json:"title"`
 }
 
 var (
@@ -146,7 +145,8 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result.Cost = cost
-
-	RespondJson(w, http.StatusOK, result)
+	RespondJson(w, http.StatusOK, map[string]any{
+		"title": result.Title,
+		"cost":  cost,
+	})
 }
