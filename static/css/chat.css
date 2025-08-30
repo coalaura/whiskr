@@ -383,6 +383,10 @@ body:not(.loading) #loading {
 	background: #1b1d2a;
 }
 
+.tool .result pre.l-json .pre-header {
+	display: none;
+}
+
 .message .tool .result,
 .message .reasoning-text {
 	background: #1e2030;

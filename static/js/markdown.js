@@ -41,7 +41,7 @@
 			code(code) {
 				const header = `<div class="pre-header">${escapeHtml(code.lang)}<button class="pre-copy" title="Copy code contents"></button></div>`;
 
-				return `<pre>${header}<code>${code.text}</code></pre>`;
+				return `<pre class="l-${escapeHtml(code.lang)}">${header}<code>${code.text}</code></pre>`;
 			},
 
 			link(link) {
