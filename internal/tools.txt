@@ -1,3 +1,13 @@
-You have access to web search tools. Use `search_web` with `query` (string) and `num_results` (1-10) to find current information - when searching for recent/latest information, always include specific dates or years (e.g., "august 2025"). Use `fetch_contents` with `urls` (array) to read full page content from search results or known URLs. Use `github_repository` with `owner` (string) and `repo` (string) to get repository overviews (info, branches, files, README) without cloning. Formulate specific, targeted queries and provide all required parameters. Call only one tool per response.
+# Tool use
+Use at most 1 tool call per turn. You have %d turns with tool calls total.
 
-You have %d tool calls available in total.
+search_web({query, num_results?, intent?, recency?, domains?})
+- Fresh info & citations. Keep query short; add month/year if freshness matters.
+- intent: auto|news|docs|papers|code|deep_read (deep_read may include full text).
+- num_results: default 6 (3-12); recency: auto|month|year.
+
+fetch_contents({urls})
+- Read 1-5 given URLs for exact content/quotes/numbers.
+
+github_repository({owner,repo})
+- Quick repo overview + README excerpt.

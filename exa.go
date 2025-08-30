@@ -7,15 +7,17 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type ExaResult struct {
-	Title         string `json:"title"`
-	URL           string `json:"url"`
-	PublishedDate string `json:"publishedDate"`
-
-	Text    string `json:"text"`
-	Summary string `json:"summary"`
+	Title         string   `json:"title"`
+	URL           string   `json:"url"`
+	PublishedDate string   `json:"publishedDate,omitempty"`
+	SiteName      string   `json:"siteName,omitempty"`
+	Summary       string   `json:"summary,omitempty"`
+	Highlights    []string `json:"highlights,omitempty"`
+	Text          string   `json:"text,omitempty"`
 }
 
 type ExaCost struct {
@@ -23,43 +25,20 @@ type ExaCost struct {
 }
 
 type ExaResults struct {
-	RequestID string      `json:"requestId"`
-	Results   []ExaResult `json:"results"`
-	Cost      ExaCost     `json:"costDollars"`
-}
-
-func (e *ExaResult) String() string {
-	var (
-		label string
-		text  string
-	)
-
-	if e.Text != "" {
-		label = "Text"
-		text = e.Text
-	} else if e.Summary != "" {
-		label = "Summary"
-		text = e.Summary
-	}
-
-	return fmt.Sprintf(
-		"Title: %s  \nURL: %s  \nPublished Date: %s  \n%s: %s",
-		e.Title,
-		e.URL,
-		e.PublishedDate,
-		label,
-		strings.TrimSpace(text),
-	)
+	RequestID  string      `json:"requestId"`
+	SearchType string      `json:"resolvedSearchType"`
+	Results    []ExaResult `json:"results"`
+	Cost       ExaCost     `json:"costDollars"`
 }
 
 func (e *ExaResults) String() string {
-	list := make([]string, len(e.Results))
+	var builder strings.Builder
 
-	for i, result := range e.Results {
-		list[i] = result.String()
-	}
+	json.NewEncoder(&builder).Encode(map[string]any{
+		"results": e.Results,
+	})
 
-	return strings.Join(list, "\n\n---\n\n")
+	return builder.String()
 }
 
 func NewExaRequest(ctx context.Context, path string, data any) (*http.Request, error) {
@@ -100,15 +79,62 @@ func RunExaRequest(req *http.Request) (*ExaResults, error) {
 }
 
 func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, error) {
+	if args.NumResults <= 0 {
+		args.NumResults = 6
+	} else if args.NumResults < 3 {
+		args.NumResults = 3
+	} else if args.NumResults >= 12 {
+		args.NumResults = 12
+	}
+
 	data := map[string]any{
 		"query":      args.Query,
 		"type":       "auto",
 		"numResults": args.NumResults,
-		"contents": map[string]any{
-			"summary": map[string]any{
-				"query": "Summarize this page only with all information directly relevant to answering the user's question: include key facts, numbers, dates, names, definitions, steps, code or commands, and the page's stance or conclusion; omit fluff and unrelated sections.",
-			},
+	}
+
+	if len(args.Domains) > 0 {
+		data["includeDomains"] = args.Domains
+	}
+
+	contents := map[string]any{
+		"summary": map[string]any{},
+		"highlights": map[string]any{
+			"numSentences":     2,
+			"highlightsPerUrl": 3,
 		},
+		"livecrawl": "preferred",
+	}
+
+	switch args.Intent {
+	case "news":
+		data["category"] = "news"
+		data["numResults"] = max(8, args.NumResults)
+		data["startPublishedDate"] = daysAgo(30)
+	case "docs":
+		contents["subpages"] = 1
+		contents["subpageTarget"] = []string{"documentation", "changelog", "release notes"}
+	case "papers":
+		data["category"] = "research paper"
+		data["startPublishedDate"] = daysAgo(365 * 2)
+	case "code":
+		data["category"] = "github"
+
+		contents["subpages"] = 1
+		contents["subpageTarget"] = []string{"readme", "changelog", "code"}
+	case "deep_read":
+		contents["text"] = map[string]any{
+			"maxCharacters": 8000,
+		}
+	}
+
+	data["contents"] = contents
+
+	switch args.Recency {
+	case "month":
+		data["startPublishedDate"] = daysAgo(30)
+	case "year":
+		data["startPublishedDate"] = daysAgo(356)
 	}
 
 	req, err := NewExaRequest(ctx, "/search", data)
@@ -121,10 +147,16 @@ func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, er
 
 func ExaRunContents(ctx context.Context, args FetchContentsArguments) (*ExaResults, error) {
 	data := map[string]any{
-		"urls": args.URLs,
+		"urls":    args.URLs,
+		"summary": map[string]any{},
+		"highlights": map[string]any{
+			"numSentences":     2,
+			"highlightsPerUrl": 3,
+		},
 		"text": map[string]any{
 			"maxCharacters": 8000,
 		},
+		"livecrawl": "preferred",
 	}
 
 	req, err := NewExaRequest(ctx, "/contents", data)
@@ -133,4 +165,8 @@ func ExaRunContents(ctx context.Context, args FetchContentsArguments) (*ExaResul
 	}
 
 	return RunExaRequest(req)
+}
+
+func daysAgo(days int) string {
+	return time.Now().Add(time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
 }

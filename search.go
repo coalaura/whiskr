@@ -11,8 +11,11 @@ import (
 )
 
 type SearchWebArguments struct {
-	Query      string `json:"query"`
-	NumResults int    `json:"num_results"`
+	Query      string   `json:"query"`
+	NumResults int      `json:"num_results,omitempty"`
+	Intent     string   `json:"intent,omitempty"`
+	Recency    string   `json:"recency,omitempty"`
+	Domains    []string `json:"domains,omitempty"`
 }
 
 type FetchContentsArguments struct {
@@ -30,40 +33,60 @@ func GetSearchTools() []openrouter.Tool {
 			Type: openrouter.ToolTypeFunction,
 			Function: &openrouter.FunctionDefinition{
 				Name:        "search_web",
-				Description: "Search the web via Exa in auto mode. Returns up to 10 results with short summaries.",
+				Description: "Search the live web (via Exa /search) and return summaries, highlights, and optionally full text for the top results.",
 				Parameters: map[string]any{
 					"type":     "object",
-					"required": []string{"query", "num_results"},
+					"required": []string{"query"},
 					"properties": map[string]any{
 						"query": map[string]any{
 							"type":        "string",
-							"description": "A concise, specific search query in natural language.",
+							"description": "A concise, specific search query in natural language. Include month/year if recency matters (e.g., 'august 2025').",
 						},
 						"num_results": map[string]any{
 							"type":        "integer",
-							"description": "Number of results to return (3-10). Default to 6.",
+							"description": "Number of results to return (3-12). Default is 6.",
 							"minimum":     3,
 							"maximum":     10,
+						},
+						"intent": map[string]any{
+							"type":        "string",
+							"enum":        []string{"auto", "news", "docs", "papers", "code", "deep_read"},
+							"description": "Search profile. Use 'news' for breaking topics, 'docs' for official docs/changelogs, 'papers' for research, 'code' for repos, 'deep_read' when you need exact quotes/numbers (adds full text). Default 'auto'.",
+						},
+						"recency": map[string]any{
+							"type":        "string",
+							"enum":        []string{"auto", "month", "year", "range"},
+							"description": "Time filter hint. 'month' ~ last 30 days, 'year' ~ last 365 days. Default 'auto'.",
+						},
+						"domains": map[string]any{
+							"type": "array",
+							"items": map[string]any{
+								"type": "string",
+							},
+							"description": "Restrict to these domains (e.g., ['europa.eu', 'who.int']).",
 						},
 					},
 					"additionalProperties": false,
 				},
-				Strict: true,
 			},
 		},
 		{
 			Type: openrouter.ToolTypeFunction,
 			Function: &openrouter.FunctionDefinition{
 				Name:        "fetch_contents",
-				Description: "Fetch page contents for one or more URLs via Exa /contents.",
+				Description: "Fetch and summarize page contents for one or more URLs (via Exa /contents). Use when the user provides specific links.",
 				Parameters: map[string]any{
 					"type":     "object",
 					"required": []string{"urls"},
 					"properties": map[string]any{
 						"urls": map[string]any{
 							"type":        "array",
-							"description": "List of URLs (1..N) to fetch.",
-							"items":       map[string]any{"type": "string"},
+							"description": "List of URLs to fetch.",
+							"items": map[string]any{
+								"type": "string",
+							},
+							"minItems": 1,
+							"maxItems": 5,
 						},
 					},
 					"additionalProperties": false,
@@ -75,14 +98,14 @@ func GetSearchTools() []openrouter.Tool {
 			Type: openrouter.ToolTypeFunction,
 			Function: &openrouter.FunctionDefinition{
 				Name:        "github_repository",
-				Description: "Get a quick overview of a GitHub repository without cloning: repo info, up to 20 branches (popular first), top-level files/dirs, and the README.",
+				Description: "Fetch repository metadata and README from GitHub.",
 				Parameters: map[string]any{
 					"type":     "object",
 					"required": []string{"owner", "repo"},
 					"properties": map[string]any{
 						"owner": map[string]any{
 							"type":        "string",
-							"description": "GitHub username or organization (e.g., 'torvalds').",
+							"description": "Repository owner (e.g., 'torvalds').",
 						},
 						"repo": map[string]any{
 							"type":        "string",
@@ -100,7 +123,7 @@ func GetSearchTools() []openrouter.Tool {
 func HandleSearchWebTool(ctx context.Context, tool *ToolCall) error {
 	var arguments SearchWebArguments
 
-	err := json.Unmarshal([]byte(tool.Args), &arguments)
+	err := ParseAndUpdateArgs(tool, &arguments)
 	if err != nil {
 		return err
 	}
@@ -132,7 +155,7 @@ func HandleSearchWebTool(ctx context.Context, tool *ToolCall) error {
 func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
 	var arguments FetchContentsArguments
 
-	err := json.Unmarshal([]byte(tool.Args), &arguments)
+	err := ParseAndUpdateArgs(tool, &arguments)
 	if err != nil {
 		return err
 	}
@@ -164,7 +187,7 @@ func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
 func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
 	var arguments GitHubRepositoryArguments
 
-	err := json.Unmarshal([]byte(tool.Args), &arguments)
+	err := ParseAndUpdateArgs(tool, &arguments)
 	if err != nil {
 		return err
 	}
@@ -177,6 +200,22 @@ func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
 	}
 
 	tool.Result = result
+
+	return nil
+}
+
+func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
+	err := json.Unmarshal([]byte(tool.Args), arguments)
+	if err != nil {
+		return err
+	}
+
+	b, err := json.Marshal(arguments)
+	if err != nil {
+		return err
+	}
+
+	tool.Args = string(b)
 
 	return nil
 }
