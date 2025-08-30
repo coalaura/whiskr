@@ -114,6 +114,20 @@ function clamp(num, min, max) {
 	return Math.min(Math.max(num, min), max);
 }
 
+function wrapJSON(txt) {
+	if (!txt || !txt.startsWith("{")) {
+		return txt;
+	}
+
+	try {
+		const data = JSON.parse(txt);
+
+		return `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+	} catch {}
+
+	return txt;
+}
+
 function download(name, type, data) {
 	let blob;
 

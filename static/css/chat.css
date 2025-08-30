@@ -378,6 +378,7 @@ body:not(.loading) #loading {
 	border: 2px solid #ed8796;
 }
 
+.tool .result pre,
 .reasoning-text pre {
 	background: #1b1d2a;
 }

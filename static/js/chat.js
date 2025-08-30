@@ -513,7 +513,7 @@
 					_cost.textContent = cost ? `${formatMoney(cost)}` : "";
 
 					_result.classList.toggle("error", result?.startsWith("error: "));
-					_result.innerHTML = render(result || "*processing*");
+					_result.innerHTML = render(result ? wrapJSON(result) : "*processing*");
 
 					this.#_tool.classList.toggle("invalid", !!invalid);
 
