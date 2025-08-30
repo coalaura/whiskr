@@ -267,6 +267,10 @@
 				}
 			});
 
+			this.#_edit.addEventListener("input", () => {
+				this.updateEditHeight();
+			});
+
 			// message tool
 			this.#_tool = make("div", "tool");
 
@@ -797,6 +801,11 @@
 			this.toggleEdit();
 		}
 
+		updateEditHeight() {
+			this.#_edit.style.height = "";
+			this.#_edit.style.height = `${Math.max(100, this.#_edit.scrollHeight + 2)}px`;
+		}
+
 		toggleEdit() {
 			this.#editing = !this.#editing;
 
@@ -804,11 +813,10 @@
 				activeMessage = this;
 
 				this.#_edit.value = this.#text;
-				this.#_edit.style.height = "";
 
 				this.setState("editing");
 
-				this.#_edit.style.height = `${Math.max(100, this.#_edit.scrollHeight)}px`;
+				this.updateEditHeight();
 
 				this.#_edit.focus();
 			} else {
