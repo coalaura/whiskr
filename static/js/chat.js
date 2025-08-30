@@ -511,7 +511,7 @@
 					_result.classList.toggle("error", result?.startsWith("error: "));
 					_result.innerHTML = render(result || "*processing*");
 
-					this.#_tool.classList.toggle("invalid", invalid);
+					this.#_tool.classList.toggle("invalid", !!invalid);
 
 					this.#_tool.setAttribute("data-tool", name);
 				} else {
@@ -1599,6 +1599,7 @@
 
 	$export.addEventListener("click", () => {
 		const data = JSON.stringify({
+			title: chatTitle,
 			message: $message.value,
 			attachments: attachments,
 			role: $role.value,
@@ -1639,6 +1640,7 @@
 
 		clearMessages();
 
+		storeValue("title", data.title);
 		storeValue("message", data.message);
 		storeValue("attachments", data.attachments);
 		storeValue("role", data.role);
