@@ -714,6 +714,7 @@ body:not(.loading) #loading {
 .files {
 	display: flex;
 	gap: 6px;
+	overflow-x: auto;
 }
 
 .files:not(.has-files) {

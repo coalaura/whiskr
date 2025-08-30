@@ -385,7 +385,7 @@
 
 				mark(false);
 
-				generate(false);
+				generate(false, true);
 			});
 
 			// edit option
@@ -940,7 +940,7 @@
 
 	let chatController;
 
-	function generate(cancel = false) {
+	function generate(cancel = false, noPush = false) {
 		if (chatController) {
 			chatController.abort();
 
@@ -980,7 +980,9 @@
 			$reasoningTokens.classList.remove("invalid");
 		}
 
-		pushMessage();
+		if (!noPush) {
+			pushMessage();
+		}
 
 		chatController = new AbortController();
 
