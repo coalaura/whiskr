@@ -193,9 +193,23 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 		for _, content := range contents {
 			switch content.Type {
 			case "dir":
-				directories = append(directories, content.Name)
+				directories = append(directories, fmt.Sprintf(
+					"[%s](https://github.com/%s/%s/tree/%s/%s)",
+					content.Name,
+					arguments.Owner,
+					arguments.Repo,
+					repository.DefaultBranch,
+					content.Name,
+				))
 			case "file":
-				files = append(files, content.Name)
+				files = append(files, fmt.Sprintf(
+					"[%s](https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s)",
+					content.Name,
+					arguments.Owner,
+					arguments.Repo,
+					repository.DefaultBranch,
+					content.Name,
+				))
 			}
 		}
 
