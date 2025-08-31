@@ -860,6 +860,8 @@
 
 			messages.splice(index, 1);
 
+			setFollowTail(distanceFromBottom() <= nearBottom);
+
 			this.#save();
 
 			$messages.dispatchEvent(new Event("scroll"));
