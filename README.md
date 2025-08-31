@@ -6,29 +6,38 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 
 ## Features
 
-- Private and self-hosted (data stored in localStorage)
-- Supports any model available on your OpenRouter account
-- Real-time streaming responses
-- Edit, delete, or copy any message
-- Persistent settings for model, temperature, and other parameters
-- Full conversation control including clearing and modifying messages
-- Title generation (and refresh)
-- Smooth UI updates with [morphdom](https://github.com/patrick-steele-idem/morphdom), selections, images, and other state are preserved during updates
-- Easy model selection:
-  - Tags indicate if a model supports **tools**, **vision**, or **reasoning**
-  - Search field with fuzzy matching to quickly find models
-  - Models are listed newest -> oldest
-- Web search tools (set the `tokens.exa` to enable):
-  - `search_web`: search via Exa in auto mode; returns up to 10 results with short summaries
-  - `fetch_contents`: fetch page contents for one or more URLs via Exa /contents
-  - `github_repository`: get a quick overview of a GitHub repository (repo info, up to 20 branches, top-level files/dirs, and the README) without cloning (optionally set `tokens.github` for higher rate limits and private repos)
-- Images attachments for vision models using simple markdown image tags
-- Text/Code file attachments
-- Reasoning effort control
-- Structured JSON output
-- Statistics for messages (provider, ttft, tps, token count and cost)
-- Import and export of chats as JSON files
-- Authentication (optional)
+### Core Functionality
+- **Private & Self-Hosted**: All your data is stored in `localStorage`.
+- **Broad Model Support**: Use any model available on your OpenRouter account.
+- **Real-time Responses**: Get streaming responses from models as they are generated.
+- **Persistent Settings**: Your chosen model, temperature, and other parameters are saved between sessions.
+- **Authentication**: Optional user/password authentication for added security.
+
+### Conversation Control
+- **Full Message Control**: Edit, delete, or copy any message in the conversation.
+- **Collapse/Expand Messages**: Collapse large messages to keep your chat history tidy.
+- **Retry & Regenerate**: Easily retry assistant responses or regenerate from any point in the conversation.
+- **Title Generation**: Automatically generate (and refresh) a title for your chat.
+- **Import & Export**: Save and load entire chats as local JSON files.
+
+### Rich UI & UX
+- **File Attachments**: Attach text, code, or images to your messages for vision-enabled models.
+- **Reasoning & Transparency**:
+  - View the model's thought process and tool usage in an expandable "Reasoning" section.
+  - See detailed statistics for each message: provider, time-to-first-token, tokens-per-second, token count, and cost.
+  - Keep track of the total cost for the entire conversation.
+- **Advanced Model Search**:
+  - Tags indicate if a model supports **tools**, **vision**, or **reasoning**.
+  - Fuzzy matching helps you quickly find the exact model you need.
+- **Smooth Interface**: Built with [morphdom](https://github.com/patrick-steele-idem/morphdom) to ensure UI updates don't lose your selections, scroll position, or focus.
+
+### Powerful Integrated Tools
+- **`search_web`**: Search the web via Exa; returns up to 12 results with short summaries.
+- **`fetch_contents`**: Fetch and summarize the contents of one or more URLs.
+- **`github_repository`**: Get a comprehensive overview of a GitHub repository. The tool returns:
+  - Core info (URL, description, stars, forks).
+  - A list of top-level files and directories.
+  - The full content of the repository's README file.
 
 ## TODO
 
@@ -88,7 +97,7 @@ After a successful login, whiskr issues a signed (HMAC-SHA256) token, using the 
 
 When running behind a reverse proxy like nginx, you can have the proxy serve static files.
 
-```ngnix
+```nginx
 server {
     listen 443 ssl;
     server_name chat.example.com;
@@ -117,13 +126,12 @@ server {
 
 ## Usage
 
-- Send a message with `Ctrl+Enter` or the send button
-- Just add a message with the add button
-- Hover over a message to edit, delete, or copy it
-- Adjust model, temperature, prompt, or message role from the controls in the bottom-left
-- Use the model search field to quickly find models (supports fuzzy matching)
-- Look for tags in the model list to see if a model supports tools, vision, or reasoning
-- Use `![alt](url)` in your message to display an image inline. If the model supports vision, the same image URL is passed to the model for multimodal input.
+- Send a message with `Ctrl+Enter` or the send button.
+- Hover over a message to reveal controls to **edit, delete, copy, collapse, or retry**.
+- Click **"Reasoning"** on an assistant message to view the model's thought process or tool usage.
+- Adjust model, temperature, prompt, or message role from the controls in the bottom-left.
+- Attach images using markdown syntax (`![alt](url)`) or upload text/code files with the attachment button.
+- Use the buttons in the top-right to **import/export** the chat or **clear** all messages.
 
 ## License
 
