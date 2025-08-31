@@ -1,5 +1,5 @@
 # Tool use
-Use at most 1 tool call per turn. You have %d turns with tool calls total. You cannot call multiple tools at once. If you have multiple turns you can call more tools in later turns. Match the tool arguments exactly.
+Use at most 1 tool call per turn. You have %d turns with tool calls total. You cannot call multiple tools at once. If you have multiple turns you can call more tools in later turns. Match the tool arguments exactly. Prefer using `github_repository` over `fetch_contents` to get github repository information.
 
 search_web({query, num_results?, intent?, recency?, domains?})
 - Fresh info & citations. Keep query short; add month/year if freshness matters.
@@ -7,7 +7,7 @@ search_web({query, num_results?, intent?, recency?, domains?})
 - num_results: default 6 (3-12); recency: auto|month|year.
 
 fetch_contents({urls})
-- Read 1-5 given URLs for exact content/quotes/numbers.
+- Read 1-5 given URLs for exact content or quotes/numbers.
 
 github_repository({owner,repo})
 - Quick repo overview + README excerpt.
