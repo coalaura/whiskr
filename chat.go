@@ -357,10 +357,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	defer stream.Close()
 
 	var (
-		id     string
-		result strings.Builder
-		tool   *ToolCall
+		id   string
+		tool *ToolCall
 	)
+
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
 
 	for {
 		chunk, err := stream.Recv()
@@ -409,7 +411,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		content := choice.Delta.Content
 
 		if content != "" {
-			result.WriteString(content)
+			buf.WriteString(content)
 
 			response.Send(TextChunk(content))
 		} else if choice.Delta.Reasoning != nil {
@@ -417,7 +419,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		}
 	}
 
-	return tool, result.String(), nil
+	return tool, buf.String(), nil
 }
 
 func SplitImagePairs(text string) []openrouter.ChatMessagePart {

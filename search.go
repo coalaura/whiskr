@@ -210,12 +210,18 @@ func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
 		return err
 	}
 
-	b, err := json.Marshal(arguments)
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
+
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+
+	err = enc.Encode(arguments)
 	if err != nil {
 		return err
 	}
 
-	tool.Args = string(b)
+	tool.Args = buf.String()
 
 	return nil
 }

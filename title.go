@@ -82,9 +82,10 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var prompt strings.Builder
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
 
-	if err := InternalTitleTmpl.Execute(&prompt, raw); err != nil {
+	if err := InternalTitleTmpl.Execute(buf, raw); err != nil {
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),
 		})
@@ -95,7 +96,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	request := openrouter.ChatCompletionRequest{
 		Model: env.Settings.TitleModel,
 		Messages: []openrouter.ChatCompletionMessage{
-			openrouter.SystemMessage(prompt.String()),
+			openrouter.SystemMessage(buf.String()),
 			openrouter.UserMessage(strings.Join(messages, "\n")),
 		},
 		Temperature: 0.25,

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -32,13 +31,14 @@ type ExaResults struct {
 }
 
 func (e *ExaResults) String() string {
-	var builder strings.Builder
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
 
-	json.NewEncoder(&builder).Encode(map[string]any{
+	json.NewEncoder(buf).Encode(map[string]any{
 		"results": e.Results,
 	})
 
-	return builder.String()
+	return buf.String()
 }
 
 func NewExaRequest(ctx context.Context, path string, data any) (*http.Request, error) {

@@ -220,35 +220,36 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 	// wait and combine results
 	wg.Wait()
 
-	var builder strings.Builder
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
 
-	fmt.Fprintf(&builder, "### %s (%s)\n", repository.Name, repository.Visibility)
-	fmt.Fprintf(&builder, "- URL: %s\n", repository.HtmlURL)
-	fmt.Fprintf(&builder, "- Description: %s\n", strings.ReplaceAll(repository.Description, "\n", " "))
-	fmt.Fprintf(&builder, "- Default branch: %s\n", repository.DefaultBranch)
-	fmt.Fprintf(&builder, "- Stars: %d | Forks: %d\n", repository.Stargazers, repository.Forks)
+	fmt.Fprintf(buf, "### %s (%s)\n", repository.Name, repository.Visibility)
+	fmt.Fprintf(buf, "- URL: %s\n", repository.HtmlURL)
+	fmt.Fprintf(buf, "- Description: %s\n", strings.ReplaceAll(repository.Description, "\n", " "))
+	fmt.Fprintf(buf, "- Default branch: %s\n", repository.DefaultBranch)
+	fmt.Fprintf(buf, "- Stars: %d | Forks: %d\n", repository.Stargazers, repository.Forks)
 
-	builder.WriteString("\n### Top-level files and directories\n")
+	buf.WriteString("\n### Top-level files and directories\n")
 
 	if len(directories) == 0 && len(files) == 0 {
-		builder.WriteString("*No entries or insufficient permissions.*\n")
+		buf.WriteString("*No entries or insufficient permissions.*\n")
 	} else {
 		for _, directory := range directories {
-			fmt.Fprintf(&builder, "- [D] %s\n", directory)
+			fmt.Fprintf(buf, "- [D] %s\n", directory)
 		}
 
 		for _, file := range files {
-			fmt.Fprintf(&builder, "- [F] %s\n", file)
+			fmt.Fprintf(buf, "- [F] %s\n", file)
 		}
 	}
 
-	builder.WriteString("\n### README\n")
+	buf.WriteString("\n### README\n")
 
 	if readmeMarkdown == "" {
-		builder.WriteString("*No README found or could not load.*\n")
+		buf.WriteString("*No README found or could not load.*\n")
 	} else {
-		builder.WriteString(readmeMarkdown)
+		buf.WriteString(readmeMarkdown)
 	}
 
-	return builder.String(), nil
+	return buf.String(), nil
 }

@@ -27,6 +27,14 @@ var pool = sync.Pool{
 	},
 }
 
+func GetFreeBuffer() *bytes.Buffer {
+	buf := pool.Get().(*bytes.Buffer)
+
+	buf.Reset()
+
+	return buf
+}
+
 func NewStream(w http.ResponseWriter, ctx context.Context) (*Stream, error) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -104,10 +112,7 @@ func WriteChunk(w http.ResponseWriter, ctx context.Context, chunk any) error {
 		return err
 	}
 
-	buf := pool.Get().(*bytes.Buffer)
-
-	buf.Reset()
-
+	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
 	if err := json.NewEncoder(buf).Encode(chunk); err != nil {
