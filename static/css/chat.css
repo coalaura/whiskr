@@ -221,7 +221,21 @@ body:not(.loading) #loading {
 }
 
 #title.refreshing #title-text {
+	position: relative;
 	filter: blur(3px);
+}
+
+#title.refreshing #title-text::before {
+	content: "";
+	position: absolute;
+	width: 38px;
+	height: 100%;
+	top: 0;
+	left: 0;
+	animation: swivel 1.2s ease-in-out infinite;
+	background: #6e738d;
+	opacity: 0.5;
+	border-radius: 6px;
 }
 
 #messages {
@@ -320,6 +334,7 @@ body:not(.loading) #loading {
 	margin-left: 12px;
 }
 
+.message:not(.has-text) .text,
 .message:not(.has-tags) .tags {
 	display: none;
 }
@@ -393,6 +408,14 @@ body:not(.loading) #loading {
 	border-radius: 6px;
 	padding: 10px 12px;
 	margin-top: 16px;
+}
+
+.reasoning-text strong {
+	display: block;
+}
+
+.reasoning-text strong:not(:first-child) {
+	margin-top: 14px;
 }
 
 .message.has-reasoning:not(.has-text):not(.errored) div.text,
@@ -611,9 +634,30 @@ body:not(.loading) #loading {
 	font-style: italic;
 }
 
-.message:empty.receiving .text::before,
-.message.waiting .text::before {
-	content: ". . .";
+.message .loader {
+	display: none;
+}
+
+.message.receiving:not(.has-text) .loader,
+.message.waiting .loader {
+	display: flex;
+	gap: 8px;
+}
+
+.message .loader span {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #939ab7;
+	animation: bounce 1.4s infinite ease-in-out;
+}
+
+.message .loader span:nth-child(2) {
+	animation-delay: 0.2s;
+}
+
+.message .loader span:nth-child(3) {
+	animation-delay: 0.4s;
 }
 
 .statistics {
@@ -708,6 +752,10 @@ body:not(.loading) #loading {
 	right: 0;
 	height: 8px;
 	cursor: n-resize;
+}
+
+#chat:has(.has-files) #resize-bar {
+	top: 46px;
 }
 
 #attachments {
@@ -1035,6 +1083,10 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/screen.svg);
 }
 
+#scrolling.not-following {
+	opacity: 0.5;
+}
+
 #json {
 	background-image: url(icons/json-off.svg);
 }
@@ -1193,6 +1245,32 @@ label[for="reasoning-tokens"] {
 
 #login:hover {
 	background: #89bb77;
+}
+
+@keyframes swivel {
+
+	0%,
+	100% {
+		left: 0px;
+	}
+
+	50% {
+		left: calc(100%);
+		transform: translateX(-100%);
+	}
+}
+
+@keyframes bounce {
+
+	0%,
+	75%,
+	100% {
+		transform: translateY(0);
+	}
+
+	25% {
+		transform: translateY(-4px);
+	}
 }
 
 @keyframes wiggling {

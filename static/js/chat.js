@@ -1,7 +1,6 @@
 (() => {
 	const $version = document.getElementById("version"),
 		$total = document.getElementById("total"),
-		$notifications = document.getElementById("notifications"),
 		$title = document.getElementById("title"),
 		$titleRefresh = document.getElementById("title-refresh"),
 		$titleText = document.getElementById("title-text"),
@@ -34,7 +33,8 @@
 		$password = document.getElementById("password"),
 		$login = document.getElementById("login");
 
-	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+	const nearBottom = 22,
+		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
 	let platform = "";
 
@@ -50,6 +50,8 @@
 		promptList = [];
 
 	let autoScrolling = false,
+		followTail = true,
+		awaitingScroll = false,
 		jsonMode = false,
 		searchTool = false,
 		chatTitle = false;
@@ -66,34 +68,6 @@
 		$total.textContent = formatMoney(totalCost);
 	}
 
-	async function notify(msg, persistent = false) {
-		console.warn(msg);
-
-		const notification = make("div", "notification", "off-screen");
-
-		notification.textContent = msg instanceof Error ? msg.message : msg;
-
-		$notifications.appendChild(notification);
-
-		await wait(250);
-
-		notification.classList.remove("off-screen");
-
-		if (persistent) {
-			return;
-		}
-
-		await wait(5000);
-
-		notification.style.height = `${notification.getBoundingClientRect().height}px`;
-
-		notification.classList.add("off-screen");
-
-		await wait(250);
-
-		notification.remove();
-	}
-
 	function updateTitle() {
 		const title = chatTitle || (messages.length ? "New Chat" : "");
 
@@ -106,26 +80,44 @@
 		storeValue("title", chatTitle);
 	}
 
+	function distanceFromBottom() {
+		return $messages.scrollHeight - ($messages.scrollTop + $messages.clientHeight);
+	}
+
 	function updateScrollButton() {
-		const bottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight);
+		const bottom = distanceFromBottom();
 
 		$top.classList.toggle("hidden", $messages.scrollTop < 80);
 		$bottom.classList.toggle("hidden", bottom < 80);
 	}
 
+	function setFollowTail(follow) {
+		followTail = follow;
+
+		$scrolling.classList.toggle("not-following", !followTail);
+	}
+
 	function scroll(force = false, instant = false) {
-		if (!autoScrolling && !force) {
+		if (awaitingScroll || !(followTail || force)) {
 			updateScrollButton();
 
 			return;
 		}
 
-		setTimeout(() => {
+		awaitingScroll = true;
+
+		requestAnimationFrame(() => {
+			awaitingScroll = false;
+
+			if (!followTail && !force) {
+				return;
+			}
+
 			$messages.scroll({
 				top: $messages.scrollHeight,
 				behavior: instant ? "instant" : "smooth",
 			});
-		}, 0);
+		});
 	}
 
 	function preloadIcons(icons) {
@@ -215,6 +207,13 @@
 
 			this.#_message.appendChild(_body);
 
+			// loader
+			const _loader = make("div", "loader");
+
+			_loader.innerHTML = "<span></span>".repeat(3);
+
+			_body.appendChild(_loader);
+
 			// message files
 			this.#_files = make("div", "files");
 
@@ -233,11 +232,13 @@
 			_reasoning.appendChild(_toggle);
 
 			_toggle.addEventListener("click", () => {
-				_reasoning.classList.toggle("expanded");
+				let delta = this.#updateReasoningHeight() + 16; // margin
 
-				if (_reasoning.classList.contains("expanded")) {
-					this.#updateReasoningHeight();
+				if (!_reasoning.classList.toggle("expanded")) {
+					delta = -delta;
 				}
+
+				setFollowTail(distanceFromBottom() + delta <= nearBottom);
 
 				updateScrollButton();
 			});
@@ -282,7 +283,13 @@
 			this.#_tool.appendChild(_call);
 
 			_call.addEventListener("click", () => {
-				this.#_tool.classList.toggle("expanded");
+				let delta = this.#updateToolHeight() + 16; // margin
+
+				if (!this.#_tool.classList.toggle("expanded")) {
+					delta = -delta;
+				}
+
+				setFollowTail(distanceFromBottom() + delta <= nearBottom);
 
 				updateScrollButton();
 			});
@@ -323,6 +330,10 @@
 
 			_optCollapse.addEventListener("click", () => {
 				this.#_message.classList.toggle("collapsed");
+
+				updateScrollButton();
+
+				setFollowTail(distanceFromBottom() <= nearBottom);
 
 				this.#save();
 			});
@@ -432,13 +443,20 @@
 		}
 
 		#updateReasoningHeight() {
-			this.#_reasoning.parentNode.style.setProperty("--height", `${this.#_reasoning.scrollHeight}px`);
+			const height = this.#_reasoning.scrollHeight;
+
+			this.#_reasoning.parentNode.style.setProperty("--height", `${height}px`);
+
+			return height;
 		}
 
 		#updateToolHeight() {
-			const result = this.#_tool.querySelector(".result");
+			const result = this.#_tool.querySelector(".result"),
+				height = result.scrollHeight;
 
-			this.#_tool.style.setProperty("--height", `${result.scrollHeight}px`);
+			this.#_tool.style.setProperty("--height", `${height}px`);
+
+			return height;
 		}
 
 		#morph(from, to) {
@@ -524,8 +542,6 @@
 
 				this.#_message.classList.toggle("has-tool", !!this.#tool);
 
-				this.#updateToolHeight();
-
 				noScroll || scroll();
 
 				updateScrollButton();
@@ -565,8 +581,6 @@
 
 			if (!only || only === "reasoning") {
 				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
-					this.#updateReasoningHeight();
-
 					noScroll || scroll();
 
 					updateScrollButton();
@@ -829,6 +843,10 @@
 				this.#render(false, true);
 				this.#save();
 			}
+
+			setFollowTail(distanceFromBottom() <= nearBottom);
+
+			updateScrollButton();
 		}
 
 		delete() {
@@ -949,6 +967,10 @@
 
 				return;
 			}
+		}
+
+		if (autoScrolling) {
+			setFollowTail(true);
 		}
 
 		let temperature = parseFloat($temperature.value);
@@ -1308,7 +1330,9 @@
 			}
 
 			if (message.tags) {
-				message.tags.forEach(tag => obj.addTag(tag));
+				message.tags.forEach(tag => {
+					obj.addTag(tag);
+				});
 			}
 
 			if (message.tool) {
@@ -1324,10 +1348,9 @@
 
 		updateTitle();
 
-		scroll();
-
-		// small fix, sometimes when hard reloading we don't scroll all the way
-		setTimeout(scroll, 250);
+		requestAnimationFrame(() => {
+			$messages.scrollTop = $messages.scrollHeight;
+		});
 	}
 
 	let attachments = [];
@@ -1437,7 +1460,17 @@
 		updateScrollButton();
 	});
 
+	$messages.addEventListener("wheel", event => {
+		if (event.deltaY < 0) {
+			setFollowTail(false);
+		} else {
+			setFollowTail(distanceFromBottom() - event.deltaY <= nearBottom);
+		}
+	});
+
 	$bottom.addEventListener("click", () => {
+		setFollowTail(true);
+
 		$messages.scroll({
 			top: $messages.scrollHeight,
 			behavior: "smooth",
@@ -1445,6 +1478,8 @@
 	});
 
 	$top.addEventListener("click", () => {
+		setFollowTail($messages.scrollHeight <= $messages.clientHeight);
+
 		$messages.scroll({
 			top: 0,
 			behavior: "smooth",
@@ -1452,7 +1487,7 @@
 	});
 
 	$resizeBar.addEventListener("mousedown", event => {
-		const isAtBottom = $messages.scrollHeight - ($messages.scrollTop + $messages.offsetHeight) <= 10;
+		const isAtBottom = $messages.scrollHeight - ($messages.scrollTop + $messages.clientHeight) <= 10;
 
 		if (event.button === 1) {
 			$chat.style.height = "";
@@ -1671,6 +1706,8 @@
 		autoScrolling = !autoScrolling;
 
 		if (autoScrolling) {
+			setFollowTail(true);
+
 			$scrolling.title = "Turn off auto-scrolling";
 			$scrolling.classList.add("on");
 
@@ -1729,7 +1766,7 @@
 		}
 
 		const total = window.innerHeight,
-			height = clamp(window.innerHeight - event.clientY, 100, total - 240);
+			height = clamp(window.innerHeight - event.clientY + (attachments.length ? 50 : 0), 100, total - 240);
 
 		$chat.style.height = `${height}px`;
 
@@ -1742,6 +1779,52 @@
 		isResizing = false;
 
 		document.body.classList.remove("resizing");
+	});
+
+	addEventListener("keydown", event => {
+		if (["TEXTAREA", "INPUT", "SELECT"].includes(document.activeElement?.tagName)) {
+			return;
+		}
+
+		let delta;
+
+		switch (event.key) {
+			case "PageUp":
+			case "ArrowUp":
+				delta = event.key === "PageUp" ? -$messages.clientHeight : -120;
+
+				setFollowTail(false);
+
+				break;
+			case "PageDown":
+			case "ArrowDown":
+				delta = event.key === "PageDown" ? $messages.clientHeight : 120;
+
+				setFollowTail(distanceFromBottom() - delta <= nearBottom);
+
+				break;
+			case "Home":
+				delta = -$messages.scrollTop;
+
+				setFollowTail(false);
+
+				break;
+			case "End":
+				delta = $messages.scrollHeight - $messages.clientHeight - $messages.scrollTop;
+
+				setFollowTail(true);
+
+				break;
+		}
+
+		if (delta) {
+			event.preventDefault();
+
+			$messages.scrollBy({
+				top: delta,
+				behavior: "smooth",
+			});
+		}
 	});
 
 	dropdown($role);

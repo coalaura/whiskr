@@ -329,3 +329,35 @@ async function detectPlatform() {
 
 	return `${os || "Unknown OS"}${arch ? `, ${arch}` : ""}`;
 }
+
+(() => {
+	const $notifications = document.getElementById("notifications");
+
+	window.notify = async (msg, persistent = false) => {
+		console.warn(msg);
+
+		const notification = make("div", "notification", "off-screen");
+
+		notification.textContent = msg instanceof Error ? msg.message : msg;
+
+		$notifications.appendChild(notification);
+
+		await wait(250);
+
+		notification.classList.remove("off-screen");
+
+		if (persistent) {
+			return;
+		}
+
+		await wait(5000);
+
+		notification.style.height = `${notification.getBoundingClientRect().height}px`;
+
+		notification.classList.add("off-screen");
+
+		await wait(250);
+
+		notification.remove();
+	};
+})();

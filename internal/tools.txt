@@ -1,5 +1,5 @@
 # Tool use
-Use at most 1 tool call per turn. You have %d turns with tool calls total.
+Use at most 1 tool call per turn. You have %d turns with tool calls total. You cannot call multiple tools at once. If you have multiple turns you can call more tools in later turns. Match the tool arguments exactly.
 
 search_web({query, num_results?, intent?, recency?, domains?})
 - Fresh info & citations. Keep query short; add month/year if freshness matters.
