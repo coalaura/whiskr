@@ -13,7 +13,7 @@ import (
 
 type Chunk struct {
 	Type string `json:"type"`
-	Text any    `json:"text"`
+	Text any    `json:"text,omitempty"`
 }
 
 type Stream struct {
@@ -69,6 +69,18 @@ func IDChunk(id string) Chunk {
 	return Chunk{
 		Type: "id",
 		Text: id,
+	}
+}
+
+func EndChunk() Chunk {
+	return Chunk{
+		Type: "end",
+	}
+}
+
+func StartChunk() Chunk {
+	return Chunk{
+		Type: "start",
 	}
 }
 

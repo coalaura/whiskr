@@ -276,6 +276,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
 
+		response.Send(StartChunk())
+
 		if len(request.Tools) > 0 && iteration == raw.Iterations-1 {
 			debug("no more tool calls")
 
@@ -341,6 +343,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			tool.AsAssistantToolCall(message),
 			tool.AsToolMessage(),
 		)
+
+		response.Send(EndChunk())
 	}
 }
 
