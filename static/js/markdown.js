@@ -111,7 +111,7 @@
 
 		const el = event.target.closest(".table-wrapper");
 
-		if (!el) {
+		if (!el || !el.classList.contains("overflowing")) {
 			return;
 		}
 
