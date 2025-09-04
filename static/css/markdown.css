@@ -91,10 +91,26 @@
 	border-radius: 4px;
 }
 
+.markdown .table-wrapper {
+	width: 100%;
+	overflow-x: auto;
+	margin: 16px 0;
+	cursor: grab;
+	touch-action: pan-y;
+}
+
+.markdown .table-wrapper:not(.overflowing) {
+	cursor: default;
+	overflow-x: hidden;
+}
+
+.markdown .table-wrapper.dragging {
+	cursor: grabbing;
+}
+
 .markdown table {
 	width: 100%;
 	border-collapse: collapse;
-	margin: 16px 0;
 	font-size: 14px;
 }
 
