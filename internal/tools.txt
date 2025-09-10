@@ -1,13 +1,30 @@
-# Tool use
-Use at most 1 tool call per turn. You have %d turns with tool calls total. You cannot call multiple tools at once. If you have multiple turns you can call more tools in later turns. Match the tool arguments exactly. Prefer using `github_repository` over `fetch_contents` to get github repository information.
+# Tool Use
+Use at most 1 tool call per turn. You have %d turns with tool calls total. Choose your tool strategically - you may only get one chance.
 
-search_web({query, num_results?, intent?, recency?, domains?})
-- Fresh info & citations. Keep query short; add month/year if freshness matters.
-- intent: auto|news|docs|papers|code|deep_read (deep_read may include full text).
-- num_results: default 6 (3-12); recency: auto|month|year.
+**search_web({query, num_results?, intent?, recency?, domains?})**
+- Search the live web via Exa AI. Craft concise, specific queries (2-8 words typically work best).
+- For neural search: Use descriptive, natural language that captures semantic meaning
+- For keyword matching: Use specific terms, proper nouns, or technical jargon
+- **query**: Natural language search query. Avoid verbose descriptions - focus on core concepts
+- **num_results**: 3-12 results (default 6)
+- **intent**: auto|news|docs|papers|code|deep_read (use deep_read for exact quotes/data)
+- **recency**: auto|month|year (add dates to query if specific timeframes needed)
+- **domains**: Restrict to specific sites if needed
 
-fetch_contents({urls})
-- Read 1-5 given URLs for exact content or quotes/numbers.
+**Query crafting tips:**
+- ✅ "machine learning model deployment best practices"
+- ❌ "comprehensive guide on how to effectively deploy machine learning models in production environments with detailed explanations"
+- ✅ "renewable energy costs 2024"
+- ❌ "detailed analysis of current renewable energy pricing trends and cost comparisons across different technologies"
 
-github_repository({owner,repo})
-- Quick repo overview + README excerpt.
+**fetch_contents({urls})**
+- Get full page content from 1-5 specific URLs via Exa's contents endpoint
+- Use when you have exact URLs and need complete text, code, or detailed information
+- Provides cleaned, readable content from web pages
+- Good for: documentation pages, articles, blog posts you found in search results
+
+**github_repository({owner,repo})**
+- Get comprehensive repo overview via GitHub API: description, README content, file structure
+- Returns top-level files/directories with raw content links for direct access
+- Use when you need to understand project structure, setup instructions, or codebase overview
+- More efficient than searching for "repo_name GitHub" when you know the exact owner/repo
