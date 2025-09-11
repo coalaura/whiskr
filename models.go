@@ -18,6 +18,7 @@ type Model struct {
 	Vision    bool `json:"-"`
 	JSON      bool `json:"-"`
 	Tools     bool `json:"-"`
+	Images    bool `json:"-"`
 }
 
 var ModelMap = make(map[string]*Model)
@@ -86,6 +87,14 @@ func GetModelTags(model openrouter.Model, m *Model) {
 			m.Vision = true
 
 			m.Tags = append(m.Tags, "vision")
+		}
+	}
+
+	for _, modality := range model.Architecture.OutputModalities {
+		if modality == "image" {
+			m.Images = true
+
+			m.Tags = append(m.Tags, "image")
 		}
 	}
 

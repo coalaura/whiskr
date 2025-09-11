@@ -19,8 +19,9 @@ type EnvTokens struct {
 }
 
 type EnvSettings struct {
-	CleanContent bool   `json:"cleanup"`
-	TitleModel   string `json:"title-model"`
+	CleanContent    bool   `json:"cleanup"`
+	TitleModel      string `json:"title-model"`
+	ImageGeneration bool   `json:"image-generation"`
 }
 
 type EnvUser struct {
@@ -45,7 +46,8 @@ type Environment struct {
 var env = Environment{
 	// defaults
 	Settings: EnvSettings{
-		CleanContent: true,
+		CleanContent:    true,
+		ImageGeneration: true,
 	},
 }
 
@@ -65,6 +67,13 @@ func (e *Environment) Init() error {
 	// print if debug is enabled
 	if e.Debug {
 		log.Warnln("Debug mode enabled")
+	}
+
+	// print if image generation is enabled
+	if e.Settings.ImageGeneration {
+		log.Warnln("Image generation enabled")
+	} else {
+		log.Warnln("Image generation disabled")
 	}
 
 	// check if server secret is set
@@ -133,8 +142,9 @@ func (e *Environment) Store() error {
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
-			"$.settings.cleanup":     {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
-			"$.settings.title-model": {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
+			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
+			"$.settings.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
+			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},

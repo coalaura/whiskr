@@ -111,6 +111,10 @@
 	background-image: url(icons/tags/json.svg)
 }
 
+.tags .tag.image {
+	background-image: url(icons/tags/image.svg)
+}
+
 .tags .tag.all {
 	background-image: url(icons/tags/all.svg)
 }

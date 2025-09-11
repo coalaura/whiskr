@@ -363,6 +363,18 @@ body:not(.loading) #loading {
 	max-width: 800px;
 }
 
+.message.loading .text::after {
+	content: "";
+	display: block;
+	position: relative;
+	width: 32px;
+	height: 3px;
+	background: #cad3f5;
+	animation: swivel 1.5s ease-in-out infinite;
+	opacity: 0.5;
+	margin-top: 5px;
+}
+
 .message:not(.editing) textarea.text,
 .message.editing div.text {
 	display: none;
@@ -1256,7 +1268,7 @@ label[for="reasoning-tokens"] {
 	}
 
 	50% {
-		left: calc(100%);
+		left: 100%;
 		transform: translateX(-100%);
 	}
 }

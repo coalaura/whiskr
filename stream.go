@@ -52,6 +52,19 @@ func (s *Stream) Send(ch Chunk) error {
 	return WriteChunk(s.wr, s.ctx, ch)
 }
 
+func StartChunk() Chunk {
+	return Chunk{
+		Type: "start",
+	}
+}
+
+func IDChunk(id string) Chunk {
+	return Chunk{
+		Type: "id",
+		Text: id,
+	}
+}
+
 func ReasoningChunk(text string) Chunk {
 	return Chunk{
 		Type: "reason",
@@ -73,29 +86,16 @@ func ToolChunk(tool *ToolCall) Chunk {
 	}
 }
 
-func IDChunk(id string) Chunk {
+func ErrorChunk(err error) Chunk {
 	return Chunk{
-		Type: "id",
-		Text: id,
+		Type: "error",
+		Text: GetErrorMessage(err),
 	}
 }
 
 func EndChunk() Chunk {
 	return Chunk{
 		Type: "end",
-	}
-}
-
-func StartChunk() Chunk {
-	return Chunk{
-		Type: "start",
-	}
-}
-
-func ErrorChunk(err error) Chunk {
-	return Chunk{
-		Type: "error",
-		Text: GetErrorMessage(err),
 	}
 }
 

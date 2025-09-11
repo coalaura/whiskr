@@ -6,7 +6,7 @@ require (
 	github.com/coalaura/plain v0.2.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/goccy/go-yaml v1.18.0
-	github.com/revrost/go-openrouter v0.2.3
+	github.com/revrost/go-openrouter v0.2.4-0.20250909110314-b8c4ee4c5861
 	golang.org/x/crypto v0.42.0
 )
 

@@ -146,6 +146,7 @@
 
 		#editing = false;
 		#state = false;
+		#loading = false;
 
 		#_diff;
 		#pending = {};
@@ -750,6 +751,16 @@
 			this.#save();
 		}
 
+		setLoading(loading) {
+			if (this.#loading === loading) {
+				return;
+			}
+
+			this.#loading = loading;
+
+			this.#_message.classList.toggle("loading", this.#loading);
+		}
+
 		setState(state) {
 			if (this.#state === state) {
 				return;
@@ -1032,7 +1043,21 @@
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
 
-		let message, generationID;
+		let message, generationID, timeout;
+
+		function stopLoadingTimeout() {
+			clearTimeout(timeout);
+
+			message?.setLoading(false);
+		}
+
+		function startLoadingTimeout() {
+			clearTimeout(timeout);
+
+			timeout = setTimeout(() => {
+				message?.setLoading(true);
+			}, 1500);
+		}
 
 		function finish(aborted = false) {
 			if (!message) {
@@ -1076,6 +1101,8 @@
 				signal: chatController.signal,
 			},
 			chunk => {
+				stopLoadingTimeout();
+
 				if (chunk === "aborted") {
 					chatController = null;
 
@@ -1135,6 +1162,8 @@
 
 						break;
 				}
+
+				startLoadingTimeout();
 			}
 		);
 	}
