@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"io"
 	"os"
@@ -25,6 +25,7 @@ type EnvSettings struct {
 }
 
 type EnvUser struct {
+	ID       string `json:"id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -64,6 +65,8 @@ func init() {
 }
 
 func (e *Environment) Init() error {
+	var store bool
+
 	// print if debug is enabled
 	if e.Debug {
 		log.Warnln("Debug mode enabled")
@@ -78,23 +81,16 @@ func (e *Environment) Init() error {
 
 	// check if server secret is set
 	if e.Tokens.Secret == "" {
-		log.Warnln("Missing tokens.secret, generating new...")
+		log.Warnln("Missing tokens.secret, generating new")
 
-		key := make([]byte, 32)
-
-		_, err := io.ReadFull(rand.Reader, key)
+		secret, err := CreateSecret(32)
 		if err != nil {
 			return err
 		}
 
-		e.Tokens.Secret = base64.StdEncoding.EncodeToString(key)
+		e.Tokens.Secret = secret
 
-		err = e.Store()
-		if err != nil {
-			return err
-		}
-
-		log.Println("Stored new tokens.secret")
+		store = true
 	}
 
 	// check if openrouter token is set
@@ -120,8 +116,31 @@ func (e *Environment) Init() error {
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
-	for _, user := range e.Authentication.Users {
+	for i, user := range e.Authentication.Users {
+		if user.ID == "" {
+			log.Warnf("User %q has no id, generating new\n", user.Username)
+
+			id, err := CreateSecret(16)
+			if err != nil {
+				return err
+			}
+
+			user.ID = id
+
+			e.Authentication.Users[i] = user
+
+			store = true
+		}
+
 		e.Authentication.lookup[user.Username] = user
+	}
+
+	if store {
+		if err := e.Store(); err != nil {
+			return err
+		}
+
+		log.Println("Updated config.yml")
 	}
 
 	return nil
@@ -159,4 +178,15 @@ func (e *Environment) Store() error {
 	body := bytes.ReplaceAll(buffer.Bytes(), []byte("#\n"), []byte("\n"))
 
 	return os.WriteFile("config.yml", body, 0644)
+}
+
+func CreateSecret(length int) (string, error) {
+	key := make([]byte, length)
+
+	_, err := io.ReadFull(rand.Reader, key)
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(key), nil
 }
