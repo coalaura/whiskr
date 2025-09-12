@@ -393,6 +393,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		}
 
 		choice := chunk.Choices[0]
+		delta := choice.Delta
 
 		if choice.FinishReason == openrouter.FinishReasonContentFilter {
 			response.Send(ErrorChunk(errors.New("stopped due to content_filter")))
@@ -400,7 +401,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			return nil, "", nil
 		}
 
-		calls := choice.Delta.ToolCalls
+		calls := delta.ToolCalls
 
 		if len(calls) > 0 {
 			call := calls[0]
@@ -416,14 +417,20 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			break
 		}
 
-		content := choice.Delta.Content
+		if delta.Content != "" {
+			buf.WriteString(delta.Content)
 
-		if content != "" {
-			buf.WriteString(content)
+			response.Send(TextChunk(delta.Content))
+		} else if delta.Reasoning != nil {
+			response.Send(ReasoningChunk(*delta.Reasoning))
+		} else if len(delta.Images) > 0 {
+			for _, image := range delta.Images {
+				if image.Type != openrouter.StreamImageTypeImageURL {
+					continue
+				}
 
-			response.Send(TextChunk(content))
-		} else if choice.Delta.Reasoning != nil {
-			response.Send(ReasoningChunk(*choice.Delta.Reasoning))
+				response.Send(ImageChunk(image.ImageURL.URL))
+			}
 		}
 	}
 

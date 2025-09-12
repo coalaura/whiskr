@@ -79,6 +79,13 @@ func TextChunk(text string) Chunk {
 	}
 }
 
+func ImageChunk(image string) Chunk {
+	return Chunk{
+		Type: "image",
+		Text: image,
+	}
+}
+
 func ToolChunk(tool *ToolCall) Chunk {
 	return Chunk{
 		Type: "tool",

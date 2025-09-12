@@ -86,6 +86,36 @@ function formatMilliseconds(ms) {
 	return `${Math.round(ms / 1000)}s`;
 }
 
+function dataBlob(dataUrl) {
+	const [header, data] = dataUrl.split(","),
+		mime = header.match(/data:(.*?)(;|$)/)[1];
+
+	let blob;
+
+	if (header.includes(";base64")) {
+		const bytes = atob(data),
+			numbers = new Array(bytes.length);
+
+		for (let i = 0; i < bytes.length; i++) {
+			numbers[i] = bytes.charCodeAt(i);
+		}
+
+		const byteArray = new Uint8Array(numbers);
+
+		blob = new Blob([byteArray], {
+			type: mime,
+		});
+	} else {
+		const text = decodeURIComponent(data);
+
+		blob = new Blob([text], {
+			type: mime,
+		});
+	}
+
+	return blob;
+}
+
 function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(/\.?0+$/m, "");
 }

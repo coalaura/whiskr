@@ -137,6 +137,7 @@
 		#role;
 		#reasoning;
 		#text;
+		#images = [];
 		#files = [];
 
 		#tool;
@@ -158,10 +159,11 @@
 		#_reasoning;
 		#_text;
 		#_edit;
+		#_images;
 		#_tool;
 		#_statistics;
 
-		constructor(role, reasoning, text, files = [], collapsed = false) {
+		constructor(role, reasoning, text, tool = false, files = [], images = [], tags = [], collapsed = false) {
 			this.#id = uid();
 			this.#role = role;
 			this.#reasoning = reasoning || "";
@@ -172,15 +174,25 @@
 			this.#build(collapsed);
 			this.#render();
 
+			if (tool) {
+				this.setTool(tool);
+			}
+
 			for (const file of files) {
 				this.addFile(file);
 			}
 
+			for (const image of images) {
+				this.addImage(image);
+			}
+
+			for (const tag of tags) {
+				this.addTag(tag);
+			}
+
 			messages.push(this);
 
-			if (this.#reasoning || this.#text) {
-				this.#save();
-			}
+			this.#save();
 		}
 
 		#build(collapsed) {
@@ -272,6 +284,11 @@
 			this.#_edit.addEventListener("input", () => {
 				this.updateEditHeight();
 			});
+
+			// message images
+			this.#_images = make("div", "images");
+
+			_body.appendChild(this.#_images);
 
 			// message tool
 			this.#_tool = make("div", "tool");
@@ -514,6 +531,38 @@
 				this.#_message.classList.toggle("has-tags", this.#tags.length > 0);
 			}
 
+			if (!only || only === "images") {
+				for (let x = 0; x < this.#images.length; x++) {
+					if (this.#_images.querySelector(`.i-${x}`)) {
+						continue;
+					}
+
+					const image = this.#images[x],
+						blob = dataBlob(image),
+						url = URL.createObjectURL(blob);
+
+					const _link = make("a", "image", `i-${x}`);
+
+					_link.download = `image-${x + 1}`;
+					_link.target = "_blank";
+					_link.href = url;
+
+					this.#_images.appendChild(_link);
+
+					const _image = make("img");
+
+					_image.src = url;
+
+					_link.appendChild(_image);
+				}
+
+				this.#_message.classList.toggle("has-images", !!this.#images.length);
+
+				noScroll || scroll();
+
+				updateScrollButton();
+			}
+
 			if (!only || only === "tool") {
 				if (this.#tool) {
 					const { name, args, result, cost, invalid } = this.#tool;
@@ -650,6 +699,10 @@
 				data.reasoning = this.#reasoning;
 			}
 
+			if (this.#images.length && full) {
+				data.images = this.#images;
+			}
+
 			if (this.#error && full) {
 				data.error = this.#error;
 			}
@@ -666,7 +719,7 @@
 				data.collapsed = true;
 			}
 
-			if (!data.files?.length && !data.reasoning && !data.text && !data.tool) {
+			if (!data.images?.length && !data.files?.length && !data.reasoning && !data.text && !data.tool) {
 				return false;
 			}
 
@@ -787,6 +840,13 @@
 			this.#tool = tool;
 
 			this.#render("tool");
+			this.#save();
+		}
+
+		addImage(image) {
+			this.#images.push(image);
+
+			this.#render("images");
 			this.#save();
 		}
 
@@ -995,7 +1055,7 @@
 			$temperature.classList.remove("invalid");
 		}
 
-		let iterations = parseInt($iterations.value);
+		let iterations = parseInt($iterations.value, 10);
 
 		if (Number.isNaN(iterations) || iterations < 1 || iterations > 50) {
 			iterations = 3;
@@ -1006,7 +1066,7 @@
 
 		const effort = $reasoningEffort.value;
 
-		let tokens = parseInt($reasoningTokens.value);
+		let tokens = parseInt($reasoningTokens.value, 10);
 
 		if (!effort && (Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)) {
 			tokens = 1024;
@@ -1145,6 +1205,10 @@
 
 							finish();
 						}
+
+						break;
+					case "image":
+						message.addImage(chunk.text);
 
 						break;
 					case "reason":
@@ -1354,20 +1418,10 @@
 		}
 
 		loadValue("messages", []).forEach(message => {
-			const obj = new Message(message.role, message.reasoning, message.text, message.files || [], message.collapsed);
+			const obj = new Message(message.role, message.reasoning, message.text, message.tool, message.files || [], message.images || [], message.tags || [], message.collapsed);
 
 			if (message.error) {
 				obj.showError(message.error);
-			}
-
-			if (message.tags) {
-				message.tags.forEach(tag => {
-					obj.addTag(tag);
-				});
-			}
-
-			if (message.tool) {
-				obj.setTool(message.tool);
 			}
 
 			if (message.statistics) {
@@ -1689,7 +1743,7 @@
 			},
 			json: jsonMode,
 			search: searchTool,
-			messages: messages.map(message => message.getData()).filter(Boolean),
+			messages: messages.map(message => message.getData(true)).filter(Boolean),
 		});
 
 		download("chat.json", "application/json", data);

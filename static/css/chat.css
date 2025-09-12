@@ -334,6 +334,9 @@ body:not(.loading) #loading {
 	margin-left: 12px;
 }
 
+.message:not(.has-tool) .tool,
+.message:not(.has-reasoning) .reasoning,
+.message:not(.has-images) .images,
 .message:not(.has-text) .text,
 .message:not(.has-tags) .tags {
 	display: none;
@@ -405,6 +408,18 @@ body:not(.loading) #loading {
 	border: 2px solid #ed8796;
 }
 
+.images .image {
+	display: block;
+	font-size: 0;
+}
+
+.images .image img {
+	max-width: 100%;
+	width: 420px;
+	border-radius: 6px;
+	border: 2px solid #363a4f;
+}
+
 .tool .result pre,
 .reasoning-text pre {
 	background: #1b1d2a;
@@ -433,8 +448,7 @@ body:not(.loading) #loading {
 .message.has-reasoning:not(.has-text):not(.errored) div.text,
 .message.has-tool:not(.has-text):not(.errored) div.text,
 .message.has-files:not(.has-text):not(.errored) div.text,
-.message:not(.has-tool) .tool,
-.message:not(.has-reasoning) .reasoning {
+.message.has-images:not(.has-text):not(.errored) div.text {
 	display: none;
 }
 
