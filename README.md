@@ -7,7 +7,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 ## Features
 
 ### Core Functionality
-- **Private & Self-Hosted**: All your data is stored in `localStorage`.
+- **Private & Self-Hosted**: All your data is stored in `indexedDB`.
 - **Broad Model Support**: Use any model available on your OpenRouter account.
 - **Real-time Responses**: Get streaming responses from models as they are generated.
 - **Persistent Settings**: Your chosen model, temperature, and other parameters are saved between sessions.

@@ -1251,6 +1251,8 @@
 		};
 
 		if (!body.messages.length) {
+			chatTitle = false;
+
 			updateTitle();
 
 			return;
