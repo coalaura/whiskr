@@ -12,6 +12,9 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - **Real-time Responses**: Get streaming responses from models as they are generated.
 - **Persistent Settings**: Your chosen model, temperature, and other parameters are saved between sessions.
 - **Authentication**: Optional user/password authentication for added security.
+- Multimodal Output: If a model supports image output (for example, `google/gemini-2.5-flash-image-preview`), whiskr will request and render images alongside text. You can enable/disable this globally via `settings.image-generation` in `config.yml` (default: true).
+
+![image](.github/images.png)
 
 ### Conversation Control
 - **Full Message Control**: Edit, delete, or copy any message in the conversation.
@@ -79,6 +82,12 @@ go build -o whiskr
 ```
 3. Open `http://localhost:3443` in your browser.
 
+Optional configuration notes (from `config.yml`):
+- `settings.image-generation` (bool, default: true) - allow models with image output to generate images. If set to false, whiskr requests text-only responses even for image-capable models.
+- `settings.title-model` (string, default: `google/gemini-2.5-flash-lite`) - model used to generate chat titles (requires structured output support).
+- `tokens.exa` (optional) - enables the search tools; without it, web search is unavailable.
+- `tokens.github` (optional) - increases GitHub API limits for the GitHub repository tool.
+
 ## Authentication (optional)
 
 whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt (12 rounds). If `authentication.enabled` is set to `false`, whiskr will not prompt for authentication at all.
@@ -133,7 +142,8 @@ server {
 - Click **"Reasoning"** on an assistant message to view the model's thought process or tool usage.
 - Adjust model, temperature, prompt, or message role from the controls in the bottom-left.
 - Attach images using markdown syntax (`![alt](url)`) or upload text/code files with the attachment button.
-- Use the buttons in the top-right to **import/export** the chat or **clear** all messages.
+- When using an **image-output model** (e.g., `google/gemini-2.5-flash-image-preview`) and `settings.image-generation` is enabled, whiskr will display returned images inline.
+- Use the buttons in the top-right to **import/export** the chat or clear all messages.
 
 ## License
 
