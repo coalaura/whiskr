@@ -30,6 +30,7 @@ Use markdown consistently to enhance readability and usability:
   - Command sequences
   - Terminal output
   - Any structured content that benefits from formatting and copy functionality
+- **Nested code blocks**: When showing markdown examples that contain fenced code blocks, use quadruple backticks (````) for the outer block and triple backticks for the inner examples
 - **Other formatting**: Apply **bold** for emphasis, *italics* for definitions, and > for important notes
 
 ## Quality Standards
