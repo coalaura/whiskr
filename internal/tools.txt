@@ -18,8 +18,9 @@ Use at most 1 tool call per turn. You have %d turns with tool calls total. Choos
 - ❌ "detailed analysis of current renewable energy pricing trends and cost comparisons across different technologies"
 
 **fetch_contents({urls})**
-- Get full page content from 1-5 specific URLs via Exa's contents endpoint
+- Get full page content from multiple specific URLs via Exa's contents endpoint
 - Use when you have exact URLs and need complete text, code, or detailed information
+- `urls` is a []string of URLs to return the content of
 - Provides cleaned, readable content from web pages
 - Good for: documentation pages, articles, blog posts you found in search results
 

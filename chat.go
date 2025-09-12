@@ -364,8 +364,10 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	defer stream.Close()
 
 	var (
-		id   string
-		tool *ToolCall
+		id    string
+		open  int
+		close int
+		tool  *ToolCall
 	)
 
 	buf := GetFreeBuffer()
@@ -405,12 +407,25 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		if len(calls) > 0 {
 			call := calls[0]
 
+			if open > 0 && open == close {
+				continue
+			}
+
 			if tool == nil {
 				tool = &ToolCall{}
 			}
 
-			tool.ID += call.ID
-			tool.Name += call.Function.Name
+			if call.ID != "" && !strings.HasSuffix(tool.ID, call.ID) {
+				tool.ID += call.ID
+			}
+
+			if call.Function.Name != "" && !strings.HasSuffix(tool.Name, call.Function.Name) {
+				tool.Name += call.Function.Name
+			}
+
+			open += strings.Count(call.Function.Arguments, "{")
+			close += strings.Count(call.Function.Arguments, "}")
+
 			tool.Args += call.Function.Arguments
 		} else if tool != nil {
 			break
