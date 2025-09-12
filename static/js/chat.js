@@ -174,7 +174,7 @@
 			this.#build(collapsed);
 			this.#render();
 
-			if (tool) {
+			if (tool?.name) {
 				this.setTool(tool);
 			}
 
@@ -592,6 +592,8 @@
 
 				this.#_message.classList.toggle("has-tool", !!this.#tool);
 
+				this.#updateToolHeight();
+
 				noScroll || scroll();
 
 				updateScrollButton();
@@ -631,6 +633,8 @@
 
 			if (!only || only === "reasoning") {
 				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
+					this.#updateReasoningHeight();
+
 					noScroll || scroll();
 
 					updateScrollButton();
