@@ -404,6 +404,10 @@ body:not(.loading) #loading {
 	color: #ed8796;
 }
 
+.message .text .error a {
+	color: #ee99a0;
+}
+
 .message.errored {
 	border: 2px solid #ed8796;
 }

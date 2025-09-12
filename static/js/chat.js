@@ -723,7 +723,7 @@
 				data.collapsed = true;
 			}
 
-			if (!data.images?.length && !data.files?.length && !data.reasoning && !data.text && !data.tool) {
+			if (!data.error && !data.images?.length && !data.files?.length && !data.reasoning && !data.text && !data.tool) {
 				return false;
 			}
 
@@ -868,14 +868,14 @@
 			this.#save();
 		}
 
-		showError(error) {
-			this.#error = error;
+		setError(error) {
+			this.#error = error || "Something went wrong";
 
-			this.#_message.classList.add("errored");
+			this.#_message.classList.add("errored", "has-text");
 
 			const _err = make("div", "error");
 
-			_err.textContent = this.#error;
+			_err.innerHTML = renderInline(this.#error);
 
 			this.#_text.appendChild(_err);
 
@@ -1226,7 +1226,7 @@
 
 						break;
 					case "error":
-						message.showError(chunk.text);
+						message.setError(chunk.text);
 
 						break;
 				}
@@ -1326,7 +1326,7 @@
 	}
 
 	async function loadData() {
-		const data = await json("/-/data");
+		const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
 		if (!data) {
 			notify("Failed to load data.", true);
@@ -1394,6 +1394,12 @@
 	}
 
 	function restore() {
+		const resizedHeight = loadValue("resized");
+
+		if (resizedHeight) {
+			$chat.style.height = `${resizedHeight}px`;
+		}
+
 		$message.value = loadValue("message", "");
 		$role.value = loadValue("role", "user");
 		$model.value = loadValue("model", modelList.length ? modelList[0].id : "");
@@ -1424,12 +1430,12 @@
 		loadValue("messages", []).forEach(message => {
 			const obj = new Message(message.role, message.reasoning, message.text, message.tool, message.files || [], message.images || [], message.tags || [], message.collapsed);
 
-			if (message.error) {
-				obj.showError(message.error);
-			}
-
 			if (message.statistics) {
 				obj.setStatistics(message.statistics);
+			}
+
+			if (message.error) {
+				obj.setError(message.error);
 			}
 		});
 
@@ -1918,12 +1924,6 @@
 
 	dropdown($role);
 	dropdown($reasoningEffort);
-
-	const resizedHeight = loadValue("resized");
-
-	if (resizedHeight) {
-		$chat.style.height = `${resizedHeight}px`;
-	}
 
 	loadData().then(() => {
 		restore();

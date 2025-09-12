@@ -158,4 +158,8 @@
 	window.render = markdown => {
 		return marked.parse(markdown);
 	};
+
+	window.renderInline = markdown => {
+		return marked.parseInline(markdown.trim());
+	};
 })();
