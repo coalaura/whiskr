@@ -1003,17 +1003,21 @@
 						continue;
 					}
 
+					let chunk;
+
 					try {
-						const chunk = JSON.parse(frame);
+						chunk = JSON.parse(frame);
 
 						if (!chunk) {
 							throw new Error("invalid chunk");
 						}
-
-						callback(chunk);
 					} catch (err) {
 						console.warn("bad frame", frame);
 						console.warn(err);
+					}
+
+					if (chunk) {
+						callback(chunk);
 					}
 				}
 			}
