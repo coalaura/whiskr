@@ -283,7 +283,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
 
-		response.Send(StartChunk())
+		response.WriteChunk(NewChunk(ChunkStart, nil))
 
 		if len(request.Tools) > 0 && iteration == raw.Iterations-1 {
 			debug("no more tool calls")
@@ -298,7 +298,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		tool, message, err := RunCompletion(ctx, response, request)
 		if err != nil {
-			response.Send(ErrorChunk(err))
+			response.WriteChunk(NewChunk(ChunkError, err))
 
 			return
 		}
@@ -311,27 +311,27 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		debug("got %q tool call", tool.Name)
 
-		response.Send(ToolChunk(tool))
+		response.WriteChunk(NewChunk(ChunkTool, tool))
 
 		switch tool.Name {
 		case "search_web":
 			err = HandleSearchWebTool(ctx, tool)
 			if err != nil {
-				response.Send(ErrorChunk(err))
+				response.WriteChunk(NewChunk(ChunkError, err))
 
 				return
 			}
 		case "fetch_contents":
 			err = HandleFetchContentsTool(ctx, tool)
 			if err != nil {
-				response.Send(ErrorChunk(err))
+				response.WriteChunk(NewChunk(ChunkError, err))
 
 				return
 			}
 		case "github_repository":
 			err = HandleGitHubRepositoryTool(ctx, tool)
 			if err != nil {
-				response.Send(ErrorChunk(err))
+				response.WriteChunk(NewChunk(ChunkError, err))
 
 				return
 			}
@@ -344,14 +344,14 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		debug("finished tool call")
 
-		response.Send(ToolChunk(tool))
+		response.WriteChunk(NewChunk(ChunkTool, tool))
 
 		request.Messages = append(request.Messages,
 			tool.AsAssistantToolCall(message),
 			tool.AsToolMessage(),
 		)
 
-		response.Send(EndChunk())
+		response.WriteChunk(NewChunk(ChunkEnd, nil))
 	}
 }
 
@@ -386,7 +386,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		if id == "" {
 			id = chunk.ID
 
-			response.Send(IDChunk(id))
+			response.WriteChunk(NewChunk(ChunkID, id))
 		}
 
 		if len(chunk.Choices) == 0 {
@@ -397,7 +397,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		delta := choice.Delta
 
 		if choice.FinishReason == openrouter.FinishReasonContentFilter {
-			response.Send(ErrorChunk(errors.New("stopped due to content_filter")))
+			response.WriteChunk(NewChunk(ChunkError, errors.New("stopped due to content_filter")))
 
 			return nil, "", nil
 		}
@@ -434,16 +434,16 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		if delta.Content != "" {
 			buf.WriteString(delta.Content)
 
-			response.Send(TextChunk(delta.Content))
+			response.WriteChunk(NewChunk(ChunkText, delta.Content))
 		} else if delta.Reasoning != nil {
-			response.Send(ReasoningChunk(*delta.Reasoning))
+			response.WriteChunk(NewChunk(ChunkReasoning, *delta.Reasoning))
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
 				if image.Type != openrouter.StreamImageTypeImageURL {
 					continue
 				}
 
-				response.Send(ImageChunk(image.ImageURL.URL))
+				response.WriteChunk(NewChunk(ChunkImage, image.ImageURL.URL))
 			}
 		}
 	}

@@ -1,4 +1,15 @@
 (() => {
+	const ChunkType = {
+		0: "start",
+		1: "id",
+		2: "reason",
+		3: "text",
+		4: "image",
+		5: "tool",
+		6: "error",
+		7: "end",
+	};
+
 	const $version = document.getElementById("version"),
 		$total = document.getElementById("total"),
 		$title = document.getElementById("title"),
@@ -975,50 +986,59 @@
 				throw new Error(err?.error || response.statusText);
 			}
 
-			const reader = response.body.getReader(),
-				decoder = new TextDecoder();
+			const reader = response.body.getReader();
 
-			let buffer = "";
+			let buffer = new Uint8Array();
 
 			while (true) {
 				const { value, done } = await reader.read();
 
-				if (done) break;
+				if (done) {
+					break;
+				}
 
-				buffer += decoder.decode(value, {
-					stream: true,
-				});
+				const read = new Uint8Array(buffer.length + value.length);
 
-				while (true) {
-					const idx = buffer.indexOf("\n\n");
+				read.set(buffer);
+				read.set(value, buffer.length);
 
-					if (idx === -1) {
-						break;
-					}
+				buffer = read;
 
-					const frame = buffer.slice(0, idx).trim();
-					buffer = buffer.slice(idx + 2);
+				while (buffer.length >= 5) {
+					const type = ChunkType[buffer[0]],
+						length = buffer[1] | (buffer[2] << 8) | (buffer[3] << 16) | (buffer[4] << 24);
 
-					if (!frame) {
+					if (!type) {
+						console.warn("bad chunk type", type);
+
+						buffer = buffer.slice(5 + length);
+
 						continue;
 					}
 
-					let chunk;
+					if (buffer.length < 5 + length) {
+						break;
+					}
 
-					try {
-						chunk = JSON.parse(frame);
+					let data;
 
-						if (!chunk) {
-							throw new Error("invalid chunk");
+					if (length > 0) {
+						const packed = buffer.slice(5, 5 + length);
+
+						try {
+							data = msgpackr.unpack(packed);
+						} catch (err) {
+							console.warn("bad chunk data", packed);
+							console.warn(err);
 						}
-					} catch (err) {
-						console.warn("bad frame", frame);
-						console.warn(err);
 					}
 
-					if (chunk) {
-						callback(chunk);
-					}
+					buffer = buffer.slice(5 + length);
+
+					callback({
+						type: type,
+						data: data,
+					});
 				}
 			}
 		} catch (err) {
@@ -1030,7 +1050,7 @@
 
 			callback({
 				type: "error",
-				text: err.message,
+				data: err.message,
 			});
 		} finally {
 			callback(aborted ? "aborted" : "done");
@@ -1201,36 +1221,36 @@
 
 						break;
 					case "id":
-						generationID = chunk.text;
+						generationID = chunk.data;
 
 						break;
 					case "tool":
 						message.setState("tooling");
-						message.setTool(chunk.text);
+						message.setTool(chunk.data);
 
-						if (chunk.text.done) {
-							totalCost += chunk.text.cost || 0;
+						if (chunk.data?.done) {
+							totalCost += chunk.data.cost || 0;
 
 							finish();
 						}
 
 						break;
 					case "image":
-						message.addImage(chunk.text);
+						message.addImage(chunk.data);
 
 						break;
 					case "reason":
 						message.setState("reasoning");
-						message.addReasoning(chunk.text);
+						message.addReasoning(chunk.data);
 
 						break;
 					case "text":
 						message.setState("receiving");
-						message.addText(chunk.text);
+						message.addText(chunk.data);
 
 						break;
 					case "error":
-						message.setError(chunk.text);
+						message.setError(chunk.data);
 
 						break;
 				}
