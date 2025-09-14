@@ -61,6 +61,10 @@ func NewStream(w http.ResponseWriter, ctx context.Context) (*Stream, error) {
 }
 
 func NewChunk(typ ChunkType, data any) *Chunk {
+	if str, ok := data.(string); ok {
+		data = CleanChunk(str)
+	}
+
 	return &Chunk{
 		Type: typ,
 		Data: data,

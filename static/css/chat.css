@@ -806,11 +806,19 @@ body:not(.loading) #loading {
 }
 
 .message .files {
-	background: #181926;
-	padding: 10px 12px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
 	border-radius: 2px;
-	flex-wrap: wrap;
 	overflow: hidden;
+}
+
+.message.editing .files {
+	background: #181926;
+	padding: 7px 8px;
+}
+
+.message .files .file {
+	box-shadow: none;
 }
 
 .files .file {
