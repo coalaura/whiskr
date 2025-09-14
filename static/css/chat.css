@@ -801,15 +801,15 @@ body:not(.loading) #loading {
 	overflow-x: auto;
 }
 
-.files:not(.has-files) {
+#messages .message:not(.has-files) .files,
+#attachments.files:not(.has-files) {
 	display: none;
 }
 
 .message .files {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
 	border-radius: 2px;
 	overflow: hidden;
+	flex-wrap: wrap;
 }
 
 .message.editing .files {
@@ -819,6 +819,7 @@ body:not(.loading) #loading {
 
 .message .files .file {
 	box-shadow: none;
+	width: 160px;
 }
 
 .files .file {
