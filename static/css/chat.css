@@ -809,6 +809,8 @@ body:not(.loading) #loading {
 	background: #181926;
 	padding: 10px 12px;
 	border-radius: 2px;
+	flex-wrap: wrap;
+	overflow: hidden;
 }
 
 .files .file {
