@@ -1555,7 +1555,7 @@
 		$message.value = "";
 		storeValue("message", "");
 
-		const message = new Message($role.value, "", text, attachments);
+		const message = new Message($role.value, "", text, false, attachments);
 
 		clearAttachments();
 		updateTitle();
