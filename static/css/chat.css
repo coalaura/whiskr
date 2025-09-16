@@ -835,9 +835,15 @@ body:not(.loading) #loading {
 	border: 1px solid #363a4f;
 }
 
+.files .file .name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .files .file::before {
 	content: "";
 	background-image: url(icons/file.svg);
+	flex-shrink: 0;
 }
 
 .files .file button.remove {
