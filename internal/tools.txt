@@ -4,7 +4,7 @@ No more tool calls available. Provide your final response now based on the infor
 {{else if eq .total 1}}
 You have exactly 1 tool call available. After using it, you must provide your final response in the next turn based on the information you have gathered.
 {{else}}
-You have {{.total}} tool calls remaining. If you use a tool now, you will have {{.remaining}} more tool call(s) available in subsequent turns.
+You have {{.total}} tool calls remaining. If you use a tool now, you will have {{.remaining}} more tool call(s) available in subsequent turns. Do not ask for permission to continue unless explicitly instructed to.
 {{end}}
 {{- if gt .total 0}}
 Use at most 1 tool call per turn (not multiple tools in the same turn).{{- if gt .total 1 }} After calling a tool, you will receive its results and can then decide whether to call another tool or provide your final response.{{- end }}
