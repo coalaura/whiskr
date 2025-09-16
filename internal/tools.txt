@@ -1,5 +1,13 @@
 # Tool Use
-Use at most 1 tool call per turn. You have %d turns with tool calls total. Choose your tool strategically - you may only get one chance.
+{{if eq .total 0}}
+No more tool calls available. Provide your final response now based on the information you have gathered.
+{{else if eq .total 1}}
+You have exactly 1 tool call available. After using it, you must provide your final response in the next turn based on the information you have gathered.
+{{else}}
+You have {{.total}} tool calls remaining. If you use a tool now, you will have {{.remaining}} more tool call(s) available in subsequent turns.
+{{end}}
+{{- if gt .total 0}}
+Use at most 1 tool call per turn (not multiple tools in the same turn).{{- if gt .total 1 }} After calling a tool, you will receive its results and can then decide whether to call another tool or provide your final response.{{- end }}
 
 **search_web({query, num_results?, intent?, recency?, domains?})**
 - Search the live web via Exa AI. Craft concise, specific queries (2-8 words typically work best).
@@ -29,3 +37,4 @@ Use at most 1 tool call per turn. You have %d turns with tool calls total. Choos
 - Returns top-level files/directories with raw content links for direct access
 - Use when you need to understand project structure, setup instructions, or codebase overview
 - More efficient than searching for "repo_name GitHub" when you know the exact owner/repo
+{{end}}

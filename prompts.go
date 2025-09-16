@@ -32,6 +32,8 @@ var (
 	//go:embed internal/tools.txt
 	InternalToolsPrompt string
 
+	InternalToolsTmpl *template.Template
+
 	//go:embed internal/title.txt
 	InternalTitlePrompt string
 
@@ -42,6 +44,7 @@ var (
 )
 
 func init() {
+	InternalToolsTmpl = NewTemplate("internal-tools", InternalToolsPrompt)
 	InternalTitleTmpl = NewTemplate("internal-title", InternalTitlePrompt)
 
 	var err error

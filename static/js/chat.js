@@ -1191,6 +1191,8 @@
 			chunk => {
 				stopLoadingTimeout();
 
+				console.log("chunk", chunk);
+
 				if (chunk === "aborted") {
 					chatController = null;
 
