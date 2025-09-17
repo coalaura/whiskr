@@ -71,6 +71,7 @@
 		activeMessage = null,
 		isResizing = false,
 		scrollResize = false,
+		isUploading = false,
 		totalCost = 0;
 
 	function updateTotalCost() {
@@ -1476,6 +1477,31 @@
 		});
 	}
 
+	async function resolveTokenCount(str) {
+		try {
+			const response = await fetch("/-/tokenize", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						string: str,
+					}),
+				}),
+				data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data?.error || response.statusText);
+			}
+
+			return data.tokens;
+		} catch (err) {
+			console.error(err);
+		}
+
+		return false;
+	}
+
 	let attachments = [];
 
 	function buildFileElement(file, callback) {
@@ -1489,6 +1515,15 @@
 		_name.textContent = file.name;
 
 		_file.appendChild(_name);
+
+		// token count
+		if ("tokens" in file) {
+			const _tokens = make("div", "tokens");
+
+			_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(file.tokens)} tokens`;
+
+			_file.appendChild(_tokens);
+		}
 
 		// remove button
 		const _remove = make("button", "remove");
@@ -1718,6 +1753,10 @@
 	});
 
 	$upload.addEventListener("click", async () => {
+		if (isUploading) {
+			return;
+		}
+
 		const files = await selectFile(
 			// the ultimate list
 			"text/*",
@@ -1744,9 +1783,29 @@
 			return;
 		}
 
+		isUploading = true;
+
+		$upload.classList.add("loading");
+
+		const promises = [];
+
+		for (const file of files) {
+			promises.push(
+				resolveTokenCount(file.content).then(tokens => {
+					file.tokens = tokens;
+				})
+			);
+		}
+
+		await Promise.all(promises);
+
 		for (const file of files) {
 			pushAttachment(file);
 		}
+
+		$upload.classList.remove("loading");
+
+		isUploading = false;
 	});
 
 	$add.addEventListener("click", () => {

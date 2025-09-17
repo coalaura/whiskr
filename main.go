@@ -22,6 +22,9 @@ func main() {
 	models, err := LoadModels()
 	log.MustFail(err)
 
+	tokenizer, err := LoadTokenizer(TikTokenSource)
+	log.MustFail(err)
+
 	log.Println("Preparing router...")
 	r := chi.NewRouter()
 
@@ -51,6 +54,8 @@ func main() {
 		gr.Get("/-/stats/{id}", HandleStats)
 		gr.Post("/-/title", HandleTitle)
 		gr.Post("/-/chat", HandleChat)
+
+		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 	})
 
 	log.Println("Listening at http://localhost:3443/")
@@ -73,6 +78,8 @@ func cache(next http.Handler) http.Handler {
 }
 
 func LoadIcons() ([]string, error) {
+	log.Println("Loading icons...")
+
 	var icons []string
 
 	directory := filepath.Join("static", "css", "icons")
@@ -97,6 +104,8 @@ func LoadIcons() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Loaded %d icons\n", len(icons))
 
 	return icons, nil
 }

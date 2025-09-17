@@ -833,6 +833,8 @@ body:not(.loading) #loading {
 	padding-right: 14px;
 	border-radius: 6px;
 	border: 1px solid #363a4f;
+	overflow: hidden;
+	min-width: 140px;
 }
 
 .files .file .name {
@@ -847,14 +849,32 @@ body:not(.loading) #loading {
 	flex-shrink: 0;
 }
 
+.files .file .tokens {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	backdrop-filter: blur(4px);
+	font-size: 13px;
+	pointer-events: none;
+	opacity: 0;
+	transition: 150ms;
+}
+
+.files .file:hover .tokens {
+	opacity: 1;
+}
+
 .files .file button.remove {
 	content: "";
 	position: absolute;
 	background-image: url(icons/remove.svg);
-	width: 16px;
-	height: 16px;
-	top: 1px;
-	right: 1px;
+	top: 0;
+	right: 0;
 	opacity: 0;
 	transition: 150ms;
 }
@@ -1113,6 +1133,11 @@ label[for="reasoning-tokens"] {
 #upload {
 	right: 84px;
 	background-image: url(icons/attach.svg);
+}
+
+#upload.loading {
+	animation: rotating 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
 }
 
 #json,
