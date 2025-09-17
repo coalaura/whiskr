@@ -838,6 +838,7 @@ body:not(.loading) #loading {
 .files .file .name {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .files .file::before {
