@@ -145,6 +145,8 @@
 	}
 
 	class Message {
+		#destroyed = false;
+
 		#id;
 		#role;
 		#reasoning;
@@ -704,6 +706,7 @@
 				data.files = this.#files.map(file => ({
 					name: file.name,
 					content: file.content,
+					tokens: file.tokens,
 				}));
 			}
 
@@ -750,7 +753,7 @@
 		}
 
 		async loadGenerationData(generationID, retrying = false) {
-			if (!generationID) {
+			if (!generationID || this.#destroyed) {
 				return;
 			}
 
@@ -937,6 +940,8 @@
 		}
 
 		delete() {
+			this.#destroyed = true;
+
 			const index = messages.findIndex(msg => msg.#id === this.#id);
 
 			if (index === -1) {
@@ -1148,16 +1153,19 @@
 			}, 1500);
 		}
 
-		function finish(aborted = false) {
+		function finish() {
 			if (!message) {
 				return;
 			}
 
-			message.setState(false);
+			const msg = message,
+				genID = generationID;
 
-			if (!aborted) {
-				setTimeout(message.loadGenerationData.bind(message), 1000, generationID);
-			}
+			msg.setState(false);
+
+			setTimeout(() => {
+				msg.loadGenerationData(genID);
+			}, 1000);
 
 			message = null;
 			generationID = null;
@@ -1192,23 +1200,17 @@
 			chunk => {
 				stopLoadingTimeout();
 
-				console.log("chunk", chunk);
-
-				if (chunk === "aborted") {
-					chatController = null;
-
-					finish(true);
-
-					return;
-				} else if (chunk === "done") {
+				if (chunk === "aborted" || chunk === "done") {
 					chatController = null;
 
 					finish();
 
-					$chat.classList.remove("completing");
+					if (chunk === "done") {
+						$chat.classList.remove("completing");
 
-					if (!chatTitle && !titleController) {
-						refreshTitle();
+						if (!chatTitle && !titleController) {
+							refreshTitle();
+						}
 					}
 
 					return;
@@ -1517,7 +1519,7 @@
 		_file.appendChild(_name);
 
 		// token count
-		if ("tokens" in file) {
+		if ("tokens" in file && Number.isInteger(file.tokens)) {
 			const _tokens = make("div", "tokens");
 
 			_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(file.tokens)} tokens`;
