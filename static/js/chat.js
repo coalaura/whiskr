@@ -1237,6 +1237,8 @@
 							totalCost += chunk.data.cost || 0;
 
 							finish();
+						} else {
+							return; // prevent loading bar
 						}
 
 						break;
