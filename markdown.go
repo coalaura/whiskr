@@ -84,7 +84,7 @@ func SplitImagePairs(text string) []openrouter.ChatMessagePart {
 	for {
 		location := rgx.FindStringSubmatchIndex(text[index:])
 		if location == nil {
-			push(index, len(text)-1)
+			push(index, len(text))
 
 			break
 		}
