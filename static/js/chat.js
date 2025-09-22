@@ -2046,7 +2046,7 @@
 			return;
 		}
 
-		const time = rand(120, 140);
+		const time = rand(140, 160);
 
 		el.style.setProperty("--time", `${time.toFixed(2)}s`);
 
