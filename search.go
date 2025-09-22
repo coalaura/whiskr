@@ -46,7 +46,7 @@ func GetSearchTools() []openrouter.Tool {
 							"type":        "integer",
 							"description": "Number of results to return (3-12). Default is 6.",
 							"minimum":     3,
-							"maximum":     10,
+							"maximum":     12,
 						},
 						"intent": map[string]any{
 							"type":        "string",

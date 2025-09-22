@@ -134,7 +134,7 @@ func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, er
 	case "month":
 		data["startPublishedDate"] = daysAgo(30)
 	case "year":
-		data["startPublishedDate"] = daysAgo(356)
+		data["startPublishedDate"] = daysAgo(365)
 	}
 
 	req, err := NewExaRequest(ctx, "/search", data)
@@ -168,5 +168,5 @@ func ExaRunContents(ctx context.Context, args FetchContentsArguments) (*ExaResul
 }
 
 func daysAgo(days int) string {
-	return time.Now().Add(time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
+	return time.Now().Add(-time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
 }
