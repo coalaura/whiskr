@@ -56,7 +56,6 @@ html,
 body {
 	font-family: "Work Sans", sans-serif;
 	font-size: 15px;
-	background: #181926;
 	color: #cad3f5;
 	height: 100%;
 	width: 100%;
@@ -125,6 +124,27 @@ body.resizing * {
 body:not(.loading) #loading {
 	opacity: 0;
 	pointer-events: none;
+}
+
+#floaters {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+	background: #181926;
+}
+
+#floaters .floater {
+	position: absolute;
+	width: var(--size, 2px);
+	height: var(--size, 2px);
+	border-radius: 50%;
+	filter: blur(1px);
+	opacity: 0.3;
+	transform: translate(var(--x), var(--y));
+	transition: transform var(--time, 14s);
+	background: var(--color, #181926);
+	will-change: transform;
 }
 
 #notifications {
@@ -1379,5 +1399,11 @@ label[for="reasoning-tokens"] {
 
 	to {
 		transform: translateY(-50%) rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#floaters {
+		display: none;
 	}
 }

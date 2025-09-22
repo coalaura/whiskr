@@ -2022,3 +2022,56 @@
 		document.body.classList.remove("loading");
 	});
 })();
+
+(() => {
+	const $floaters = document.getElementById("floaters"),
+		colors = ["#8aadf4", "#c6a0f6", "#8bd5ca", "#91d7e3", "#b7bdf8"],
+		count = Math.floor((window.outerHeight * window.outerWidth) / 98000);
+
+	function rand(a, b, rnd = false) {
+		const num = Math.random() * (b - a) + a;
+
+		if (rnd) {
+			return Math.floor(num);
+		}
+
+		return num;
+	}
+
+	function place(el, init = false) {
+		el.style.setProperty("--x", `${rand(0, 100).toFixed(4)}vw`);
+		el.style.setProperty("--y", `${rand(0, 100).toFixed(4)}vh`);
+
+		if (init) {
+			return;
+		}
+
+		const time = rand(120, 140);
+
+		el.style.setProperty("--time", `${time.toFixed(2)}s`);
+
+		setTimeout(() => {
+			place(el);
+		}, time * 1000);
+	}
+
+	for (let i = 0; i < count; i++) {
+		const el = document.createElement("div");
+
+		el.className = "floater";
+
+		el.style.setProperty("--size", `${rand(2, 4, true)}px`);
+		el.style.setProperty("--color", colors[rand(0, colors.length, true)]);
+
+		$floaters.appendChild(el);
+
+		place(el, true);
+
+		setTimeout(
+			() => {
+				place(el);
+			},
+			rand(0, 1000, true)
+		);
+	}
+})();
