@@ -56,6 +56,10 @@ function formatMilliseconds(ms) {
 	return `${Math.round(ms / 1000)}s`;
 }
 
+function formatTimestamp(ts) {
+	return new Date(ts * 1000).toLocaleDateString();
+}
+
 function dataBlob(dataUrl) {
 	const [header, data] = dataUrl.split(","),
 		mime = header.match(/data:(.*?)(;|$)/)[1];

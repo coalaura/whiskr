@@ -1451,7 +1451,7 @@
 		// render models
 		fillSelect($model, data.models, (el, model) => {
 			el.value = model.id;
-			el.title = model.description;
+			el.title = `${model.name} (${formatTimestamp(model.created)})\n---\n${model.description}`;
 			el.textContent = model.name;
 
 			el.dataset.tags = (model.tags || []).join(",");

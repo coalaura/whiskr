@@ -4,12 +4,15 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/revrost/go-openrouter"
 )
 
 type Model struct {
 	ID          string   `json:"id"`
+	Created     int64    `json:"created"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Tags        []string `json:"tags,omitempty"`
@@ -21,23 +24,64 @@ type Model struct {
 	Images    bool `json:"-"`
 }
 
-var ModelMap = make(map[string]*Model)
+var (
+	modelMx sync.RWMutex
 
-func LoadModels() ([]*Model, error) {
-	log.Println("Loading models...")
+	ModelMap  map[string]*Model
+	ModelList []*Model
+)
+
+func GetModel(name string) *Model {
+	modelMx.RLock()
+	defer modelMx.RUnlock()
+
+	return ModelMap[name]
+}
+
+func StartModelUpdateLoop() error {
+	err := LoadModels(true)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		ticker := time.NewTicker(2 * time.Hour)
+
+		for range ticker.C {
+			err := LoadModels(false)
+			if err != nil {
+				log.Warnln(err)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func LoadModels(initial bool) error {
+	log.Println("Refreshing model list...")
 
 	client := OpenRouterClient()
 
 	list, err := client.ListUserModels(context.Background())
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	if !initial && len(list) == len(ModelList) {
+		log.Println("No new models, skipping update")
+
+		return nil
 	}
 
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Created > list[j].Created
 	})
 
-	models := make([]*Model, len(list))
+	var (
+		newList = make([]*Model, len(list))
+		newMap  = make(map[string]*Model, len(list))
+	)
 
 	for index, model := range list {
 		name := model.Name
@@ -48,20 +92,27 @@ func LoadModels() ([]*Model, error) {
 
 		m := &Model{
 			ID:          model.ID,
+			Created:     model.Created,
 			Name:        name,
 			Description: model.Description,
 		}
 
 		GetModelTags(model, m)
 
-		models[index] = m
-
-		ModelMap[model.ID] = m
+		newList[index] = m
+		newMap[model.ID] = m
 	}
 
-	log.Printf("Loaded %d models\n", len(models))
+	log.Printf("Loaded %d models\n", len(newList))
 
-	return models, nil
+	modelMx.Lock()
+
+	ModelList = newList
+	ModelMap = newMap
+
+	modelMx.Unlock()
+
+	return nil
 }
 
 func GetModelTags(model openrouter.Model, m *Model) {

@@ -97,7 +97,6 @@
 				// option label
 				const _label = make("div", "label");
 
-				_label.title = option.label;
 				_label.textContent = option.label;
 
 				_opt.appendChild(_label);

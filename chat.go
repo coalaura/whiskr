@@ -101,8 +101,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, int, error) {
 		toolIndex int
 	)
 
-	model, ok := ModelMap[r.Model]
-	if !ok {
+	model := GetModel(r.Model)
+	if model == nil {
 		return nil, 0, fmt.Errorf("unknown model: %q", r.Model)
 	}
 

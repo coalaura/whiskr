@@ -19,7 +19,7 @@ func main() {
 	icons, err := LoadIcons()
 	log.MustFail(err)
 
-	models, err := LoadModels()
+	err = StartModelUpdateLoop()
 	log.MustFail(err)
 
 	tokenizer, err := LoadTokenizer(TikTokenSource)
@@ -35,6 +35,9 @@ func main() {
 	r.Handle("/*", cache(http.StripPrefix("/", fs)))
 
 	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
+		modelMx.RLock()
+		defer modelMx.RUnlock()
+
 		RespondJson(w, http.StatusOK, map[string]any{
 			"authenticated": IsAuthenticated(r),
 			"config": map[string]any{
@@ -43,7 +46,7 @@ func main() {
 				"motion": env.UI.ReducedMotion,
 			},
 			"icons":   icons,
-			"models":  models,
+			"models":  ModelList,
 			"prompts": Prompts,
 			"version": Version,
 		})
