@@ -398,6 +398,10 @@ body:not(.loading) #loading {
 	margin-top: 5px;
 }
 
+.message.editing {
+	overflow-anchor: none;
+}
+
 .message:not(.editing) textarea.text,
 .message.editing div.text {
 	display: none;
