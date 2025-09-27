@@ -16,6 +16,12 @@ settings:
   cleanup: true
   # model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)
   title-model: google/gemini-2.5-flash-lite
+  # allow image generation (optional; default: true)
+  image-generation: true
+
+ui:
+  # disables things like the floating stars in the background (optional; default: false)
+  reduced-motion: false
 
 authentication:
   # require login with username and password

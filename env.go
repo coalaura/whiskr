@@ -24,6 +24,10 @@ type EnvSettings struct {
 	ImageGeneration bool   `json:"image-generation"`
 }
 
+type EnvUI struct {
+	ReducedMotion bool `json:"reduced-motion"`
+}
+
 type EnvUser struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
@@ -41,6 +45,7 @@ type Environment struct {
 	Debug          bool              `json:"debug"`
 	Tokens         EnvTokens         `json:"tokens"`
 	Settings       EnvSettings       `json:"settings"`
+	UI             EnvUI             `json:"ui"`
 	Authentication EnvAuthentication `json:"authentication"`
 }
 
@@ -164,6 +169,8 @@ func (e *Environment) Store() error {
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
 			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
+
+			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},

@@ -36,13 +36,16 @@ func main() {
 
 	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
 		RespondJson(w, http.StatusOK, map[string]any{
-			"authentication": env.Authentication.Enabled,
-			"authenticated":  IsAuthenticated(r),
-			"search":         env.Tokens.Exa != "",
-			"icons":          icons,
-			"models":         models,
-			"prompts":        Prompts,
-			"version":        Version,
+			"authenticated": IsAuthenticated(r),
+			"config": map[string]any{
+				"auth":   env.Authentication.Enabled,
+				"search": env.Tokens.Exa != "",
+				"motion": env.UI.ReducedMotion,
+			},
+			"icons":   icons,
+			"models":  models,
+			"prompts": Prompts,
+			"version": Version,
 		})
 	})
 
