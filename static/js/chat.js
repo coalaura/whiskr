@@ -1456,10 +1456,13 @@
 				model.name,
 				separator,
 				`Created:\t\t${formatTimestamp(model.created)}`,
-				`Pricing/1M:\t$${fixed(model.pricing.input, 2)} In | $${fixed(model.pricing.output, 2)} Out`,
+				`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
+				model.pricing.image ? `Images:\t\t${formatMoney(model.pricing.image)} each` : null,
 				separator,
 				stripMarkdown(model.description),
-			].join("\n");
+			]
+				.filter(Boolean)
+				.join("\n");
 
 			el.value = model.id;
 			el.textContent = model.name;

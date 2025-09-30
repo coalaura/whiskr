@@ -14,6 +14,7 @@ import (
 type ModelPricing struct {
 	Input  float64 `json:"input"`
 	Output float64 `json:"output"`
+	Image  float64 `json:"image,omitzero"`
 }
 
 type Model struct {
@@ -99,6 +100,7 @@ func LoadModels(initial bool) error {
 
 		input, _ := strconv.ParseFloat(model.Pricing.Prompt, 64)
 		output, _ := strconv.ParseFloat(model.Pricing.Completion, 64)
+		image, _ := strconv.ParseFloat(model.Pricing.Image, 64)
 
 		m := &Model{
 			ID:          model.ID,
@@ -109,6 +111,7 @@ func LoadModels(initial bool) error {
 			Pricing: ModelPricing{
 				Input:  input * 1000000,
 				Output: output * 1000000,
+				Image:  image,
 			},
 		}
 
