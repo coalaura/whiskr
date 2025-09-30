@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -10,12 +11,18 @@ import (
 	"github.com/revrost/go-openrouter"
 )
 
+type ModelPricing struct {
+	Input  float64 `json:"input"`
+	Output float64 `json:"output"`
+}
+
 type Model struct {
-	ID          string   `json:"id"`
-	Created     int64    `json:"created"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags,omitempty"`
+	ID          string       `json:"id"`
+	Created     int64        `json:"created"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Pricing     ModelPricing `json:"pricing"`
+	Tags        []string     `json:"tags,omitempty"`
 
 	Reasoning bool `json:"-"`
 	Vision    bool `json:"-"`
@@ -90,11 +97,19 @@ func LoadModels(initial bool) error {
 			name = name[index+2:]
 		}
 
+		input, _ := strconv.ParseFloat(model.Pricing.Prompt, 64)
+		output, _ := strconv.ParseFloat(model.Pricing.Completion, 64)
+
 		m := &Model{
 			ID:          model.ID,
 			Created:     model.Created,
 			Name:        name,
 			Description: model.Description,
+
+			Pricing: ModelPricing{
+				Input:  input * 1000000,
+				Output: output * 1000000,
+			},
 		}
 
 		GetModelTags(model, m)

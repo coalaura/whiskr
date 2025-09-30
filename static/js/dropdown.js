@@ -168,6 +168,7 @@
 
 		#render() {
 			if (this.#selected === false) {
+				this.#_selected.title = "";
 				this.#_selected.innerHTML = "";
 
 				return;
@@ -175,6 +176,7 @@
 
 			const selection = this.#options[this.#selected];
 
+			this.#_selected.title = selection.title;
 			this.#_selected.innerHTML = selection.el.innerHTML;
 		}
 

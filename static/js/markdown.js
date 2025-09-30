@@ -162,4 +162,25 @@
 	window.renderInline = markdown => {
 		return marked.parseInline(markdown.trim());
 	};
+
+	window.stripMarkdown = markdown => {
+		return (
+			markdown
+				// Remove headings
+				.replace(/^#+\s*/gm, "")
+				// Remove links, keeping the link text
+				.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+				// Remove bold/italics, keeping the text
+				.replace(/(\*\*|__|\*|_|~~|`)(.*?)\1/g, "$2")
+				// Remove images
+				.replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+				// Remove horizontal rules
+				.replace(/^-{3,}\s*$/gm, "")
+				// Remove list markers
+				.replace(/^\s*([*-]|\d+\.)\s+/gm, "")
+				// Collapse multiple newlines into one
+				.replace(/\n{2,}/g, "\n")
+				.trim()
+		);
+	};
 })();

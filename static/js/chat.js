@@ -1450,8 +1450,18 @@
 
 		// render models
 		fillSelect($model, data.models, (el, model) => {
+			const separator = "─".repeat(24);
+
+			el.title = [
+				model.name,
+				separator,
+				`Created:\t\t${formatTimestamp(model.created)}`,
+				`Pricing/1M:\t$${fixed(model.pricing.input, 2)} In | $${fixed(model.pricing.output, 2)} Out`,
+				separator,
+				stripMarkdown(model.description),
+			].join("\n");
+
 			el.value = model.id;
-			el.title = `${model.name} (${formatTimestamp(model.created)})\n---\n${model.description}`;
 			el.textContent = model.name;
 
 			el.dataset.tags = (model.tags || []).join(",");
