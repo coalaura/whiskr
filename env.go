@@ -22,6 +22,7 @@ type EnvSettings struct {
 	CleanContent    bool   `json:"cleanup"`
 	TitleModel      string `json:"title-model"`
 	ImageGeneration bool   `json:"image-generation"`
+	Transformation  string `json:"transformation"`
 }
 
 type EnvUI struct {
@@ -118,6 +119,11 @@ func (e *Environment) Init() error {
 		e.Settings.TitleModel = "google/gemini-2.5-flash-lite"
 	}
 
+	// default transformation method
+	if e.Settings.Transformation == "" {
+		e.Settings.Transformation = "middle-out"
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
@@ -169,6 +175,7 @@ func (e *Environment) Store() error {
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
 			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
+			"$.settings.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
 
 			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 

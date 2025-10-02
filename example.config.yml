@@ -18,6 +18,8 @@ settings:
   title-model: google/gemini-2.5-flash-lite
   # allow image generation (optional; default: true)
   image-generation: true
+  # what transformation method to use for too long contexts (optional; default: middle-out)
+  transformation: "middle-out"
 
 ui:
   # disables things like the floating stars in the background (optional; default: false)

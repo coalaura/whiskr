@@ -116,6 +116,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, int, error) {
 		request.Modalities = append(request.Modalities, openrouter.ModalityImage)
 	}
 
+	request.Transforms = append(request.Transforms, env.Settings.Transformation)
+
 	if r.Iterations < 1 || r.Iterations > 50 {
 		return nil, 0, fmt.Errorf("invalid iterations (1-50): %d", r.Iterations)
 	}
