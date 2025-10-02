@@ -420,6 +420,8 @@
 					return;
 				}
 
+				abortNow();
+
 				this.stopEdit();
 
 				while (messages.length > index) {
@@ -1073,6 +1075,10 @@
 
 	let chatController;
 
+	function abortNow() {
+		chatController?.abort();
+	}
+
 	function generate(cancel = false, noPush = false) {
 		if (chatController) {
 			chatController.abort();
@@ -1500,6 +1506,8 @@
 	}
 
 	function clearMessages() {
+		abortNow();
+
 		while (messages.length) {
 			messages[0].delete();
 		}
