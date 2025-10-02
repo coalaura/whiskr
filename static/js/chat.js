@@ -884,6 +884,14 @@
 		}
 
 		setError(error) {
+			if (typeof error === "object") {
+				if ("Message" in error) {
+					error = error.Message;
+				} else {
+					error = JSON.stringify(error);
+				}
+			}
+
 			this.#error = error || "Something went wrong";
 
 			this.#_message.classList.add("errored", "has-text");
