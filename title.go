@@ -132,7 +132,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	choice := response.Choices[0].Message.Content.Text
-	cost := response.Usage.Cost
+	cost := response.Usage.Cost + response.Usage.CostDetails.UpstreamInferenceCost
 
 	var result TitleResponse
 

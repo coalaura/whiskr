@@ -45,6 +45,10 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 		Time:     Nullable(generation.GenerationTime, 0),
 	}
 
+	if generation.IsBYOK && generation.UpstreamInferenceCost != nil {
+		statistics.Cost += *generation.UpstreamInferenceCost
+	}
+
 	nativeIn := Nullable(generation.NativeTokensPrompt, 0)
 	normalIn := Nullable(generation.TokensPrompt, 0)
 
