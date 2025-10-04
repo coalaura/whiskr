@@ -1073,21 +1073,21 @@
 		}
 	}
 
-	let chatController;
+	let abortCallback;
 
 	function abortNow() {
-		chatController?.abort();
+		if (!abortCallback) {
+			return false;
+		}
+
+		abortCallback();
+
+		return true;
 	}
 
 	function generate(cancel = false, noPush = false) {
-		if (chatController) {
-			chatController.abort();
-
-			if (cancel) {
-				$chat.classList.remove("completing");
-
-				return;
-			}
+		if (abortNow() && cancel) {
+			return;
 		}
 
 		if (autoScrolling) {
@@ -1127,7 +1127,7 @@
 			pushMessage();
 		}
 
-		chatController = new AbortController();
+		const controller = new AbortController();
 
 		$chat.classList.add("completing");
 
@@ -1151,20 +1151,27 @@
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
 
-		let message, generationID, timeout;
-
-		function stopLoadingTimeout() {
-			clearTimeout(timeout);
-
-			message?.setLoading(false);
-		}
+		let message, generationID, stopTimeout;
 
 		function startLoadingTimeout() {
-			clearTimeout(timeout);
+			stopTimeout?.();
 
-			timeout = setTimeout(() => {
-				message?.setLoading(true);
-			}, 1500);
+			if (!message) {
+				return;
+			}
+
+			const msg = message,
+				timeout = setTimeout(() => {
+					msg.setLoading(true);
+				}, 1500);
+
+			stopTimeout = () => {
+				stopTimeout = null;
+
+				clearTimeout(timeout);
+
+				msg?.setLoading(false);
+			};
 		}
 
 		function finish() {
@@ -1199,6 +1206,25 @@
 			}
 		}
 
+		let aborted;
+
+		abortCallback = () => {
+			abortCallback = null;
+			aborted = true;
+
+			controller.abort();
+
+			stopTimeout?.();
+
+			finish();
+
+			$chat.classList.remove("completing");
+
+			if (!chatTitle && !titleController) {
+				refreshTitle();
+			}
+		};
+
 		start();
 
 		stream(
@@ -1209,26 +1235,20 @@
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify(body),
-				signal: chatController.signal,
+				signal: controller.signal,
 			},
 			chunk => {
-				stopLoadingTimeout();
+				if (aborted) {
+					return;
+				}
 
-				if (chunk === "aborted" || chunk === "done") {
-					chatController = null;
-
-					finish();
-
-					if (chunk === "done") {
-						$chat.classList.remove("completing");
-
-						if (!chatTitle && !titleController) {
-							refreshTitle();
-						}
-					}
+				if (chunk === "done") {
+					abortCallback();
 
 					return;
 				}
+
+				stopTimeout?.();
 
 				if (!message && chunk.type !== "end") {
 					start();
