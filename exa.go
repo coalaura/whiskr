@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -87,6 +88,8 @@ func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, er
 		args.NumResults = 12
 	}
 
+	guidance := ExaGuidanceForIntent(args)
+
 	data := map[string]any{
 		"query":      args.Query,
 		"type":       "auto",
@@ -98,35 +101,57 @@ func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, er
 	}
 
 	contents := map[string]any{
-		"summary": map[string]any{},
-		"highlights": map[string]any{
-			"numSentences":     2,
-			"highlightsPerUrl": 3,
+		"summary": map[string]any{
+			"query": guidance,
 		},
 		"livecrawl": "preferred",
 	}
 
+	highlights := map[string]any{
+		"numSentences":     2,
+		"highlightsPerUrl": 3,
+		"query":            guidance,
+	}
+
 	switch args.Intent {
 	case "news":
+		highlights["highlightsPerUrl"] = 2
+
 		data["category"] = "news"
 		data["numResults"] = max(8, args.NumResults)
 		data["startPublishedDate"] = daysAgo(30)
 	case "docs":
+		highlights["numSentences"] = 3
+		highlights["highlightsPerUrl"] = 4
+
 		contents["subpages"] = 1
 		contents["subpageTarget"] = []string{"documentation", "changelog", "release notes"}
 	case "papers":
+		highlights["numSentences"] = 4
+		highlights["highlightsPerUrl"] = 4
+
 		data["category"] = "research paper"
 		data["startPublishedDate"] = daysAgo(365 * 2)
 	case "code":
-		data["category"] = "github"
+		highlights["highlightsPerUrl"] = 4
 
 		contents["subpages"] = 1
 		contents["subpageTarget"] = []string{"readme", "changelog", "code"}
-	case "deep_read":
 		contents["text"] = map[string]any{
 			"maxCharacters": 8000,
 		}
+
+		data["category"] = "github"
+	case "deep_read":
+		highlights["numSentences"] = 3
+		highlights["highlightsPerUrl"] = 5
+
+		contents["text"] = map[string]any{
+			"maxCharacters": 12000,
+		}
 	}
+
+	contents["highlights"] = highlights
 
 	data["contents"] = contents
 
@@ -169,4 +194,33 @@ func ExaRunContents(ctx context.Context, args FetchContentsArguments) (*ExaResul
 
 func daysAgo(days int) string {
 	return time.Now().Add(-time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
+}
+
+func ExaGuidanceForIntent(args SearchWebArguments) string {
+	var recency string
+
+	switch args.Recency {
+	case "month":
+		recency = " since " + daysAgo(30)
+	case "year":
+		recency = " since " + daysAgo(365)
+	}
+
+	goal := strings.TrimSpace(args.Query)
+
+	switch args.Intent {
+	case "news":
+		return "Give who/what/when/where and key numbers" + recency +
+			". Include dates and named sources; 2-4 bullets. Note disagreements. Ignore speculation."
+	case "docs":
+		return "Extract install command, minimal example, breaking changes" + recency + ", key config options with defaults, and deprecations. Prefer official docs and release notes."
+	case "papers":
+		return "Summarize problem, method, dataset, metrics (with numbers), baselines, novelty, and limitations; include year/venue."
+	case "code":
+		return "Summarize repo purpose, language, license, last release/commit" + recency + ", install steps and minimal example; note breaking changes. Prefer README/docs."
+	case "deep_read":
+		return "Answer: " + goal + ". Extract exact numbers, dates, quotes (with speaker) plus 1-2 sentences of context."
+	}
+
+	return "Focus on answering: " + goal + ". Provide dates, versions, key numbers; 3-5 concise bullets. Ignore marketing fluff."
 }
