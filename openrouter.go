@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	"time"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -12,7 +14,22 @@ func init() {
 }
 
 func OpenRouterClient() *openrouter.Client {
-	return openrouter.NewClient(env.Tokens.OpenRouter, openrouter.WithXTitle("Whiskr"), openrouter.WithHTTPReferer("https://github.com/coalaura/whiskr"))
+	timeout := env.Settings.Timeout
+
+	if timeout <= 0 {
+		timeout = 1
+	}
+
+	cc := openrouter.DefaultConfig(env.Tokens.OpenRouter)
+
+	cc.XTitle = "Whiskr"
+	cc.HttpReferer = "https://github.com/coalaura/whiskr"
+
+	cc.HTTPClient = &http.Client{
+		Timeout: time.Duration(timeout) * time.Second,
+	}
+
+	return openrouter.NewClientWithConfig(*cc)
 }
 
 func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletionRequest) (*openrouter.ChatCompletionStream, error) {

@@ -23,6 +23,7 @@ type EnvSettings struct {
 	TitleModel      string `json:"title-model"`
 	ImageGeneration bool   `json:"image-generation"`
 	Transformation  string `json:"transformation"`
+	Timeout         int64  `json:"timeout"`
 }
 
 type EnvUI struct {
@@ -55,6 +56,7 @@ var env = Environment{
 	Settings: EnvSettings{
 		CleanContent:    true,
 		ImageGeneration: true,
+		Timeout:         300,
 	},
 }
 
@@ -176,6 +178,7 @@ func (e *Environment) Store() error {
 			"$.settings.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
 			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 			"$.settings.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
+			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 
 			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 
