@@ -60,6 +60,7 @@ func main() {
 		gr.Get("/-/stats/{id}", HandleStats)
 		gr.Post("/-/title", HandleTitle)
 		gr.Post("/-/chat", HandleChat)
+		gr.Post("/-/dump", HandleDump)
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 	})
