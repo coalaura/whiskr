@@ -14,19 +14,13 @@ func init() {
 }
 
 func OpenRouterClient() *openrouter.Client {
-	timeout := env.Settings.Timeout
-
-	if timeout <= 0 {
-		timeout = 1
-	}
-
 	cc := openrouter.DefaultConfig(env.Tokens.OpenRouter)
 
 	cc.XTitle = "Whiskr"
 	cc.HttpReferer = "https://github.com/coalaura/whiskr"
 
 	cc.HTTPClient = &http.Client{
-		Timeout: time.Duration(timeout) * time.Second,
+		Timeout: time.Duration(env.Settings.Timeout) * time.Second,
 	}
 
 	return openrouter.NewClientWithConfig(*cc)

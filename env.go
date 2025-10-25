@@ -126,6 +126,11 @@ func (e *Environment) Init() error {
 		e.Settings.Transformation = "middle-out"
 	}
 
+	// default timeout
+	if env.Settings.Timeout <= 0 {
+		env.Settings.Timeout = 300
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
