@@ -37,6 +37,7 @@
 		$scrolling = document.getElementById("scrolling"),
 		$export = document.getElementById("export"),
 		$import = document.getElementById("import"),
+		$dump = document.getElementById("dump"),
 		$clear = document.getElementById("clear"),
 		$authentication = document.getElementById("authentication"),
 		$authError = document.getElementById("auth-error"),
@@ -72,6 +73,7 @@
 		isResizing = false,
 		scrollResize = false,
 		isUploading = false,
+		isDumping = false,
 		totalCost = 0;
 
 	function updateTotalCost() {
@@ -1085,15 +1087,7 @@
 		return true;
 	}
 
-	function generate(cancel = false, noPush = false) {
-		if (abortNow() && cancel) {
-			return;
-		}
-
-		if (autoScrolling) {
-			setFollowTail(true);
-		}
-
+	function buildRequest(noPush = false) {
 		let temperature = parseFloat($temperature.value);
 
 		if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
@@ -1127,11 +1121,7 @@
 			pushMessage();
 		}
 
-		const controller = new AbortController();
-
-		$chat.classList.add("completing");
-
-		const body = {
+		return {
 			prompt: $prompt.value,
 			model: $model.value,
 			temperature: temperature,
@@ -1150,6 +1140,22 @@
 			},
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
+	}
+
+	function generate(cancel = false, noPush = false) {
+		if (abortNow() && cancel) {
+			return;
+		}
+
+		if (autoScrolling) {
+			setFollowTail(true);
+		}
+
+		const body = buildRequest(noPush);
+
+		const controller = new AbortController();
+
+		$chat.classList.add("completing");
 
 		let message, generationID, stopTimeout;
 
@@ -1993,6 +1999,42 @@
 		storeValue("messages", data.messages);
 
 		restore();
+	});
+
+	$dump.addEventListener("click", async () => {
+		if (isDumping) {
+			return;
+		}
+
+		isDumping = true;
+
+		$dump.classList.add("loading");
+
+		const body = buildRequest(true);
+
+		try {
+			const response = await fetch("/-/dump", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+			});
+
+			const json = await response.json();
+
+			if (!response.ok) {
+				throw new Error(json?.error || response.statusText);
+			}
+
+			download("request.json", "application/json", JSON.stringify(json.request, null, 4));
+		} catch (err) {
+			notify(err);
+		}
+
+		$dump.classList.remove("loading");
+
+		isDumping = false;
 	});
 
 	$scrolling.addEventListener("click", () => {

@@ -1011,6 +1011,7 @@ body.loading #version,
 #scrolling,
 #import,
 #export,
+#dump,
 #clear,
 #upload,
 #add,
@@ -1170,6 +1171,7 @@ label[for="reasoning-tokens"] {
 #scrolling,
 #import,
 #export,
+#dump,
 #clear {
 	position: unset !important;
 }
@@ -1208,6 +1210,15 @@ label[for="reasoning-tokens"] {
 
 #export {
 	background-image: url(icons/export.svg);
+}
+
+#dump {
+	background-image: url(icons/dump.svg);
+}
+
+#dump.loading {
+	animation: rotating 1.2s linear infinite;
+	background-image: url(icons/spinner.svg);
 }
 
 #clear {
