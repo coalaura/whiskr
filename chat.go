@@ -404,7 +404,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest) (*ToolCall, string, error) {
 	stream, err := OpenRouterStartStream(ctx, *request)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("stream.start: %v", err)
 	}
 
 	defer stream.Close()
@@ -426,7 +426,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 				break
 			}
 
-			return nil, "", err
+			return nil, "", fmt.Errorf("stream.receive: %v", err)
 		}
 
 		if id == "" {

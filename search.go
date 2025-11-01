@@ -207,7 +207,7 @@ func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
 func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
 	err := json.Unmarshal([]byte(tool.Args), arguments)
 	if err != nil {
-		return err
+		return fmt.Errorf("json.unmarshal: %v", err)
 	}
 
 	buf := GetFreeBuffer()
@@ -218,7 +218,7 @@ func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
 
 	err = enc.Encode(arguments)
 	if err != nil {
-		return err
+		return fmt.Errorf("json.marshal: %v", err)
 	}
 
 	tool.Args = buf.String()
