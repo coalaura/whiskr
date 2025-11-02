@@ -145,6 +145,18 @@
 		}
 	}
 
+	const observer = new IntersectionObserver(
+		entries => {
+			for (const entry of entries) {
+				entry.target.parentElement.classList.toggle("in-view", entry.isIntersecting);
+			}
+		},
+		{
+			root: $messages,
+			threshold: 1.0,
+		}
+	);
+
 	class Message {
 		#destroyed = false;
 
@@ -219,6 +231,8 @@
 
 			this.#_message.appendChild(_wrapper);
 
+			observer.observe(_wrapper);
+
 			// message role
 			const _role = make("div");
 
@@ -231,6 +245,7 @@
 
 			_wrapper.appendChild(this.#_tags);
 
+			// message body
 			const _body = make("div", "body");
 
 			this.#_message.appendChild(_body);
@@ -477,6 +492,20 @@
 			this.#_statistics = make("div", "statistics");
 
 			this.#_message.appendChild(this.#_statistics);
+
+			// scroll into view
+			const _scroll = make("button", "scroll-view");
+
+			_scroll.title = "Scroll message into view";
+
+			this.#_message.appendChild(_scroll);
+
+			_scroll.addEventListener("click", () => {
+				this.#_message.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+				});
+			});
 
 			// add to dom
 			$messages.appendChild(this.#_message);

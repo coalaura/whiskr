@@ -777,6 +777,21 @@ body:not(.loading) #loading {
 	display: none;
 }
 
+#messages .message.in-view .scroll-view {
+	opacity: 0;
+	pointer-events: none;
+}
+
+#messages .message .scroll-view {
+	position: absolute;
+	bottom: 5px;
+	right: 2px;
+	background-image: url(icons/up.svg);
+	width: 14px;
+	height: 14px;
+	transition: 150ms;
+}
+
 #chat {
 	display: flex;
 	position: relative;
@@ -1011,6 +1026,7 @@ body.loading #version,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
 .message .statistics .cost::before,
+.message .scroll-view,
 #json,
 #search,
 #scrolling,
