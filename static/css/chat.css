@@ -266,6 +266,7 @@ body:not(.loading) #loading {
 	overflow-y: auto;
 	padding: 14px 12px;
 	padding-bottom: 20px;
+	overflow-anchor: none;
 }
 
 #messages:empty::before {
