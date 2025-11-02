@@ -399,10 +399,6 @@ body:not(.loading) #loading {
 	margin-top: 5px;
 }
 
-.message.editing {
-	overflow-anchor: none;
-}
-
 .message:not(.editing) textarea.text,
 .message.editing div.text {
 	display: none;
@@ -934,6 +930,7 @@ textarea {
 	resize: none;
 	font-size: 15px;
 	line-height: 23px;
+	overflow-anchor: none;
 }
 
 button {
