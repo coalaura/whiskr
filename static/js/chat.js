@@ -69,7 +69,6 @@
 		chatTitle = false;
 
 	let searchAvailable = false,
-		activeMessage = null,
 		isResizing = false,
 		scrollResize = false,
 		isUploading = false,
@@ -372,6 +371,19 @@
 				this.#save();
 			});
 
+			// attach option
+			if (this.#role === "user") {
+				const _attach = make("button", "attach");
+
+				_attach.title = "Add files to this message";
+
+				_opts.appendChild(_attach);
+
+				_attach.addEventListener("click", () => {
+					uploadToMessage(_attach, this);
+				});
+			}
+
 			// copy option
 			const _optCopy = make("button", "copy");
 
@@ -443,6 +455,10 @@
 			_opts.appendChild(_optEdit);
 
 			_optEdit.addEventListener("click", () => {
+				if (this.#_message.classList.contains("collapsed")) {
+					_optCollapse.click();
+				}
+
 				this.toggleEdit();
 			});
 
@@ -926,8 +942,6 @@
 			this.#editing = !this.#editing;
 
 			if (this.#editing) {
-				activeMessage = this;
-
 				this.#_edit.value = this.#text;
 
 				this.setState("editing");
@@ -936,8 +950,6 @@
 
 				this.#_edit.focus();
 			} else {
-				activeMessage = null;
-
 				this.#text = this.#_edit.value;
 
 				this.setState(false);
@@ -1656,11 +1668,11 @@
 		return _file;
 	}
 
-	function pushAttachment(file) {
+	function pushAttachment(file, message = false) {
 		file.id = uid();
 
-		if (activeMessage?.isUser()) {
-			activeMessage.addFile(file);
+		if (message) {
+			message.addFile(file);
 
 			return;
 		}
@@ -1715,6 +1727,62 @@
 		updateTitle();
 
 		return message;
+	}
+
+	async function uploadToMessage(self, message) {
+		if (isUploading) {
+			return;
+		}
+
+		const files = await selectFile(
+			// the ultimate list
+			"text/*",
+			true,
+			file => {
+				if (!file.name) {
+					file.name = "unknown.txt";
+				} else if (file.name.length > 512) {
+					throw new Error("File name too long (max 512 characters)");
+				}
+
+				if (!file.content) {
+					throw new Error("File is empty");
+				} else if (file.content.includes("\0")) {
+					throw new Error("File is not a text file");
+				} else if (file.content.length > 4 * 1024 * 1024) {
+					throw new Error("File is too big (max 4MB)");
+				}
+			},
+			notify
+		);
+
+		if (!files.length) {
+			return;
+		}
+
+		isUploading = true;
+
+		self.classList.add("loading");
+
+		const promises = [];
+
+		for (const file of files) {
+			promises.push(
+				resolveTokenCount(file.content).then(tokens => {
+					file.tokens = tokens;
+				})
+			);
+		}
+
+		await Promise.all(promises);
+
+		for (const file of files) {
+			pushAttachment(file, message);
+		}
+
+		self.classList.remove("loading");
+
+		isUploading = false;
 	}
 
 	$total.addEventListener("auxclick", event => {
@@ -1869,60 +1937,8 @@
 		storeValue("message", $message.value);
 	});
 
-	$upload.addEventListener("click", async () => {
-		if (isUploading) {
-			return;
-		}
-
-		const files = await selectFile(
-			// the ultimate list
-			"text/*",
-			true,
-			file => {
-				if (!file.name) {
-					file.name = "unknown.txt";
-				} else if (file.name.length > 512) {
-					throw new Error("File name too long (max 512 characters)");
-				}
-
-				if (!file.content) {
-					throw new Error("File is empty");
-				} else if (file.content.includes("\0")) {
-					throw new Error("File is not a text file");
-				} else if (file.content.length > 4 * 1024 * 1024) {
-					throw new Error("File is too big (max 4MB)");
-				}
-			},
-			notify
-		);
-
-		if (!files.length) {
-			return;
-		}
-
-		isUploading = true;
-
-		$upload.classList.add("loading");
-
-		const promises = [];
-
-		for (const file of files) {
-			promises.push(
-				resolveTokenCount(file.content).then(tokens => {
-					file.tokens = tokens;
-				})
-			);
-		}
-
-		await Promise.all(promises);
-
-		for (const file of files) {
-			pushAttachment(file);
-		}
-
-		$upload.classList.remove("loading");
-
-		isUploading = false;
+	$upload.addEventListener("click", () => {
+		uploadToMessage($upload, false);
 	});
 
 	$add.addEventListener("click", () => {

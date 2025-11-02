@@ -629,11 +629,13 @@ body:not(.loading) #loading {
 	transition: 150ms;
 }
 
+.message.editing .options,
 .message:hover .options {
 	opacity: 1;
 	pointer-events: all;
 }
 
+.message .attach,
 .message .collapse {
 	position: relative;
 	margin-right: 14px;
@@ -651,6 +653,7 @@ body:not(.loading) #loading {
 	transform: scaleY(-100%);
 }
 
+.message .attach::after,
 .message .collapse::after {
 	position: absolute;
 	top: 4px;
@@ -659,6 +662,8 @@ body:not(.loading) #loading {
 
 .message.errored .options .copy,
 .message.errored .options .edit,
+.message:not(.editing) .options .attach,
+.message.editing .options .collapse,
 .message.waiting .options,
 .message.reasoning .options,
 .message.tooling .options,
@@ -966,6 +971,7 @@ select {
 	gap: 4px;
 }
 
+.message .options .attach::after,
 .message .options .collapse::after,
 #chat .option+.option::before {
 	content: "";
@@ -996,6 +1002,7 @@ body.loading #version,
 .message .edit,
 .message .retry,
 .message .delete,
+.message .attach,
 .pre-copy,
 .tool .call .name::after,
 .tool .call::before,
@@ -1042,6 +1049,10 @@ input.invalid {
 
 .message .collapse::before {
 	background-image: url(icons/collapse.svg);
+}
+
+.message .attach {
+	background-image: url(icons/attach_message.svg);
 }
 
 .pre-copy,
@@ -1159,6 +1170,7 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/attach.svg);
 }
 
+.message .attach.loading,
 #upload.loading {
 	animation: rotating 1.2s linear infinite;
 	background-image: url(icons/spinner.svg);
