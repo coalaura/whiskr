@@ -43,7 +43,7 @@ function wait(ms) {
 }
 
 function escapeHtml(text) {
-	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function formatMilliseconds(ms) {

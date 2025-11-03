@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"io/fs"
 	"net/http"
 	"path/filepath"
@@ -63,6 +64,8 @@ func main() {
 		gr.Post("/-/dump", HandleDump)
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
+
+		gr.Post("/-/preview", HandlePreview)
 	})
 
 	log.Println("Listening at http://localhost:3443/")

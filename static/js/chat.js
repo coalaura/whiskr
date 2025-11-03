@@ -176,6 +176,7 @@
 		#editing = false;
 		#state = false;
 		#loading = false;
+		#inline = {};
 
 		#_diff;
 		#pending = {};
@@ -296,6 +297,18 @@
 			this.#_text = make("div", "text", "markdown");
 
 			_body.appendChild(this.#_text);
+
+			this.#_text.addEventListener("click", event => {
+				this.#handlePreview(event);
+			});
+
+			this.#_text.addEventListener("auxclick", event => {
+				if (event.button !== 1) {
+					return;
+				}
+
+				this.#handlePreview(event);
+			});
 
 			// message edit textarea
 			this.#_edit = make("textarea", "text");
@@ -514,6 +527,62 @@
 			scroll();
 		}
 
+		#handlePreview(event) {
+			const inline = event.target.closest(".inline-file[data-id]"),
+				id = inline?.dataset?.id;
+
+			if (!id) {
+				return;
+			}
+
+			const file = this.#inline[id];
+
+			if (!file) {
+				notify(`Error: invalid file "${id}"`);
+
+				return;
+			}
+
+			if (event.target.classList.contains("download")) {
+				download(file.name, "text/plain", file.content);
+
+				return;
+			}
+
+			// build form
+			const form = make("form");
+
+			form.style.display = "none";
+
+			form.enctype = "multipart/form-data";
+			form.method = "post";
+			form.action = "/-/preview";
+			form.target = "_blank";
+
+			// add name field
+			const name = make("input");
+
+			name.name = "name";
+			name.value = file.name;
+
+			form.appendChild(name);
+
+			// add content field
+			const content = make("textarea");
+
+			content.name = "content";
+			content.value = file.content;
+
+			form.appendChild(content);
+
+			// send form
+			document.body.appendChild(form);
+
+			form.submit();
+
+			form.remove();
+		}
+
 		#handleImages(element) {
 			element.querySelectorAll("img:not(.image)").forEach(img => {
 				img.classList.add("image");
@@ -552,7 +621,11 @@
 
 		#patch(name, element, md, after = false) {
 			if (!element.firstChild) {
-				element.innerHTML = render(md);
+				const { html, files } = render(md);
+
+				element.innerHTML = html;
+
+				this.#inline = files;
 
 				this.#handleImages(element);
 
@@ -570,9 +643,11 @@
 			this.#patching[name] = true;
 
 			schedule(() => {
-				const html = render(this.#pending[name]);
+				const { html, files } = render(this.#pending[name]);
 
 				this.#patching[name] = false;
+
+				this.#inline = files;
 
 				this.#_diff.innerHTML = html;
 
@@ -645,7 +720,7 @@
 					_cost.textContent = cost ? `${formatMoney(cost)}` : "";
 
 					_result.classList.toggle("error", result?.startsWith("error: "));
-					_result.innerHTML = render(result ? wrapJSON(result) : "*processing*");
+					_result.innerHTML = render(result ? wrapJSON(result) : "*processing*").html;
 
 					this.#_tool.classList.toggle("invalid", !!invalid);
 
@@ -893,13 +968,15 @@
 			}
 
 			if (state) {
-				this.#_message.classList.add(state);
+				this.#_message.classList.add(state, "busy");
 			} else {
 				if (this.#tool && !this.#tool.result) {
 					this.#tool.result = "failed to run tool";
 
 					this.#render("tool");
 				}
+
+				this.#_message.classList.remove("busy");
 			}
 
 			this.#state = state;

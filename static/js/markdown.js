@@ -18,9 +18,7 @@
 			const { type, text } = token;
 
 			if (type === "html") {
-				token.text = token.text.replace(/&/g, "&amp;");
-				token.text = token.text.replace(/</g, "&lt;");
-				token.text = token.text.replace(/>/g, "&gt;");
+				token.text = escapeHtml(token.text);
 
 				return;
 			} else if (type !== "code") {
@@ -65,6 +63,77 @@
 			},
 		},
 	});
+
+	function generateID() {
+		return `${Math.random().toString(36).slice(2)}${"0".repeat(8)}`.slice(0, 8);
+	}
+
+	function escapeHtml(text) {
+		return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	}
+
+	function formatBytes(bytes) {
+		if (!+bytes) {
+			return "0B";
+		}
+
+		const sizes = ["B", "kB", "MB", "GB", "TB"],
+			i = Math.floor(Math.log(bytes) / Math.log(1000));
+
+		const val = bytes / Math.pow(1000, i),
+			dec = i === 0 ? 0 : val < 10 ? 2 : 1;
+
+		return `${val.toFixed(dec)}${sizes[i]}`;
+	}
+
+	function parse(markdown) {
+		const starts = (markdown.match(/^FILE\s+"([^"]+)"(?:\s+LINES\s+\d+)?\s*\r?\n<<CONTENT>>\s*$/gm) || []).length,
+			ends = (markdown.match(/^<<END(?:ING)?>>$/gm) || []).length;
+
+		if (starts !== ends) {
+			markdown += "\n<<ENDING>>";
+		}
+
+		const files = [],
+			table = {};
+
+		markdown = markdown.replace(/^FILE\s+"([^"]+)"(?:\s+LINES\s+(\d+))?\s*\r?\n<<CONTENT>>\s*\r?\n([\s\S]*?)\r?\n<<END(ING)?>>$/gm, (_a, name, _b, content, ending) => {
+			const index = files.length,
+				id = generateID();
+
+			files.push({
+				id: id,
+				name: name,
+				size: content.length,
+				busy: !!ending,
+			});
+
+			table[id] = {
+				name: name,
+				content: content,
+			};
+
+			return `§|FILE|${index}|§`;
+		});
+
+		const html = marked.parse(markdown).replace(/(?:<p>\s*)§\|FILE\|(\d+)\|§(?:<\/p>\s*)/g, (match, index) => {
+			index = parseInt(index, 10);
+
+			if (index < files.length) {
+				const file = files[index],
+					name = escapeHtml(file.name);
+
+				return `<div class="inline-file ${file.busy ? "busy" : ""}" data-id="${file.id}"><div class="name" title="${name}">${name}</div><div class="size"><sup>${formatBytes(file.size)}</sup></div><button class="download" title="Download file"></button></div>`;
+			}
+
+			return match;
+		});
+
+		return {
+			html: html,
+			files: table,
+		};
+	}
 
 	addEventListener("click", event => {
 		const button = event.target,
@@ -156,7 +225,7 @@
 	addEventListener("pointercancel", endScroll);
 
 	window.render = markdown => {
-		return marked.parse(markdown);
+		return parse(markdown);
 	};
 
 	window.renderInline = markdown => {

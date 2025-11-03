@@ -34,6 +34,9 @@ var (
 
 	InternalToolsTmpl *template.Template
 
+	//go:embed internal/general.txt
+	InternalGeneralPrompt string
+
 	//go:embed internal/title.txt
 	InternalTitlePrompt string
 

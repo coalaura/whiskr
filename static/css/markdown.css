@@ -216,3 +216,60 @@
 .markdown>*:last-child {
 	margin-bottom: 0;
 }
+
+.markdown .inline-file {
+	position: relative;
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	background: #24273a;
+	width: max-content;
+	max-width: 100%;
+	white-space: nowrap;
+	box-shadow: none;
+	cursor: pointer;
+	padding: 8px 10px;
+	border-radius: 6px;
+	border: 1px solid #363a4f;
+	overflow: hidden;
+}
+
+.markdown .inline-file::before {
+	content: "";
+	background-image: url(icons/file.svg);
+	flex-shrink: 0;
+}
+
+.message .inline-file .name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.markdown .inline-file .size {
+	flex-shrink: 0;
+}
+
+.markdown .inline-file .size sup {
+	position: relative;
+	top: -5px;
+	font-size: 10px;
+	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+.markdown .inline-file .download {
+	background-image: url(icons/download.svg);
+	flex-shrink: 0;
+}
+
+.message.busy .markdown .inline-file.busy::after {
+	content: "";
+	display: block;
+	position: absolute;
+	width: 32px;
+	height: 3px;
+	background: #cad3f5;
+	animation: swivel 1.5s ease-in-out infinite;
+	opacity: 0.5;
+	bottom: -1px;
+	left: 0;
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<link href="/lib/catppuccin.min.css" rel="stylesheet" />
+		<link href="/css/preview.css" rel="stylesheet" />
+
+		<title>File Preview</title>
+
+		<script>
+			const data = {{ . | json }};
+		</script>
+	</head>
+	<body>
+		<pre><code></code></pre>
+
+		<script src="/lib/highlight.min.js"></script>
+		<script>
+			const title = document.querySelector("title"),
+				body = document.querySelector("code");
+
+			title.innerText = data.name;
+
+			body.innerHTML = hljs.highlightAuto(data.content).value;
+
+			addEventListener("keydown", event => {
+				if ((event.ctrlKey || event.metaKey) && event.key === "S") {
+					event.preventDefault();
+
+					const el = document.createElement("a");
+
+					el.download = data.name;
+					el.href = `data:text/plain;base64,${btoa(data.content)}`;
+
+					el.click();
+				} else if (event.key === "Escape") {
+					window.close();
+				}
+			});
+		</script>
+	</body>
+</html>
