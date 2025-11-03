@@ -883,6 +883,7 @@ body:not(.loading) #loading {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	cursor: pointer;
 }
 
 .files .file::before {

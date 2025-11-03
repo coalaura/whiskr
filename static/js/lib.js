@@ -176,6 +176,41 @@ function lines(text) {
 	return count + 1;
 }
 
+function previewFile(file) {
+	// build form
+	const form = make("form");
+
+	form.style.display = "none";
+
+	form.enctype = "multipart/form-data";
+	form.method = "post";
+	form.action = "/-/preview";
+	form.target = "_blank";
+
+	// add name field
+	const name = make("input");
+
+	name.name = "name";
+	name.value = file.name;
+
+	form.appendChild(name);
+
+	// add content field
+	const content = make("textarea");
+
+	content.name = "content";
+	content.value = file.content;
+
+	form.appendChild(content);
+
+	// send form
+	document.body.appendChild(form);
+
+	form.submit();
+
+	form.remove();
+}
+
 function readFile(file, handler, onError = false) {
 	return new Promise(resolve => {
 		const reader = new FileReader();
