@@ -23,7 +23,11 @@
 
 			title.innerText = data.name;
 
-			body.innerHTML = hljs.highlightAuto(data.content).value;
+			if (data.name.endsWith(".txt")) {
+				body.innerText = data.content;
+			} else {
+				body.innerHTML = hljs.highlightAuto(data.content).value;
+			}
 
 			addEventListener("keydown", event => {
 				if ((event.ctrlKey || event.metaKey) && event.key === "S") {
