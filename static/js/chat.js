@@ -8,6 +8,7 @@
 		5: "tool",
 		6: "error",
 		7: "end",
+		8: "alive",
 	};
 
 	const $version = document.getElementById("version"),
@@ -1093,6 +1094,10 @@
 					}
 
 					buffer = buffer.slice(5 + length);
+
+					if (type === "alive") {
+						continue; // we are still alive
+					}
 
 					callback({
 						type: type,

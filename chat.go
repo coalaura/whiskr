@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -328,6 +329,19 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	debug("handling request")
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				response.WriteChunk(NewChunk(ChunkAlive, nil))
+			}
+		}
+	}()
 
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
