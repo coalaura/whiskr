@@ -115,7 +115,7 @@
 			return `§|FILE|${index}|§`;
 		});
 
-		const html = marked.parse(markdown).replace(/(?:<p>\s*)§\|FILE\|(\d+)\|§(?:<\/p>\s*)/g, (match, index) => {
+		const html = marked.parse(markdown).replace(/(?:<p>\s*)?§\|FILE\|(\d+)\|§(?:<\/p>\s*)?/g, (match, index) => {
 			index = parseInt(index, 10);
 
 			if (index < files.length) {
