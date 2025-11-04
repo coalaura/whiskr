@@ -21,7 +21,8 @@
 				token.text = escapeHtml(token.text);
 
 				return;
-			} else if (type !== "code") {
+			}
+			if (type !== "code") {
 				return;
 			}
 
@@ -43,15 +44,13 @@
 		},
 
 		renderer: {
-			code(code) {
+			code: code => {
 				const header = `<div class="pre-header">${escapeHtml(code.lang)}<button class="pre-copy" title="Copy code contents"></button></div>`;
 
 				return `<pre class="l-${escapeHtml(code.lang)}">${header}<code>${code.text}</code></pre>`;
 			},
 
-			link(link) {
-				return `<a href="${link.href}" target="_blank">${escapeHtml(link.text || link.href)}</a>`;
-			},
+			link: link => `<a href="${link.href}" target="_blank">${escapeHtml(link.text || link.href)}</a>`,
 		},
 
 		hooks: {
@@ -238,7 +237,7 @@
 				// Remove headings
 				.replace(/^#+\s*/gm, "")
 				// Remove links, keeping the link text
-				.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+				.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
 				// Remove bold/italics, keeping the text
 				.replace(/(\*\*|__|\*|_|~~|`)(.*?)\1/g, "$2")
 				// Remove images

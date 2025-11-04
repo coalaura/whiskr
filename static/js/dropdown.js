@@ -16,7 +16,7 @@
 			this.#maxTags = maxTags;
 			this.#search = "searchable" in el.dataset;
 
-			this.#_select.querySelectorAll("option").forEach((option) => {
+			this.#_select.querySelectorAll("option").forEach(option => {
 				const tags = option.dataset.tags?.trim();
 
 				this.#options.push({
@@ -41,16 +41,13 @@
 			// prepare and hide original select
 			this.#_select.style.display = "none";
 
-			const descriptor = Object.getOwnPropertyDescriptor(
-				HTMLSelectElement.prototype,
-				"value",
-			);
+			const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
 
 			Object.defineProperty(this.#_select, "value", {
 				get: () => {
 					return descriptor.get.call(this.#_select);
 				},
-				set: (value) => {
+				set: value => {
 					descriptor.set.call(this.#_select, value);
 
 					this.#_select.dispatchEvent(new Event("change"));
@@ -141,7 +138,7 @@
 					this.#filter();
 				});
 
-				this.#_search.addEventListener("keydown", (event) => {
+				this.#_search.addEventListener("keydown", event => {
 					if (event.key !== "Escape") {
 						return;
 					}
@@ -197,7 +194,7 @@
 		}
 
 		#set(value) {
-			const index = this.#options.findIndex((option) => option.value === value);
+			const index = this.#options.findIndex(option => option.value === value);
 
 			if (this.#selected === index) {
 				return;
@@ -219,10 +216,10 @@
 		return text.trim();
 	}
 
-	document.body.addEventListener("click", (event) => {
+	document.body.addEventListener("click", event => {
 		const clicked = event.target.closest(".dropdown");
 
-		document.querySelectorAll(".dropdown").forEach((element) => {
+		document.querySelectorAll(".dropdown").forEach(element => {
 			if (element === clicked) {
 				return;
 			}

@@ -49,7 +49,9 @@ function escapeHtml(text) {
 function formatMilliseconds(ms) {
 	if (ms < 1000) {
 		return `${ms}ms`;
-	} else if (ms < 10000) {
+	}
+
+	if (ms < 10000) {
 		return `${(ms / 1000).toFixed(1)}s`;
 	}
 
@@ -60,9 +62,11 @@ function formatTimestamp(ts) {
 	return new Date(ts * 1000).toLocaleDateString();
 }
 
+const dataRgx = /data:(.*?)(;|$)/;
+
 function dataBlob(dataUrl) {
 	const [header, data] = dataUrl.split(","),
-		mime = header.match(/data:(.*?)(;|$)/)[1];
+		mime = header.match(dataRgx)[1];
 
 	let blob;
 
@@ -90,8 +94,10 @@ function dataBlob(dataUrl) {
 	return blob;
 }
 
+const trailingZeroRgx = /\.?0+$/m;
+
 function fixed(num, decimals = 0) {
-	return num.toFixed(decimals).replace(/\.?0+$/m, "");
+	return num.toFixed(decimals).replace(trailingZeroRgx, "");
 }
 
 function formatMoney(num) {
@@ -278,10 +284,69 @@ function selectFile(accept, multiple, handler, onError = false) {
 	});
 }
 
-async function detectPlatform() {
-	let os, arch;
+const platformRegexes = [
+	// Mobile
+	[/(iPhone|iPad|iPod)/, "iOS"],
+	[/Android/i, "Android"],
+	[/Windows Phone|IEMobile/i, "Windows Phone"],
 
-	let platform = navigator.platform || "";
+	// Chrome OS
+	[/CrOS/i, "Chrome OS"],
+
+	// Windows
+	[/Windows NT 10\.0/, "Windows 10/11"],
+	[/Windows NT 6\.3/, "Windows 8.1"],
+	[/Windows NT 6\.2/, "Windows 8"],
+	[/Windows NT 6\.1/, "Windows 7"],
+	[/Windows NT 6\.0/, "Windows Vista"],
+	[/Windows NT 5\.1/, "Windows XP"],
+	[/Windows NT 5\.0/, "Windows 2000"],
+	[/Windows NT 4\.0/, "Windows NT 4.0"],
+	[/Win(98|95|16)/, "Windows (legacy 95/98)"],
+	[/Windows/, "Windows (unknown version)"],
+
+	// Mac
+	[/Macintosh;.*Mac OS X/, "macOS"],
+
+	// Chrome OS
+	[/CrOS/, "Chrome OS"],
+
+	// BSD/UNIX
+	[/FreeBSD/, "FreeBSD"],
+	[/OpenBSD/, "OpenBSD"],
+	[/NetBSD/, "NetBSD"],
+	[/SunOS/, "Solaris"],
+
+	// Linux distro's
+	[/Ubuntu/i, "Ubuntu"],
+	[/Debian/i, "Debian"],
+	[/Fedora/i, "Fedora"],
+	[/CentOS/i, "CentOS"],
+	[/(?:Red Hat|RHEL)/i, "Red Hat"],
+	[/(?:openSUSE|SUSE|SLES)/i, "SUSE"],
+	[/Gentoo/i, "Gentoo"],
+	[/Arch Linux/i, "Arch Linux"],
+	[/Alpine/i, "Alpine Linux"],
+	[/Linux/i, "Linux"],
+];
+
+const architectureRegexes = [
+	[/arm64|aarch64|armv8(?:\.\d+)?/i, "arm64"],
+	[/armv?7|armhf/i, "arm"],
+	[/WOW64|Win64|x64|x86_64|amd64/i, "x64"],
+	[/\b(ia32|i[3-6]86|x86)\b/i, "x86"],
+	[/ppc64le|powerpc64le/i, "ppc64le"],
+	[/ppc64|powerpc64/i, "ppc64"],
+	[/ppc|powerpc/i, "ppc"],
+	[/s390x/i, "s390x"],
+	[/mips64/i, "mips64"],
+	[/mips/i, "mips"],
+];
+
+async function detectPlatform() {
+	let os,
+		arch,
+		platform = navigator.platform || "";
 
 	if (navigator.userAgentData?.getHighEntropyValues) {
 		try {
@@ -294,76 +359,40 @@ async function detectPlatform() {
 
 	const ua = navigator.userAgent || "";
 
-	// Windows
-	if (/Windows NT 10\.0/.test(ua)) os = "Windows 10/11";
-	else if (/Windows NT 6\.3/.test(ua)) os = "Windows 8.1";
-	else if (/Windows NT 6\.2/.test(ua)) os = "Windows 8";
-	else if (/Windows NT 6\.1/.test(ua)) os = "Windows 7";
-	else if (/Windows NT 6\.0/.test(ua)) os = "Windows Vista";
-	else if (/Windows NT 5\.1/.test(ua)) os = "Windows XP";
-	else if (/Windows NT 5\.0/.test(ua)) os = "Windows 2000";
-	else if (/Windows NT 4\.0/.test(ua)) os = "Windows NT 4.0";
-	else if (/Win(98|95|16)/.test(ua)) os = "Windows (legacy)";
-	else if (/Windows/.test(ua)) os = "Windows (unknown version)";
-	// Mac OS
-	else if (/Mac OS X/.test(ua)) {
-		os = "macOS";
+	for (const rgx of platformRegexes) {
+		if (rgx[0].test(ua)) {
+			os = rgx[1];
 
-		const match = ua.match(/Mac OS X ([0-9_]+)/);
-
-		if (match) {
-			os += ` ${match[1].replace(/_/g, ".")}`;
-		} else {
-			os += " (unknown version)";
+			break;
 		}
 	}
-	// Chrome OS
-	else if (/CrOS/.test(ua)) {
-		os = "Chrome OS";
-
-		const match = ua.match(/CrOS [^ ]+ ([0-9.]+)/);
-
-		if (match) {
-			os += ` ${match[1]}`;
-		}
-	}
-	// Linux (special)
-	else if (/FreeBSD/.test(ua)) os = "FreeBSD";
-	else if (/OpenBSD/.test(ua)) os = "OpenBSD";
-	else if (/NetBSD/.test(ua)) os = "NetBSD";
-	else if (/SunOS/.test(ua)) os = "Solaris";
-	// Linux (generic)
-	else if (/Linux/.test(ua)) {
-		if (/Ubuntu/i.test(ua)) os = "Ubuntu";
-		else if (/Debian/i.test(ua)) os = "Debian";
-		else if (/Fedora/i.test(ua)) os = "Fedora";
-		else if (/CentOS/i.test(ua)) os = "CentOS";
-		else if (/Red Hat/i.test(ua)) os = "Red Hat";
-		else if (/SUSE/i.test(ua)) os = "SUSE";
-		else if (/Gentoo/i.test(ua)) os = "Gentoo";
-		else if (/Arch/i.test(ua)) os = "Arch Linux";
-		else os = "Linux";
-	}
-	// Mobile
-	else if (/Android/.test(ua)) os = "Android";
-	else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
 
 	// We still have no OS?
 	if (!os && platform) {
-		if (platform.includes("Win")) os = "Windows";
-		else if (/Mac/.test(platform)) os = "macOS";
-		else if (/Linux/.test(platform)) os = "Linux";
-		else os = platform;
+		if (platform.includes("Win")) {
+			os = "Windows";
+		} else if (platform.includes("Mac")) {
+			os = "macOS";
+		} else if (platform.includes("Linux")) {
+			os = "Linux";
+		} else {
+			os = platform;
+		}
 	}
 
 	// Detect architecture
 	if (!arch) {
-		if (/WOW64|Win64|x64|amd64/i.test(ua)) arch = "x64";
-		else if (/arm64|aarch64/i.test(ua)) arch = "arm64";
-		else if (/i[0-9]86|x86/i.test(ua)) arch = "x86";
-		else if (/ppc/i.test(ua)) arch = "ppc";
-		else if (/sparc/i.test(ua)) arch = "sparc";
-		else if (platform && /arm/i.test(platform)) arch = "arm";
+		for (const rgx of architectureRegexes) {
+			if (rgx[0].test(ua)) {
+				arch = rgx[1];
+
+				break;
+			}
+		}
+
+		if (!arch && platform?.toLowerCase()?.includes("arm")) {
+			arch = "arm";
+		}
 	}
 
 	return `${os || "Unknown OS"}${arch ? `, ${arch}` : ""}`;
