@@ -1701,15 +1701,15 @@
 			pushAttachment(file);
 		}
 
-		if (loadValue("json")) {
+		if (!jsonMode && loadValue("json")) {
 			$json.click();
 		}
 
-		if (loadValue("search")) {
+		if (!searchTool && loadValue("search")) {
 			$search.click();
 		}
 
-		if (loadValue("scrolling")) {
+		if (!autoScrolling && loadValue("scrolling")) {
 			$scrolling.click();
 		}
 
