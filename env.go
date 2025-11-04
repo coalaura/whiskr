@@ -56,7 +56,7 @@ var env = Environment{
 	Settings: EnvSettings{
 		CleanContent:    true,
 		ImageGeneration: true,
-		Timeout:         300,
+		Timeout:         1200,
 	},
 }
 

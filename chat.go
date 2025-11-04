@@ -335,7 +335,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	debug("handling request")
 
 	go func() {
-		ticker := time.NewTicker(10 * time.Second)
+		ticker := time.NewTicker(5 * time.Second)
 
 		for {
 			select {
