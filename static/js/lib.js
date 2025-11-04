@@ -46,16 +46,25 @@ function escapeHtml(text) {
 	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+const fracZerosRgx = /(?:(\.\d*?[1-9])0+|\.0+)$/;
+
+function round(num, digits) {
+	return num.toFixed(digits).replace(fracZerosRgx, "$1") || "0";
+}
+
 function formatMilliseconds(ms) {
 	if (ms < 1000) {
 		return `${ms}ms`;
 	}
 
-	if (ms < 10000) {
-		return `${(ms / 1000).toFixed(1)}s`;
+	if (ms < 60000) {
+		return `${round(ms / 1000, 1)}s`;
 	}
 
-	return `${Math.round(ms / 1000)}s`;
+	const minutes = Math.floor(ms / 60000),
+		seconds = ms - minutes * 60000;
+
+	return `${minutes}m ${round(seconds / 1000, 1)}s`;
 }
 
 function formatTimestamp(ts) {
