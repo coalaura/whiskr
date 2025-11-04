@@ -261,7 +261,7 @@
 			this.#_time = make("div", "time");
 
 			if (this.#time) {
-				this.#_time.textContent = `${this.#time}s`;
+				this.#_time.textContent = `${this.#time.toFixed(1)}s`;
 			}
 
 			_body.appendChild(this.#_time);
@@ -868,7 +868,7 @@
 			this.#time = time;
 
 			if (this.#time) {
-				this.#_time.textContent = `${this.#time}s`;
+				this.#_time.textContent = `${this.#time.toFixed(1)}s`;
 			}
 		}
 
