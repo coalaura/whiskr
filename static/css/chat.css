@@ -493,7 +493,7 @@ body:not(.loading) #loading {
 	height: 32px;
 }
 
-.message.collapsed .body>* {
+.message.collapsed .body > * {
 	opacity: 0;
 }
 
@@ -999,7 +999,7 @@ select {
 
 .message .options .attach::after,
 .message .options .collapse::after,
-#chat .option+.option::before {
+#chat .option + .option::before {
 	content: "";
 	display: block;
 	width: 2px;
@@ -1174,7 +1174,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden)+#bottom {
+#top:not(.hidden) + #bottom {
 	right: 40px;
 }
 
@@ -1397,7 +1397,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
-
 	0%,
 	100% {
 		left: 0px;
@@ -1410,7 +1409,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
-
 	0%,
 	75%,
 	100% {

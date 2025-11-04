@@ -1,7 +1,7 @@
 .markdown {
 	font-size: 15px;
 	line-height: 23px;
-	color: #CAD3F5;
+	color: #cad3f5;
 	overflow: hidden;
 	word-wrap: break-word;
 }
@@ -59,15 +59,17 @@
 }
 
 .markdown a {
-	color: #8AADF4;
+	color: #8aadf4;
 	text-decoration: none;
 	font-weight: 500;
-	transition: color 150ms ease, text-decoration-color 150ms ease;
+	transition:
+		color 150ms ease,
+		text-decoration-color 150ms ease;
 }
 
 .markdown a:hover,
 .markdown a:focus {
-	color: #B7BDF8;
+	color: #b7bdf8;
 	text-decoration: underline;
 	text-decoration-color: rgba(183, 189, 248, 0.6);
 }
@@ -84,9 +86,9 @@
 
 .markdown blockquote {
 	padding: 10px 16px;
-	border-left: 4px solid #8AADF4;
+	border-left: 4px solid #8aadf4;
 	background: rgba(138, 173, 244, 0.05);
-	color: #CAD3F5;
+	color: #cad3f5;
 	font-style: italic;
 	border-radius: 4px;
 }
@@ -124,7 +126,7 @@
 .markdown th {
 	background: rgba(165, 173, 203, 0.07);
 	font-weight: 600;
-	color: #CAD3F5;
+	color: #cad3f5;
 }
 
 .markdown tr:nth-child(even) td {
@@ -189,7 +191,7 @@
 }
 
 .markdown hr {
-	color: #5F6386;
+	color: #5f6386;
 	margin: 25px 0;
 }
 
@@ -198,22 +200,22 @@
 	padding-left: 28px;
 }
 
-.markdown> :first-child {
+.markdown > :first-child {
 	margin-top: 0;
 }
 
-.markdown blockquote>*,
-.markdown td>*,
-.markdown th>*,
-.markdown>* {
+.markdown blockquote > *,
+.markdown td > *,
+.markdown th > *,
+.markdown > * {
 	margin: 0;
 	margin-bottom: 14px;
 }
 
-.markdown blockquote>*:last-child,
-.markdown td>*:last-child,
-.markdown th>*:last-child,
-.markdown>*:last-child {
+.markdown blockquote > *:last-child,
+.markdown td > *:last-child,
+.markdown th > *:last-child,
+.markdown > *:last-child {
 	margin-bottom: 0;
 }
 

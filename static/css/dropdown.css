@@ -35,7 +35,9 @@
 	flex-direction: column;
 	background: #363a4f;
 	max-height: 250px;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+	box-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.05),
+		0 1px 3px rgba(0, 0, 0, 0.1);
 	border: 1px solid #494d64;
 }
 
@@ -63,7 +65,7 @@
 	background: #363a4f;
 }
 
-.dropdown .opt:nth-child(2n+1) {
+.dropdown .opt:nth-child(2n + 1) {
 	background: #32354a;
 }
 
@@ -96,27 +98,27 @@
 }
 
 .tags .tag.reasoning {
-	background-image: url(icons/tags/reasoning.svg)
+	background-image: url(icons/tags/reasoning.svg);
 }
 
 .tags .tag.tools {
-	background-image: url(icons/tags/tools.svg)
+	background-image: url(icons/tags/tools.svg);
 }
 
 .tags .tag.vision {
-	background-image: url(icons/tags/vision.svg)
+	background-image: url(icons/tags/vision.svg);
 }
 
 .tags .tag.json {
-	background-image: url(icons/tags/json.svg)
+	background-image: url(icons/tags/json.svg);
 }
 
 .tags .tag.image {
-	background-image: url(icons/tags/image.svg)
+	background-image: url(icons/tags/image.svg);
 }
 
 .tags .tag.all {
-	background-image: url(icons/tags/all.svg)
+	background-image: url(icons/tags/all.svg);
 }
 
 .dropdown .search {
