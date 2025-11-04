@@ -461,7 +461,7 @@
 			_opts.appendChild(_optRetry);
 
 			_optRetry.addEventListener("mouseenter", () => {
-				const index = this.index(!_assistant ? 1 : 0);
+				const index = this.index(_assistant ? 0 : 1);
 
 				mark(index);
 			});
@@ -471,7 +471,7 @@
 			});
 
 			_optRetry.addEventListener("click", () => {
-				const index = this.index(!_assistant ? 1 : 0);
+				const index = this.index(_assistant ? 0 : 1);
 
 				if (index === false) {
 					return;
@@ -1901,9 +1901,13 @@
 
 				if (!file.content) {
 					throw new Error("File is empty");
-				} else if (file.content.includes("\0")) {
+				}
+
+				if (file.content.includes("\0")) {
 					throw new Error("File is not a text file");
-				} else if (file.content.length > 4 * 1024 * 1024) {
+				}
+
+				if (file.content.length > 4 * 1024 * 1024) {
 					throw new Error("File is too big (max 4MB)");
 				}
 			},
@@ -1994,7 +1998,9 @@
 			scroll(isAtBottom, true);
 
 			return;
-		} else if (event.button !== 0) {
+		}
+
+		if (event.button !== 0) {
 			return;
 		}
 
@@ -2064,7 +2070,7 @@
 
 	$reasoningTokens.addEventListener("input", () => {
 		const value = $reasoningTokens.value,
-			tokens = parseInt(value);
+			tokens = parseInt(value, 10);
 
 		storeValue("reasoning-tokens", value);
 
@@ -2141,8 +2147,8 @@
 		const file = await selectFile(
 				"application/json",
 				false,
-				file => {
-					file.content = JSON.parse(file.content);
+				selected => {
+					selected.content = JSON.parse(selected.content);
 				},
 				notify
 			),
@@ -2191,13 +2197,13 @@
 				body: JSON.stringify(body),
 			});
 
-			const json = await response.json();
+			const dumped = await response.json();
 
 			if (!response.ok) {
-				throw new Error(json?.error || response.statusText);
+				throw new Error(dumped?.error || response.statusText);
 			}
 
-			download("request.json", "application/json", JSON.stringify(json.request, null, 4));
+			download("request.json", "application/json", JSON.stringify(dumped.request, null, 4));
 		} catch (err) {
 			notify(err);
 		}
