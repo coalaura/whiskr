@@ -42,7 +42,9 @@
 			title.innerText += ` (${language})`;
 
 			addEventListener("keydown", event => {
-				if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+				const key = event.key.toLowerCase();
+
+				if ((event.ctrlKey || event.metaKey) && key === "s") {
 					event.preventDefault();
 
 					const el = document.createElement("a");
@@ -51,7 +53,17 @@
 					el.href = `data:text/plain;base64,${btoa(data.content)}`;
 
 					el.click();
-				} else if (event.key === "Escape") {
+				} else if ((event.ctrlKey || event.metaKey) && key === "a") {
+					event.preventDefault();
+
+					const sel = window.getSelection(),
+						range = document.createRange();
+
+					range.selectNodeContents(body);
+
+					sel.removeAllRanges();
+					sel.addRange(range);
+				} else if (key === "escape") {
 					window.close();
 				}
 			});
