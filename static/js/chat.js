@@ -171,6 +171,7 @@
 
 		#tool;
 		#tags = [];
+		#time = 0;
 		#statistics;
 		#error = false;
 
@@ -185,6 +186,7 @@
 
 		#_message;
 		#_tags;
+		#_time;
 		#_files;
 		#_reasoning;
 		#_text;
@@ -193,11 +195,13 @@
 		#_tool;
 		#_statistics;
 
-		constructor(role, reasoning, text, tool = false, files = [], images = [], tags = [], collapsed = false) {
+		constructor(role, reasoning, text, tool = false, files = [], images = [], tags = [], time = 0, collapsed = false) {
 			this.#id = uid();
 			this.#role = role;
 			this.#reasoning = reasoning || "";
 			this.#text = text || "";
+
+			this.#time = time;
 
 			this.#_diff = document.createElement("div");
 
@@ -252,6 +256,15 @@
 			const _body = make("div", "body");
 
 			this.#_message.appendChild(_body);
+
+			// time
+			this.#_time = make("div", "time");
+
+			if (this.#time) {
+				this.#_time.textContent = `${this.#time}s`;
+			}
+
+			_body.appendChild(this.#_time);
 
 			// loader
 			const _loader = make("div", "loader");
@@ -829,6 +842,10 @@
 				data.statistics = this.#statistics;
 			}
 
+			if (this.#time && full) {
+				data.time = this.#time;
+			}
+
 			if (this.#_message.classList.contains("collapsed") && full) {
 				data.collapsed = true;
 			}
@@ -845,6 +862,14 @@
 
 			this.#render("statistics");
 			this.#save();
+		}
+
+		setTime(time) {
+			this.#time = time;
+
+			if (this.#time) {
+				this.#_time.textContent = `${this.#time}s`;
+			}
 		}
 
 		async loadGenerationData(generationID, retrying = false) {
@@ -1254,7 +1279,7 @@
 
 		$chat.classList.add("completing");
 
-		let message, generationID, stopTimeout;
+		let message, generationID, stopTimeout, timeInterval, started;
 
 		function startLoadingTimeout() {
 			stopTimeout?.();
@@ -1285,6 +1310,10 @@
 			const msg = message,
 				genID = generationID;
 
+			clearInterval(timeInterval);
+
+			msg.setTime(Math.round((Date.now() - started) / 100) / 10);
+
 			msg.setState(false);
 
 			setTimeout(() => {
@@ -1296,6 +1325,8 @@
 		}
 
 		function start() {
+			started = Date.now();
+
 			message = new Message("assistant", "", "");
 
 			message.setState("waiting");
@@ -1307,6 +1338,14 @@
 			if (searchTool) {
 				message.addTag("search");
 			}
+
+			timeInterval = setInterval(() => {
+				if (!message) {
+					return;
+				}
+
+				message.setTime(Math.round((Date.now() - started) / 100) / 10);
+			}, 100);
 		}
 
 		let aborted;
@@ -1675,7 +1714,17 @@
 		}
 
 		loadValue("messages", []).forEach(message => {
-			const obj = new Message(message.role, message.reasoning, message.text, message.tool, message.files || [], message.images || [], message.tags || [], message.collapsed);
+			const obj = new Message(
+				message.role,
+				message.reasoning,
+				message.text,
+				message.tool,
+				message.files || [],
+				message.images || [],
+				message.tags || [],
+				message.time || 0,
+				message.collapsed
+			);
 
 			if (message.statistics) {
 				obj.setStatistics(message.statistics);

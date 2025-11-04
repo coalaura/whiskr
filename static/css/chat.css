@@ -508,6 +508,16 @@ body:not(.loading) #loading {
 	transform: translateY(-50%);
 }
 
+.message .time {
+	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-size: 11px;
+	line-height: 12px;
+	position: absolute;
+	top: 3px;
+	right: 3px;
+	color: #a5adcb;
+}
+
 .tool .call,
 .reasoning .toggle {
 	position: relative;
