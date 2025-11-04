@@ -74,6 +74,7 @@
 		scrollResize = false,
 		isUploading = false,
 		isDumping = false,
+		isGenerating = false,
 		totalCost = 0;
 
 	function updateTotalCost() {
@@ -89,7 +90,7 @@
 
 		$titleText.textContent = title;
 
-		document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
+		document.title = `whiskr${isGenerating ? "*" : ""}${chatTitle ? ` - ${chatTitle}` : ""}`;
 
 		storeValue("title", chatTitle);
 	}
@@ -1243,6 +1244,10 @@
 			setFollowTail(true);
 		}
 
+		isGenerating = true;
+
+		updateTitle();
+
 		const body = buildRequest(noPush);
 
 		const controller = new AbortController();
@@ -1313,6 +1318,10 @@
 			controller.abort();
 
 			stopTimeout?.();
+
+			isGenerating = false;
+
+			updateTitle();
 
 			finish();
 
