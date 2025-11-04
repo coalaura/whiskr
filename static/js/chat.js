@@ -916,6 +916,10 @@
 		}
 
 		addFile(file) {
+			if (!file.id) {
+				file.id = uid();
+			}
+
 			this.#files.push(file);
 
 			this.#_files.appendChild(
