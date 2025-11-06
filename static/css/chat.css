@@ -651,6 +651,7 @@ body:not(.loading) #loading {
 	margin-right: 14px;
 }
 
+.message .attach::before,
 .message .collapse::before {
 	content: "";
 	transition: 150ms;
@@ -1031,6 +1032,7 @@ body.loading #version,
 .message .retry,
 .message .delete,
 .message .attach,
+.message .attach::before,
 .pre-copy,
 .tool .call .name::after,
 .tool .call::before,
@@ -1080,7 +1082,7 @@ input.invalid {
 	background-image: url(icons/collapse.svg);
 }
 
-.message .attach {
+.message .attach::before {
 	background-image: url(icons/attach_message.svg);
 }
 
@@ -1199,7 +1201,7 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/attach.svg);
 }
 
-.message .attach.loading,
+.message .attach.loading::before,
 #upload.loading {
 	animation: rotating 1.2s linear infinite;
 	background-image: url(icons/spinner.svg);
