@@ -181,11 +181,9 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	if prompt != "" {
 		prompt += "\n\n" + InternalGeneralPrompt
-	} else {
-		prompt = InternalGeneralPrompt
-	}
 
-	request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
+		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
+	}
 
 	if model.Tools && r.Tools.Search && env.Tokens.Exa != "" && r.Iterations > 1 {
 		request.Tools = GetSearchTools()
