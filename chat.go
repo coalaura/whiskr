@@ -211,15 +211,6 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 			}
 
 			if len(message.Files) > 0 {
-				if content.Text != "" {
-					content.Multi = append(content.Multi, openrouter.ChatMessagePart{
-						Type: openrouter.ChatMessagePartTypeText,
-						Text: content.Text,
-					})
-
-					content.Text = ""
-				}
-
 				for i, file := range message.Files {
 					if len(file.Name) > 512 {
 						return nil, fmt.Errorf("file %d is invalid (name too long, max 512 characters)", i)
@@ -229,15 +220,16 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 					lines := strings.Count(file.Content, "\n") + 1
 
-					content.Multi = append(content.Multi, openrouter.ChatMessagePart{
-						Type: openrouter.ChatMessagePartTypeText,
-						Text: fmt.Sprintf(
-							"FILE %q LINES %d\n<<CONTENT>>\n%s\n<<END>>",
-							file.Name,
-							lines,
-							file.Content,
-						),
-					})
+					if content.Text != "" {
+						content.Text += "\n\n"
+					}
+
+					content.Text += fmt.Sprintf(
+						"FILE %q LINES %d\n<<CONTENT>>\n%s\n<<END>>",
+						file.Name,
+						lines,
+						file.Content,
+					)
 				}
 			}
 
