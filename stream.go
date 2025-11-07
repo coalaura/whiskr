@@ -32,6 +32,7 @@ type Chunk struct {
 }
 
 type Stream struct {
+	mx  sync.Mutex
 	wr  http.ResponseWriter
 	ctx context.Context
 }
@@ -81,6 +82,9 @@ func GetErrorMessage(err error) string {
 }
 
 func (s *Stream) WriteChunk(chunk *Chunk) error {
+	s.mx.Lock()
+	defer s.mx.Unlock()
+
 	debugIf(chunk.Type == ChunkError, "error: %v", chunk.Data)
 
 	if err := s.ctx.Err(); err != nil {
