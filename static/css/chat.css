@@ -747,7 +747,6 @@ body:not(.loading) #loading {
 	font-size: 13px;
 	line-height: 13px;
 	pointer-events: none;
-	flex-wrap: wrap;
 }
 
 .statistics .provider,
@@ -1517,5 +1516,9 @@ label[for="reasoning-tokens"] {
 		width: 100%;
 		min-width: auto;
 		max-width: 100%;
+	}
+
+	.statistics {
+		flex-wrap: wrap;
 	}
 }
