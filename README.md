@@ -12,9 +12,13 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - **Real-time Responses**: Get streaming responses from models as they are generated.
 - **Persistent Settings**: Your chosen model, temperature, and other parameters are saved between sessions.
 - **Authentication**: Optional user/password authentication for added security.
-- Multimodal Output: If a model supports image output (for example, `google/gemini-2.5-flash-image-preview`), whiskr will request and render images alongside text. You can enable/disable this globally via `settings.image-generation` in `config.yml` (default: true).
+- **Multimodal Output**: If a model supports image output (for example, `google/gemini-2.5-flash-image-preview`), whiskr will request and render images alongside text. You can enable/disable this globally via `settings.image-generation` in `config.yml` (default: true).
 
-![image](.github/images.png)
+![images](.github/images.png)
+
+- **File Output**: Models are able to emit text files themselves, which can be downloaded or previewed.
+
+![files](.github/files.png)
 
 ### Conversation Control
 - **Full Message Control**: Edit, delete, or copy any message in the conversation.
