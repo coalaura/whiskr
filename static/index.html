@@ -45,6 +45,23 @@
 
 				<div id="attachments" class="files"></div>
 
+				<div id="header">
+					<div id="role">
+						<select title="Message role">
+							<option value="user" selected>User</option>
+							<option value="assistant">Assistant</option>
+							<option value="system">System</option>
+						</select>
+					</div>
+
+					<div class="option">
+						<button id="export" title="Export the entire chat as a JSON file"></button>
+						<button id="import" title="Import a chat from an exported JSON file"></button>
+						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
+						<button id="clear" title="Clear the entire chat"></button>
+					</div>
+				</div>
+
 				<textarea id="message" placeholder="Type something..." autocomplete="off"></textarea>
 
 				<button id="upload" title="Add files to message"></button>
@@ -53,28 +70,8 @@
 
 				<div class="options">
 					<div class="option">
-						<label for="role" title="Message role"></label>
-						<select id="role">
-							<option value="user" selected>User</option>
-							<option value="assistant">Assistant</option>
-							<option value="system">System</option>
-						</select>
-					</div>
-					<div class="option">
 						<label for="model" title="Model"></label>
 						<select id="model" data-searchable></select>
-					</div>
-					<div class="option">
-						<label for="prompt" title="Main system prompt"></label>
-						<select id="prompt" data-searchable></select>
-					</div>
-					<div class="option">
-						<label for="temperature" title="Temperature (0 - 2)"></label>
-						<input id="temperature" type="number" min="0" max="2" step="0.05" value="0.85" />
-					</div>
-					<div class="option">
-						<label for="iterations" title="Maximum number of iterations (turns) per response"></label>
-						<input id="iterations" type="number" min="1" max="50" value="3" />
 					</div>
 					<div class="option none">
 						<label for="reasoning-effort" title="Reasoning Effort"></label>
@@ -89,18 +86,24 @@
 						<label for="reasoning-tokens" title="Maximum amount of reasoning tokens"></label>
 						<input id="reasoning-tokens" type="number" min="2" max="1048576" value="1024" />
 					</div>
+					<div class="option">
+						<label for="prompt" title="Main system prompt"></label>
+						<select id="prompt" data-searchable></select>
+					</div>
+					<div class="option">
+						<label for="temperature" title="Temperature (0 - 2)"></label>
+						<input id="temperature" type="number" min="0" max="2" step="0.05" value="0.85" />
+					</div>
+					<div class="option">
+						<label for="iterations" title="Maximum number of iterations (turns) per response"></label>
+						<input id="iterations" type="number" min="1" max="50" value="3" />
+					</div>
 					<div class="option group none">
 						<button id="json" title="Turn on structured json output"></button>
 						<button id="search" title="Turn on search tools (search_web and fetch_contents)"></button>
 					</div>
 					<div class="option">
 						<button id="scrolling" title="Turn on auto-scrolling"></button>
-					</div>
-					<div class="option">
-						<button id="export" title="Export the entire chat as a JSON file"></button>
-						<button id="import" title="Import a chat form a JSON file"></button>
-						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
-						<button id="clear" title="Clear the entire chat"></button>
 					</div>
 				</div>
 			</div>

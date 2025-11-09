@@ -65,6 +65,7 @@ body {
 body {
 	display: flex;
 	overflow: hidden;
+	padding: 0 10px;
 }
 
 body.resizing * {
@@ -192,7 +193,7 @@ body:not(.loading) #loading {
 	gap: 5px;
 	background: #1e2030;
 	margin: auto;
-	margin-top: 40px;
+	margin-top: 42px;
 	width: 100%;
 	max-width: 1200px;
 	height: calc(100% - 40px);
@@ -220,10 +221,14 @@ body:not(.loading) #loading {
 	font-style: italic;
 	padding-left: 22px;
 	transition: 150ms opacity;
+	max-width: 100%;
 }
 
 #title-text {
 	transition: 150ms;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 #title #title-refresh {
@@ -288,7 +293,7 @@ body:not(.loading) #loading {
 
 .message {
 	position: relative;
-	max-width: 700px;
+	max-width: min(700px, 100%);
 	min-width: 280px;
 	width: max-content;
 	padding-top: 28px;
@@ -371,20 +376,23 @@ body:not(.loading) #loading {
 	background-image: url(icons/search-tool.svg);
 }
 
+#role::before,
 .message.user .role::before {
 	background-image: url(icons/user.svg);
 }
 
+#role:has(.dropdown[data-value="system"])::before,
 .message.system .role::before {
 	background-image: url(icons/system.svg);
 }
 
+#role:has(.dropdown[data-value="assistant"])::before,
 .message.assistant .role::before {
 	background-image: url(icons/assistant.svg);
 }
 
 .message.assistant {
-	max-width: 800px;
+	max-width: min(800px, 100%);
 }
 
 .message.loading .text::after {
@@ -493,7 +501,7 @@ body:not(.loading) #loading {
 	height: 32px;
 }
 
-.message.collapsed .body > * {
+.message.collapsed .body>* {
 	opacity: 0;
 }
 
@@ -734,11 +742,12 @@ body:not(.loading) #loading {
 	left: 8px;
 	display: flex;
 	align-items: center;
-	gap: 20px;
+	gap: 2px 20px;
 	white-space: nowrap;
 	font-size: 13px;
 	line-height: 13px;
 	pointer-events: none;
+	flex-wrap: wrap;
 }
 
 .statistics .provider,
@@ -811,6 +820,7 @@ body:not(.loading) #loading {
 	height: 320px;
 	padding-bottom: 36px;
 	flex-shrink: 0;
+	flex-direction: column;
 }
 
 #chat::after {
@@ -937,12 +947,45 @@ body:not(.loading) #loading {
 	opacity: 1;
 }
 
+#header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 6px;
+	background: #363a4f;
+	width: 100%;
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	font-size: 12px;
+	line-height: 12px;
+}
+
+#role {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+#role .dropdown {
+	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	background: transparent;
+	padding: 0;
+	height: 14px;
+}
+
+#role .dropdown .selected {
+	text-transform: lowercase;
+}
+
+#role .dropdown .selected::after {
+	display: none;
+}
+
 #message {
-	border-bottom-left-radius: 0px;
-	border-bottom-right-radius: 0px;
+	border-radius: 0;
 	width: 100%;
 	height: 100%;
-	padding: 14px 16px;
+	padding: 12px 14px;
 	padding-bottom: 8px;
 }
 
@@ -990,6 +1033,7 @@ select {
 	align-items: center;
 	gap: 12px;
 	z-index: 10;
+	max-width: calc(100% - 140px);
 }
 
 #chat .option {
@@ -1000,7 +1044,7 @@ select {
 
 .message .options .attach::after,
 .message .options .collapse::after,
-#chat .option + .option::before {
+#chat .option+.option::before {
 	content: "";
 	display: block;
 	width: 2px;
@@ -1042,6 +1086,7 @@ body.loading #version,
 .message .statistics .tokens::before,
 .message .statistics .cost::before,
 .message .scroll-view,
+#role::before,
 #json,
 #search,
 #scrolling,
@@ -1061,6 +1106,7 @@ body.loading #version,
 	background-repeat: no-repeat;
 }
 
+#role::before,
 .message .statistics .provider::before,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
@@ -1176,7 +1222,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden) + #bottom {
+#top:not(.hidden)+#bottom {
 	right: 40px;
 }
 
@@ -1399,6 +1445,7 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
+
 	0%,
 	100% {
 		left: 0px;
@@ -1411,6 +1458,7 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
+
 	0%,
 	75%,
 	100% {
@@ -1459,5 +1507,15 @@ label[for="reasoning-tokens"] {
 @media (prefers-reduced-motion: reduce) {
 	#floaters {
 		display: none;
+	}
+}
+
+@media (max-width: 745px) {
+
+	.message,
+	.message.assistant {
+		width: 100%;
+		min-width: auto;
+		max-width: 100%;
 	}
 }

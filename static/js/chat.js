@@ -23,7 +23,7 @@
 		$bottom = document.getElementById("bottom"),
 		$resizeBar = document.getElementById("resize-bar"),
 		$attachments = document.getElementById("attachments"),
-		$role = document.getElementById("role"),
+		$role = document.getElementById("role").querySelector("select"),
 		$model = document.getElementById("model"),
 		$prompt = document.getElementById("prompt"),
 		$temperature = document.getElementById("temperature"),
@@ -2336,6 +2336,10 @@
 				behavior: "smooth",
 			});
 		}
+	});
+
+	addEventListener("resize", () => {
+		updateScrollButton();
 	});
 
 	dropdown($role);

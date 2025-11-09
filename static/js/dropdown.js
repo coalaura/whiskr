@@ -23,7 +23,7 @@
 					value: option.value,
 					label: option.textContent,
 
-					title: option.title || false,
+					title: option.title || "",
 					tags: tags ? tags.split(",") : [],
 
 					search: searchable(option.textContent),
@@ -173,8 +173,10 @@
 
 			const selection = this.#options[this.#selected];
 
-			this.#_selected.title = selection.title;
+			this.#_selected.title = selection.title || this.#_select.title;
 			this.#_selected.innerHTML = selection.el.innerHTML;
+
+			this.#_dropdown.setAttribute("data-value", selection.value);
 		}
 
 		#filter() {
