@@ -47,7 +47,7 @@
 
 				<div id="header">
 					<div id="role">
-						<select title="Message role">
+						<select title="Message Role">
 							<option value="user" selected>User</option>
 							<option value="assistant">Assistant</option>
 							<option value="system">System</option>
@@ -72,6 +72,15 @@
 					<div class="option">
 						<label for="model" title="Model"></label>
 						<select id="model" data-searchable></select>
+					</div>
+					<div class="option">
+						<label for="provider-sorting" title="Provider Sorting"></label>
+						<select id="provider-sorting">
+							<option value="" selected title="Default sorting">-</option>
+							<option value="throughput" title="Sort by throughput">:turbo</option>
+							<option value="latency" title="Sort by latency">:quick</option>
+							<option value="price" title="Sort by price">:cheap</option>
+						</select>
 					</div>
 					<div class="option none">
 						<label for="reasoning-effort" title="Reasoning Effort"></label>

@@ -54,6 +54,7 @@ type Metadata struct {
 type Request struct {
 	Prompt      string    `json:"prompt"`
 	Model       string    `json:"model"`
+	Provider    string    `json:"provider"`
 	Temperature float64   `json:"temperature"`
 	Iterations  int64     `json:"iterations"`
 	Tools       Tools     `json:"tools"`
@@ -165,6 +166,21 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 			}
 
 			request.Reasoning.MaxTokens = &r.Reasoning.Tokens
+		}
+	}
+
+	switch r.Provider {
+	case "throughput":
+		request.Provider = &openrouter.ChatProvider{
+			Sort: openrouter.ProviderSortingThroughput,
+		}
+	case "latency":
+		request.Provider = &openrouter.ChatProvider{
+			Sort: openrouter.ProviderSortingLatency,
+		}
+	case "price":
+		request.Provider = &openrouter.ChatProvider{
+			Sort: openrouter.ProviderSortingPrice,
 		}
 	}
 

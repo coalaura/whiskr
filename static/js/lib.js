@@ -117,7 +117,9 @@ function formatMoney(num) {
 	if (num < 1) {
 		let decimals = 1;
 
-		if (num < 0.0001) {
+		if (num < 0.00001) {
+			decimals = 4;
+		} else if (num < 0.0001) {
 			decimals = 3;
 		} else if (num < 0.001) {
 			decimals = 2;

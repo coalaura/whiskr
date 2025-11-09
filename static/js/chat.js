@@ -25,11 +25,12 @@
 		$attachments = document.getElementById("attachments"),
 		$role = document.getElementById("role").querySelector("select"),
 		$model = document.getElementById("model"),
+		$providerSorting = document.getElementById("provider-sorting"),
+		$reasoningEffort = document.getElementById("reasoning-effort"),
+		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$prompt = document.getElementById("prompt"),
 		$temperature = document.getElementById("temperature"),
 		$iterations = document.getElementById("iterations"),
-		$reasoningEffort = document.getElementById("reasoning-effort"),
-		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$json = document.getElementById("json"),
 		$search = document.getElementById("search"),
 		$upload = document.getElementById("upload"),
@@ -1246,6 +1247,7 @@
 		return {
 			prompt: $prompt.value,
 			model: $model.value,
+			provider: $providerSorting.value,
 			temperature: temperature,
 			iterations: iterations,
 			tools: {
@@ -1641,7 +1643,7 @@
 				separator,
 				`Created:\t\t${formatTimestamp(model.created)}`,
 				`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
-				model.pricing.image ? `Images:\t\t${formatMoney(model.pricing.image)} each` : null,
+				model.pricing.image ? `Images/1K:\t${formatMoney(model.pricing.image * 1000)} Out` : null,
 				separator,
 				stripMarkdown(model.description),
 			]
@@ -1696,6 +1698,7 @@
 		$prompt.value = loadValue("prompt", promptList.length ? promptList[0].key : "");
 		$temperature.value = loadValue("temperature", 0.85);
 		$iterations.value = loadValue("iterations", 3);
+		$providerSorting.value = loadValue("provider", "");
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
@@ -2060,6 +2063,12 @@
 		$iterations.classList.toggle("invalid", Number.isNaN(iterations) || iterations < 1 || iterations > 50);
 	});
 
+	$providerSorting.addEventListener("change", () => {
+		const provider = $providerSorting.value;
+
+		storeValue("provider", provider);
+	});
+
 	$reasoningEffort.addEventListener("change", () => {
 		const effort = $reasoningEffort.value;
 
@@ -2124,6 +2133,7 @@
 			attachments: attachments,
 			role: $role.value,
 			model: $model.value,
+			provider: $providerSorting.value,
 			prompt: $prompt.value,
 			temperature: $temperature.value,
 			iterations: $iterations.value,
@@ -2343,6 +2353,7 @@
 	});
 
 	dropdown($role);
+	dropdown($providerSorting);
 	dropdown($reasoningEffort);
 
 	loadData().then(() => {
