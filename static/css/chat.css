@@ -1,62 +1,8 @@
-@font-face {
-	font-family: "Comic Code";
-	src: url(fonts/ComicCode-Regular.ttf);
-	font-weight: normal;
-}
-
-@font-face {
-	font-family: "Comic Code";
-	src: url(fonts/ComicCode-Bold.ttf);
-	font-weight: 700;
-}
-
-@font-face {
-	font-family: "Comic Code";
-	src: url(fonts/ComicCode-Italic.ttf);
-	font-weight: normal;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Comic Code";
-	src: url(fonts/ComicCode-BoldItalic.ttf);
-	font-weight: 700;
-	font-style: italic;
-}
-
-* {
-	box-sizing: border-box;
-}
-
-:-webkit-scrollbar {
-	width: 6px;
-	height: 6px;
-}
-
-::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-	background-color: #cad3f5;
-	border: none;
-	border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-	background-color: #cad3f5;
-}
-
-* {
-	scrollbar-width: thin;
-	scrollbar-color: #cad3f5 transparent;
-}
-
 html,
 body {
-	font-family: "Work Sans", sans-serif;
+	font-family: var(--font);
 	font-size: 15px;
-	color: #cad3f5;
+	color: var(--c-text);
 	height: 100%;
 	width: 100%;
 	margin: 0;
@@ -80,7 +26,7 @@ body.resizing * {
 	font-style: italic;
 	top: 3px;
 	right: 4px;
-	color: #a5adcb;
+	color: var(--c-subtext);
 }
 
 #total {
@@ -89,7 +35,7 @@ body.resizing * {
 }
 
 #version a {
-	color: #a5adcb;
+	color: var(--c-subtext);
 	text-decoration: none;
 }
 
@@ -132,7 +78,7 @@ body:not(.loading) #loading {
 	inset: 0;
 	pointer-events: none;
 	z-index: -1;
-	background: #181926;
+	background: var(--c-crust);
 }
 
 #floaters .floater {
@@ -144,7 +90,7 @@ body:not(.loading) #loading {
 	opacity: 0.3;
 	transform: translate(var(--x), var(--y));
 	transition: transform var(--time, 14s);
-	background: var(--color, #181926);
+	background: var(--color, var(--c-crust));
 	will-change: transform;
 }
 
@@ -157,14 +103,14 @@ body:not(.loading) #loading {
 
 .notification {
 	position: relative;
-	background: #24273a;
+	background: var(--c-base);
 	padding: 12px 15px;
 	border-radius: 6px;
 	width: 280px;
 	margin-bottom: 10px;
 	transition: 250ms;
-	color: #ed8796;
-	border: 2px solid #ed8796;
+	color: var(--c-red);
+	border: 2px solid var(--c-red);
 	left: 0px;
 	overflow: hidden;
 }
@@ -191,7 +137,7 @@ body:not(.loading) #loading {
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
-	background: #1e2030;
+	background: var(--c-mantle);
 	margin: auto;
 	margin-top: 42px;
 	width: 100%;
@@ -258,7 +204,7 @@ body:not(.loading) #loading {
 	top: 0;
 	left: 0;
 	animation: swivel 1.2s ease-in-out infinite;
-	background: #6e738d;
+	background: var(--c-overlay0);
 	opacity: 0.5;
 	border-radius: 6px;
 }
@@ -276,7 +222,7 @@ body:not(.loading) #loading {
 
 #messages:empty::before {
 	content: "whiskr - no messages";
-	color: #a5adcb;
+	color: var(--c-subtext);
 	font-style: italic;
 	align-self: center;
 	margin-top: 5px;
@@ -286,7 +232,7 @@ body:not(.loading) #loading {
 .message {
 	border: none;
 	border-radius: 6px;
-	background: #24273a;
+	background: var(--c-base);
 	font: inherit;
 	color: inherit;
 }
@@ -297,7 +243,7 @@ body:not(.loading) #loading {
 	min-width: 280px;
 	width: max-content;
 	padding-top: 28px;
-	background: #363a4f;
+	background: var(--c-surface0);
 	flex-shrink: 0;
 }
 
@@ -332,7 +278,7 @@ body:not(.loading) #loading {
 	display: flex;
 	gap: 4px;
 	align-items: center;
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 	font-size: 12px;
 	line-height: 12px;
 	top: 6px;
@@ -350,7 +296,7 @@ body:not(.loading) #loading {
 	left: -10px;
 	height: 2px;
 	width: 6px;
-	background: #939ab7;
+	background: var(--c-overlay2);
 }
 
 .message .tags {
@@ -401,7 +347,7 @@ body:not(.loading) #loading {
 	position: relative;
 	width: 32px;
 	height: 3px;
-	background: #cad3f5;
+	background: var(--c-text);
 	animation: swivel 1.5s ease-in-out infinite;
 	opacity: 0.5;
 	margin-top: 5px;
@@ -414,7 +360,7 @@ body:not(.loading) #loading {
 
 .message textarea.text {
 	display: block;
-	background: #181926;
+	background: var(--c-crust);
 	min-width: 480px;
 	min-height: 100px;
 	max-width: 100%;
@@ -430,15 +376,15 @@ body:not(.loading) #loading {
 .message .tool.invalid,
 .message .tool .result.error,
 .message .text .error {
-	color: #ed8796;
+	color: var(--c-red);
 }
 
 .message .text .error a {
-	color: #ee99a0;
+	color: var(--c-maroon);
 }
 
 .message.errored {
-	border: 2px solid #ed8796;
+	border: 2px solid var(--c-red);
 }
 
 .images .image {
@@ -450,12 +396,12 @@ body:not(.loading) #loading {
 	max-width: 100%;
 	width: 420px;
 	border-radius: 6px;
-	border: 2px solid #363a4f;
+	border: 2px solid var(--c-surface0);
 }
 
 .tool .result pre,
 .reasoning-text pre {
-	background: #1b1d2a;
+	background: var(--c-mantle-dark);
 }
 
 .tool .result pre.l-json .pre-header {
@@ -464,7 +410,7 @@ body:not(.loading) #loading {
 
 .message .tool .result,
 .message .reasoning-text {
-	background: #1e2030;
+	background: var(--c-mantle);
 	border-radius: 6px;
 	padding: 10px 12px;
 	margin-top: 16px;
@@ -486,7 +432,7 @@ body:not(.loading) #loading {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	background: #24273a;
+	background: var(--c-base);
 }
 
 .message.collapsed .body {
@@ -501,7 +447,7 @@ body:not(.loading) #loading {
 	position: absolute;
 	content: "collapsed...";
 	font-style: italic;
-	color: #939ab7;
+	color: var(--c-overlay2);
 	font-size: 12px;
 	top: 50%;
 	left: 12px;
@@ -509,13 +455,13 @@ body:not(.loading) #loading {
 }
 
 .message .time {
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 	font-size: 10px;
 	line-height: 10px;
 	position: absolute;
 	top: 3px;
 	right: 3px;
-	color: #a5adcb;
+	color: var(--c-subtext);
 }
 
 .tool .call,
@@ -574,7 +520,7 @@ body:not(.loading) #loading {
 	flex-direction: column;
 	width: 100%;
 	cursor: pointer;
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 	font-size: 13px;
 }
 
@@ -619,7 +565,7 @@ body:not(.loading) #loading {
 	right: 2px;
 	font-size: 12px;
 	font-style: italic;
-	color: #a5adcb;
+	color: var(--c-subtext);
 	transition: 150ms opacity;
 	opacity: 0;
 }
@@ -715,7 +661,7 @@ body:not(.loading) #loading {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: #939ab7;
+	background: var(--c-overlay2);
 	animation: bounce 1.4s infinite ease-in-out;
 }
 
@@ -821,7 +767,7 @@ body:not(.loading) #loading {
 	left: 12px;
 	right: 12px;
 	height: 36px;
-	background: #24273a;
+	background: var(--c-base);
 }
 
 #chat:has(.has-files) {
@@ -866,7 +812,7 @@ body:not(.loading) #loading {
 }
 
 .message.editing .files {
-	background: #181926;
+	background: var(--c-crust);
 	padding: 9px;
 	gap: 6px;
 }
@@ -881,12 +827,12 @@ body:not(.loading) #loading {
 	display: flex;
 	gap: 4px;
 	align-items: center;
-	background: #24273a;
+	background: var(--c-base);
 	box-shadow: 0px 0px 10px 6px rgba(0, 0, 0, 0.1);
 	padding: 8px 10px;
 	padding-right: 14px;
 	border-radius: 6px;
-	border: 1px solid #363a4f;
+	border: 1px solid var(--c-surface0);
 	overflow: hidden;
 	min-width: 140px;
 }
@@ -943,7 +889,7 @@ body:not(.loading) #loading {
 	align-items: center;
 	justify-content: space-between;
 	padding: 4px 6px;
-	background: #363a4f;
+	background: var(--c-surface0);
 	width: 100%;
 	border-top-left-radius: 6px;
 	border-top-right-radius: 6px;
@@ -958,7 +904,7 @@ body:not(.loading) #loading {
 }
 
 #role .dropdown {
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 	background: transparent;
 	padding: 0;
 	height: 14px;
@@ -1006,7 +952,7 @@ button {
 
 input,
 select {
-	background: #363a4f;
+	background: var(--c-surface0);
 	padding: 2px 5px;
 	font-size: 14px;
 }
@@ -1040,7 +986,7 @@ select {
 	display: block;
 	width: 2px;
 	height: 12px;
-	background: #5b6078;
+	background: var(--c-surface2);
 	margin-right: 4px;
 }
 
@@ -1112,7 +1058,7 @@ body.loading #version,
 }
 
 input.invalid {
-	border: 1px solid #ed8796;
+	border: 1px solid var(--c-red);
 }
 
 .message .collapse::before {
@@ -1349,7 +1295,7 @@ label[for="reasoning-tokens"] {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	gap: 14px;
-	background: #24273a;
+	background: var(--c-base);
 	padding: 18px 20px;
 	border-radius: 6px;
 	box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.1);
@@ -1357,7 +1303,7 @@ label[for="reasoning-tokens"] {
 }
 
 .modal .header {
-	background: #363a4f;
+	background: var(--c-surface0);
 	height: 42px;
 	margin: -18px -20px;
 	padding: 10px 20px;
@@ -1390,12 +1336,12 @@ label[for="reasoning-tokens"] {
 }
 
 .modal .error {
-	background: #ed8796;
+	background: var(--c-red);
 	font-weight: 500;
 	font-style: italic;
 	margin-bottom: 6px;
 	font-size: 14px;
-	color: #11111b;
+	color: var(--c-crust-dark);
 	padding: 5px 10px;
 	border-radius: 2px;
 }
@@ -1405,7 +1351,7 @@ label[for="reasoning-tokens"] {
 }
 
 .modal.errored input {
-	border: 1px solid #ed8796;
+	border: 1px solid var(--c-red);
 }
 
 .modal .form-group {
@@ -1427,8 +1373,8 @@ label[for="reasoning-tokens"] {
 }
 
 #login {
-	background: #a6da95;
-	color: #11111b;
+	background: var(--c-green);
+	color: var(--c-crust-dark);
 	padding: 4px 10px;
 	border-radius: 2px;
 	font-weight: 500;
@@ -1436,7 +1382,7 @@ label[for="reasoning-tokens"] {
 }
 
 #login:hover {
-	background: #89bb77;
+	background: var(--c-green-dark);
 }
 
 @keyframes swivel {

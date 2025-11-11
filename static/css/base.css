@@ -1,0 +1,84 @@
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Regular.ttf);
+	font-weight: normal;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Bold.ttf);
+	font-weight: 700;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-Italic.ttf);
+	font-weight: normal;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: "Comic Code";
+	src: url(fonts/ComicCode-BoldItalic.ttf);
+	font-weight: 700;
+	font-style: italic;
+}
+
+:root {
+	--font: "Work Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+	--font-mono: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+
+	--c-rosewater: #f4dbd6;
+	--c-mauve: #c6a0f6;
+	--c-red: #ed8796;
+	--c-maroon: #ee99a0;
+	--c-yellow: #eed49f;
+	--c-green: #a6da95;
+	--c-sapphire: #7dc4e4;
+	--c-blue: #8aadf4;
+	--c-lavender: #b7bdf8;
+	--c-text: #cad3f5;
+	--c-subtext: #a5adcb;
+
+	--c-overlay2: #939ab7;
+	--c-overlay0: #6e738d;
+	--c-surface2: #5b6078;
+	--c-surface1: #494d64;
+	--c-surface0: #363a4f;
+	--c-base: #24273a;
+	--c-mantle: #1e2030;
+	--c-crust: #181926;
+
+	--c-green-dark: color-mix(in oklab, var(--c-green), black 25%);
+
+	--c-overlay0-dark: color-mix(in oklab, var(--c-overlay0), black 10%);
+	--c-surface0-dark: color-mix(in oklab, var(--c-surface0), black 10%);
+	--c-base-dark: color-mix(in oklab, var(--c-base), black 10%);
+	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 10%);
+	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 10%);
+}
+
+* {
+	box-sizing: border-box;
+	scrollbar-width: thin;
+	scrollbar-color: var(--c-text) transparent;
+}
+
+:-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: var(--c-text);
+	border: none;
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--c-text);
+}

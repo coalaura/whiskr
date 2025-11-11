@@ -1,7 +1,7 @@
 .markdown {
 	font-size: 15px;
 	line-height: 23px;
-	color: #cad3f5;
+	color: var(--c-text);
 	overflow: hidden;
 	word-wrap: break-word;
 }
@@ -59,7 +59,7 @@
 }
 
 .markdown a {
-	color: #8aadf4;
+	color: var(--c-blue);
 	text-decoration: none;
 	font-weight: 500;
 	transition:
@@ -69,7 +69,7 @@
 
 .markdown a:hover,
 .markdown a:focus {
-	color: #b7bdf8;
+	color: var(--c-lavender);
 	text-decoration: underline;
 	text-decoration-color: rgba(183, 189, 248, 0.6);
 }
@@ -86,9 +86,9 @@
 
 .markdown blockquote {
 	padding: 10px 16px;
-	border-left: 4px solid #8aadf4;
+	border-left: 4px solid var(--c-blue);
 	background: rgba(138, 173, 244, 0.05);
-	color: #cad3f5;
+	color: var(--c-text);
 	font-style: italic;
 	border-radius: 4px;
 }
@@ -126,7 +126,7 @@
 .markdown th {
 	background: rgba(165, 173, 203, 0.07);
 	font-weight: 600;
-	color: #cad3f5;
+	color: var(--c-text);
 }
 
 .markdown tr:nth-child(even) td {
@@ -139,19 +139,19 @@
 
 .markdown code,
 .markdown pre {
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 	font-size: 13px;
 }
 
 .markdown code {
-	background: #363a4f;
+	background: var(--c-surface0);
 	padding: 1px 4px;
 	border-radius: 3px;
 	margin: 0 1px;
 }
 
 .markdown pre {
-	background: #1e2030;
+	background: var(--c-mantle);
 	white-space: pre-wrap;
 	padding: 10px 12px;
 	border-radius: 6px;
@@ -168,7 +168,7 @@
 
 .markdown .pre-header {
 	position: relative;
-	background: #363a4f;
+	background: var(--c-surface0);
 	padding: 8px 12px;
 	margin: -10px -12px;
 	margin-bottom: 10px;
@@ -191,7 +191,7 @@
 }
 
 .markdown hr {
-	color: #5f6386;
+	color: var(--c-overlay0-dark);
 	margin: 25px 0;
 }
 
@@ -224,7 +224,7 @@
 	display: flex;
 	gap: 4px;
 	align-items: center;
-	background: #24273a;
+	background: var(--c-base);
 	width: max-content;
 	max-width: 100%;
 	white-space: nowrap;
@@ -232,7 +232,7 @@
 	cursor: pointer;
 	padding: 8px 10px;
 	border-radius: 6px;
-	border: 1px solid #363a4f;
+	border: 1px solid var(--c-surface0);
 	overflow: hidden;
 }
 
@@ -255,7 +255,7 @@
 	position: relative;
 	top: -5px;
 	font-size: 10px;
-	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
+	font-family: var(--font-mono);
 }
 
 .markdown .inline-file .download {
@@ -269,7 +269,7 @@
 	position: absolute;
 	width: 32px;
 	height: 3px;
-	background: #cad3f5;
+	background: var(--c-text);
 	animation: swivel 1.5s ease-in-out infinite;
 	opacity: 0.5;
 	bottom: -1px;
