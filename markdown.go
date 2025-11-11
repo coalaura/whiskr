@@ -63,15 +63,15 @@ func SplitImagePairs(text string) []openrouter.ChatMessagePart {
 
 		rest := text[str:end]
 
-		if rest == "" {
-			return
-		}
-
 		total := len(parts)
 
 		if total > 0 && parts[total-1].Type == openrouter.ChatMessagePartTypeText {
 			parts[total-1].Text += rest
 
+			return
+		}
+
+		if strings.TrimSpace(rest) == "" {
 			return
 		}
 

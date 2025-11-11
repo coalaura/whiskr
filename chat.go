@@ -218,10 +218,20 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 				},
 			})
 		case "user":
-			var content openrouter.Content
+			var (
+				content openrouter.Content
+				multi   bool
+				last    = -1
+			)
 
 			if model.Vision && strings.Contains(message.Text, "![") {
 				content.Multi = SplitImagePairs(message.Text)
+
+				multi = true
+
+				if content.Multi[len(content.Multi)-1].Type == openrouter.ChatMessagePartTypeText {
+					last = len(content.Multi) - 1
+				}
 			} else {
 				content.Text = message.Text
 			}
@@ -236,16 +246,33 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 					lines := strings.Count(file.Content, "\n") + 1
 
-					if content.Text != "" {
-						content.Text += "\n\n"
-					}
-
-					content.Text += fmt.Sprintf(
+					entry := fmt.Sprintf(
 						"FILE %q LINES %d\n<<CONTENT>>\n%s\n<<END>>",
 						file.Name,
 						lines,
 						file.Content,
 					)
+
+					if multi {
+						if last != -1 {
+							if content.Multi[last].Text != "" {
+								content.Multi[last].Text += "\n\n"
+							}
+
+							content.Multi[last].Text += entry
+						} else {
+							content.Multi = append(content.Multi, openrouter.ChatMessagePart{
+								Type: openrouter.ChatMessagePartTypeText,
+								Text: entry,
+							})
+						}
+					} else {
+						if content.Text != "" {
+							content.Text += "\n\n"
+						}
+
+						content.Text += entry
+					}
 				}
 			}
 
