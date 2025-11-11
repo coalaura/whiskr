@@ -64,6 +64,10 @@
 
 			this.#_selected.addEventListener("click", () => {
 				this.#_dropdown.classList.toggle("open");
+
+				const selection = this.#options[this.#selected];
+
+				selection.el.scrollIntoView();
 			});
 
 			this.#_dropdown.appendChild(this.#_selected);
@@ -171,7 +175,17 @@
 				return;
 			}
 
+			for (const key in this.#options) {
+				const option = this.#options[key];
+
+				option.el.classList.remove("active");
+			}
+
 			const selection = this.#options[this.#selected];
+
+			selection.el.classList.add("active");
+
+			this.#_selected.classList.toggle("all-tags", selection.tags.length >= this.#maxTags);
 
 			this.#_selected.title = selection.title || this.#_select.title;
 			this.#_selected.innerHTML = selection.el.innerHTML;

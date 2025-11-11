@@ -26,6 +26,7 @@
 	background-size: contain;
 	background-repeat: no-repeat;
 	transform: rotate(180deg);
+	flex-shrink: 0;
 }
 
 .dropdown .cont {
@@ -74,8 +75,13 @@
 	background: #2c2f44;
 }
 
+.dropdown .opt.active {
+	background: #24273a;
+}
+
 .dropdown .opt.filtered {
 	display: none;
+	font-weight: 500;
 }
 
 .dropdown .label {
@@ -98,24 +104,50 @@
 	background-repeat: no-repeat;
 }
 
+.dropdown .selected:not(.all-tags) .tags:has(.tag:nth-child(3)) {
+	display: flex;
+	height: 2px;
+	gap: 1px;
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+}
+
+.dropdown .selected:not(.all-tags) .tags:has(.tag:nth-child(3)) .tag {
+	background: var(--color);
+	width: 100%;
+	height: 2px;
+}
+
 .tags .tag.reasoning {
+	--color: #c6a0f6;
 	background-image: url(icons/tags/reasoning.svg);
 }
 
 .tags .tag.tools {
+	--color: #eed49f;
 	background-image: url(icons/tags/tools.svg);
 }
 
 .tags .tag.vision {
+	--color: #ed8796;
 	background-image: url(icons/tags/vision.svg);
 }
 
 .tags .tag.json {
+	--color: #7dc4e4;
 	background-image: url(icons/tags/json.svg);
 }
 
 .tags .tag.image {
+	--color: #f4dbd6;
 	background-image: url(icons/tags/image.svg);
+}
+
+.tags .tag.free {
+	--color: #a6da95;
+	background-image: url(icons/tags/free.svg);
 }
 
 .tags .tag.all {

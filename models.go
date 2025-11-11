@@ -167,5 +167,9 @@ func GetModelTags(model openrouter.Model, m *Model) {
 		}
 	}
 
+	if model.Pricing.Prompt == "0" && model.Pricing.Completion == "0" {
+		m.Tags = append(m.Tags, "free")
+	}
+
 	sort.Strings(m.Tags)
 }

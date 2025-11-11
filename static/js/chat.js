@@ -1641,7 +1641,8 @@
 			el.title = [
 				model.name,
 				separator,
-				`Created:\t\t${formatTimestamp(model.created)}`,
+				`Tags:\t\t${model.tags?.join(", ") || "-"}`,
+				`Created:\t${formatTimestamp(model.created)}`,
 				`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
 				model.pricing.image ? `Images/1K:\t${formatMoney(model.pricing.image * 1000)} Out` : null,
 				separator,
@@ -1659,7 +1660,7 @@
 			modelList.push(model);
 		});
 
-		dropdown($model, 4);
+		dropdown($model, 6);
 
 		// render prompts
 		data.prompts.unshift({
