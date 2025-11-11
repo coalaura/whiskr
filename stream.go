@@ -13,15 +13,16 @@ import (
 )
 
 const (
-	ChunkStart     ChunkType = 0
-	ChunkID        ChunkType = 1
-	ChunkReasoning ChunkType = 2
-	ChunkText      ChunkType = 3
-	ChunkImage     ChunkType = 4
-	ChunkTool      ChunkType = 5
-	ChunkError     ChunkType = 6
-	ChunkEnd       ChunkType = 7
-	ChunkAlive     ChunkType = 8
+	ChunkStart         ChunkType = 0
+	ChunkID            ChunkType = 1
+	ChunkReasoning     ChunkType = 2
+	ChunkReasoningType ChunkType = 3
+	ChunkText          ChunkType = 4
+	ChunkImage         ChunkType = 5
+	ChunkTool          ChunkType = 6
+	ChunkError         ChunkType = 7
+	ChunkEnd           ChunkType = 8
+	ChunkAlive         ChunkType = 9
 )
 
 type ChunkType uint8

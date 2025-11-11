@@ -3,12 +3,13 @@
 		0: "start",
 		1: "id",
 		2: "reason",
-		3: "text",
-		4: "image",
-		5: "tool",
-		6: "error",
-		7: "end",
-		8: "alive",
+		3: "reason_type",
+		4: "text",
+		5: "image",
+		6: "tool",
+		7: "error",
+		8: "end",
+		9: "alive",
 	};
 
 	const $version = document.getElementById("version"),
@@ -166,6 +167,7 @@
 		#id;
 		#role;
 		#reasoning;
+		#reasoningType;
 		#text;
 		#images = [];
 		#files = [];
@@ -196,33 +198,48 @@
 		#_tool;
 		#_statistics;
 
-		constructor(role, reasoning, text, tool = false, files = [], images = [], tags = [], time = 0, collapsed = false) {
+		constructor(data) {
 			this.#id = uid();
-			this.#role = role;
-			this.#reasoning = reasoning || "";
-			this.#text = text || "";
+			this.#role = data.role;
+			this.#reasoning = data.reasoning || "";
+			this.#reasoningType = data.reasoningType || "";
+			this.#text = data.text || "";
 
-			this.#time = time;
+			this.#time = data.time;
 
 			this.#_diff = document.createElement("div");
 
-			this.#build(collapsed);
+			this.#build(data.collapsed);
 			this.#render();
 
-			if (tool?.name) {
-				this.setTool(tool);
+			if (data.tool?.name) {
+				this.setTool(data.tool);
 			}
 
-			for (const file of files) {
-				this.addFile(file);
+			if (data.files) {
+				for (const file of data.files) {
+					this.addFile(file);
+				}
 			}
 
-			for (const image of images) {
-				this.addImage(image);
+			if (data.images) {
+				for (const image of data.images) {
+					this.addImage(image);
+				}
 			}
 
-			for (const tag of tags) {
-				this.addTag(tag);
+			if (data.tags) {
+				for (const tag of data.tags) {
+					this.addTag(tag);
+				}
+			}
+
+			if (data.statistics) {
+				this.setStatistics(data.statistics);
+			}
+
+			if (data.error) {
+				this.setError(data.error);
 			}
 
 			messages.push(this);
@@ -755,6 +772,12 @@
 			}
 
 			if (!only || only === "reasoning") {
+				let reasoning = this.#reasoning || "";
+
+				if (this.#reasoningType === "reasoning.summary") {
+					reasoning = reasoning.replace(/(?<!^)\*\*(?!$)/gm, "\n\n**");
+				}
+
 				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
 					this.#updateReasoningHeight();
 
@@ -825,6 +848,10 @@
 
 			if (this.#reasoning && full) {
 				data.reasoning = this.#reasoning;
+
+				if (this.#reasoningType) {
+					data.reasoningType = this.#reasoningType;
+				}
 			}
 
 			if (this.#images.length && full) {
@@ -998,6 +1025,13 @@
 
 		addReasoning(chunk) {
 			this.#reasoning += chunk;
+
+			this.#render("reasoning");
+			this.#save();
+		}
+
+		setReasoningType(type) {
+			this.#reasoningType = type;
 
 			this.#render("reasoning");
 			this.#save();
@@ -1333,7 +1367,9 @@
 		function start() {
 			started = Date.now();
 
-			message = new Message("assistant", "", "");
+			message = new Message({
+				role: "assistant",
+			});
 
 			message.setState("waiting");
 
@@ -1435,6 +1471,10 @@
 					case "reason":
 						message.setState("reasoning");
 						message.addReasoning(chunk.data);
+
+						break;
+					case "reason_type":
+						message.setReasoningType(chunk.data);
 
 						break;
 					case "text":
@@ -1722,25 +1762,7 @@
 		}
 
 		loadValue("messages", []).forEach(message => {
-			const obj = new Message(
-				message.role,
-				message.reasoning,
-				message.text,
-				message.tool,
-				message.files || [],
-				message.images || [],
-				message.tags || [],
-				message.time || 0,
-				message.collapsed
-			);
-
-			if (message.statistics) {
-				obj.setStatistics(message.statistics);
-			}
-
-			if (message.error) {
-				obj.setError(message.error);
-			}
+			new Message(message);
 		});
 
 		chatTitle = loadValue("title");
@@ -1879,7 +1901,11 @@
 		$message.value = "";
 		storeValue("message", "");
 
-		const message = new Message($role.value, "", text, false, attachments);
+		const message = new Message({
+			role: $role.value,
+			text: text,
+			files: attachments,
+		});
 
 		clearAttachments();
 		updateTitle();

@@ -434,10 +434,11 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	defer stream.Close()
 
 	var (
-		id    string
-		open  int
-		close int
-		tool  *ToolCall
+		id        string
+		open      int
+		close     int
+		reasoning bool
+		tool      *ToolCall
 	)
 
 	buf := GetFreeBuffer()
@@ -506,6 +507,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
 		} else if delta.Reasoning != nil {
+			if !reasoning && len(delta.ReasoningDetails) != 0 {
+				reasoning = true
+
+				response.WriteChunk(NewChunk(ChunkReasoningType, delta.ReasoningDetails[0].Type))
+			}
+
 			response.WriteChunk(NewChunk(ChunkReasoning, *delta.Reasoning))
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
