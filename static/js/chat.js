@@ -775,10 +775,12 @@
 				let reasoning = this.#reasoning || "";
 
 				if (this.#reasoningType === "reasoning.summary") {
-					reasoning = reasoning.replace(/(?<!^)\*\*(?!$)/gm, "\n\n**");
+					reasoning = reasoning.replace(/\s*\*\*([^\n*]+)\*\*\s*/gm, (_match, title) => {
+						return `\n\n### ${title}\n`;
+					});
 				}
 
-				this.#patch("reasoning", this.#_reasoning, this.#reasoning, () => {
+				this.#patch("reasoning", this.#_reasoning, reasoning, () => {
 					this.#updateReasoningHeight();
 
 					noScroll || scroll();
@@ -786,7 +788,7 @@
 					updateScrollButton();
 				});
 
-				this.#_message.classList.toggle("has-reasoning", !!this.#reasoning);
+				this.#_message.classList.toggle("has-reasoning", !!reasoning);
 			}
 
 			if (!only || only === "text") {

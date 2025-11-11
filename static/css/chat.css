@@ -470,14 +470,6 @@ body:not(.loading) #loading {
 	margin-top: 16px;
 }
 
-.reasoning-text strong {
-	display: block;
-}
-
-.reasoning-text strong:not(:first-child) {
-	margin-top: 14px;
-}
-
 .message.has-reasoning:not(.has-text):not(.errored) div.text,
 .message.has-tool:not(.has-text):not(.errored) div.text,
 .message.has-files:not(.has-text):not(.errored) div.text,
