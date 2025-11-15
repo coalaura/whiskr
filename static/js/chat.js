@@ -1677,6 +1677,8 @@
 		}
 
 		// render models
+		const newTime = Math.round(Date.now() / 1000) - 2 * 7 * 24 * 60 * 60;
+
 		fillSelect($model, data.models, (el, model) => {
 			const separator = "─".repeat(24);
 
@@ -1684,7 +1686,7 @@
 				model.name,
 				separator,
 				`Tags:\t\t${model.tags?.join(", ") || "-"}`,
-				`Created:\t${formatTimestamp(model.created)}`,
+				`Created:\t\t${formatTimestamp(model.created)}`,
 				`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
 				model.pricing.image ? `Images/1K:\t${formatMoney(model.pricing.image * 1000)} Out` : null,
 				separator,
@@ -1695,6 +1697,10 @@
 
 			el.value = model.id;
 			el.textContent = model.name;
+
+			if ((model.created || 0) >= newTime) {
+				el.dataset.new = "yes";
+			}
 
 			el.dataset.tags = (model.tags || []).join(",");
 

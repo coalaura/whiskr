@@ -17,7 +17,8 @@
 			this.#search = "searchable" in el.dataset;
 
 			this.#_select.querySelectorAll("option").forEach(option => {
-				const tags = option.dataset.tags?.trim();
+				const tags = option.dataset.tags?.trim(),
+					isNew = !!option.dataset.new;
 
 				this.#options.push({
 					value: option.value,
@@ -25,6 +26,7 @@
 
 					title: option.title || "",
 					tags: tags ? tags.split(",") : [],
+					new: isNew,
 
 					search: searchable(option.textContent),
 				});
@@ -101,6 +103,16 @@
 				_label.textContent = option.label;
 
 				_opt.appendChild(_label);
+
+				// new tag
+				if (option.new) {
+					const _new = make("sup", "new");
+
+					_new.textContent = "new";
+					_new.title = "Less than 2 weeks old";
+
+					_label.appendChild(_new);
+				}
 
 				// option tags (optional)
 				const tags = option.tags;

@@ -103,6 +103,15 @@
 	font-weight: 500;
 }
 
+.dropdown .opt .new {
+	font-size: 11px;
+	padding-left: 4px;
+	position: relative;
+	top: -2px;
+	color: var(--c-red);
+	font-weight: 500;
+}
+
 .dropdown .label {
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -118,6 +127,10 @@
 .dropdown .tags .tag {
 	width: 18px;
 	height: 18px;
+}
+
+.dropdown .selected .new {
+	display: none;
 }
 
 .dropdown .selected:not(.all-tags) .tags:has(.tag:nth-child(3)) {
