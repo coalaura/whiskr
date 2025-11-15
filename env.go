@@ -24,6 +24,7 @@ type EnvSettings struct {
 	ImageGeneration bool   `json:"image-generation"`
 	Transformation  string `json:"transformation"`
 	Timeout         int64  `json:"timeout"`
+	RefreshInterval int64  `json:"refresh-interval"`
 }
 
 type EnvUI struct {
@@ -57,6 +58,7 @@ var env = Environment{
 		CleanContent:    true,
 		ImageGeneration: true,
 		Timeout:         1200,
+		RefreshInterval: 30,
 	},
 }
 
@@ -131,6 +133,11 @@ func (e *Environment) Init() error {
 		env.Settings.Timeout = 300
 	}
 
+	// default model refresh interval
+	if env.Settings.RefreshInterval <= 0 {
+		env.Settings.RefreshInterval = 30
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
@@ -184,6 +191,7 @@ func (e *Environment) Store() error {
 			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 			"$.settings.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
+			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
 
 			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 

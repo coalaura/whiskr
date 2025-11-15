@@ -53,7 +53,7 @@ func StartModelUpdateLoop() error {
 	}
 
 	go func() {
-		ticker := time.NewTicker(2 * time.Hour)
+		ticker := time.NewTicker(time.Duration(env.Settings.RefreshInterval) * time.Minute)
 
 		for range ticker.C {
 			err := LoadModels(false)
@@ -76,7 +76,7 @@ func LoadModels(initial bool) error {
 		return err
 	}
 
-	if !initial && len(list) == len(ModelList) {
+	if !initial && !HasModelListChanged(list) {
 		log.Println("No new models, skipping update")
 
 		return nil
@@ -172,4 +172,21 @@ func GetModelTags(model openrouter.Model, m *Model) {
 	}
 
 	sort.Strings(m.Tags)
+}
+
+func HasModelListChanged(list []openrouter.Model) bool {
+	modelMx.RLock()
+	defer modelMx.RUnlock()
+
+	if len(list) != len(ModelList) {
+		return true
+	}
+
+	for i, model := range list {
+		if ModelList[i].ID != model.ID {
+			return true
+		}
+	}
+
+	return false
 }
