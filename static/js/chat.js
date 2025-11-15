@@ -175,6 +175,7 @@
 		#tool;
 		#tags = [];
 		#time = 0;
+		#ttft = 0;
 		#statistics;
 		#error = false;
 
@@ -206,6 +207,7 @@
 			this.#text = data.text || "";
 
 			this.#time = data.time;
+			this.#ttft = data.ttft;
 
 			this.#_diff = document.createElement("div");
 
@@ -277,10 +279,6 @@
 
 			// time
 			this.#_time = make("div", "time");
-
-			if (this.#time) {
-				this.#_time.textContent = formatMilliseconds(this.#time * 1000);
-			}
 
 			_body.appendChild(this.#_time);
 
@@ -767,6 +765,28 @@
 				this.#_message.classList.toggle("has-statistics", !!html);
 			}
 
+			if (!only || only === "time") {
+				this.#_time.innerHTML = "";
+
+				if (this.#time) {
+					if (this.#ttft) {
+						const ttft = make("span", "ttft-real");
+
+						ttft.title = "Real time to first token";
+						ttft.textContent = `${formatMilliseconds(this.#ttft * 1000)}`;
+
+						this.#_time.appendChild(ttft);
+					}
+
+					const time = make("span");
+
+					time.title = "Total time taken";
+					time.textContent = formatMilliseconds(this.#time * 1000);
+
+					this.#_time.appendChild(time);
+				}
+			}
+
 			if (this.#error) {
 				return;
 			}
@@ -874,6 +894,10 @@
 
 			if (this.#time && full) {
 				data.time = this.#time;
+
+				if (this.#ttft) {
+					data.ttft = this.#ttft;
+				}
 			}
 
 			if (this.#_message.classList.contains("collapsed") && full) {
@@ -894,11 +918,17 @@
 			this.#save();
 		}
 
-		setTime(time) {
+		setTime(time, ttft, final = false) {
 			this.#time = time;
 
-			if (this.#time) {
-				this.#_time.textContent = formatMilliseconds(this.#time * 1000);
+			if (ttft && !this.#ttft) {
+				this.#ttft = ttft;
+			}
+
+			this.#render("time");
+
+			if (final) {
+				this.#save();
 			}
 		}
 
@@ -1321,7 +1351,7 @@
 
 		$chat.classList.add("completing");
 
-		let message, generationID, stopTimeout, timeInterval, started;
+		let message, generationID, stopTimeout, timeInterval, started, receivedToken;
 
 		function startLoadingTimeout() {
 			stopTimeout?.();
@@ -1354,13 +1384,17 @@
 
 			clearInterval(timeInterval);
 
-			msg.setTime(Math.round((Date.now() - started) / 100) / 10);
+			const took = Math.round((Date.now() - started) / 100) / 10;
+
+			msg.setTime(took, false);
 
 			msg.setState(false);
 
 			setTimeout(() => {
 				msg.loadGenerationData(genID);
 			}, 1000);
+
+			receivedToken = false;
 
 			message = null;
 			generationID = null;
@@ -1388,7 +1422,9 @@
 					return;
 				}
 
-				message.setTime(Math.round((Date.now() - started) / 100) / 10);
+				const took = Math.round((Date.now() - started) / 100) / 10;
+
+				message.setTime(took, receivedToken ? took : false);
 			}, 100);
 		}
 
@@ -1454,6 +1490,8 @@
 
 						break;
 					case "tool":
+						receivedToken = true;
+
 						message.setState("tooling");
 						message.setTool(chunk.data);
 
@@ -1467,19 +1505,27 @@
 
 						break;
 					case "image":
+						receivedToken = true;
+
 						message.addImage(chunk.data);
 
 						break;
 					case "reason":
+						receivedToken = true;
+
 						message.setState("reasoning");
 						message.addReasoning(chunk.data);
 
 						break;
 					case "reason_type":
+						receivedToken = true;
+
 						message.setReasoningType(chunk.data);
 
 						break;
 					case "text":
+						receivedToken = true;
+
 						message.setState("receiving");
 						message.addText(chunk.data);
 

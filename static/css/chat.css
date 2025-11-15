@@ -455,6 +455,8 @@ body:not(.loading) #loading {
 }
 
 .message .time {
+	display: flex;
+	gap: 4px;
 	font-family: var(--font-mono);
 	font-size: 10px;
 	line-height: 10px;
@@ -462,6 +464,11 @@ body:not(.loading) #loading {
 	top: 3px;
 	right: 3px;
 	color: var(--c-subtext);
+}
+
+.message .time .ttft-real::after {
+	content: "/";
+	padding-left: 4px;
 }
 
 .tool .call,
