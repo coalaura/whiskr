@@ -677,7 +677,7 @@
 
 					const image = this.#images[x],
 						blob = dataBlob(image),
-						url = URL.createObjectURL(blob);
+						url = blob ? URL.createObjectURL(blob) : `#`;
 
 					const _link = make("a", "image", `i-${x}`);
 
