@@ -1255,6 +1255,8 @@
 				return;
 			}
 
+			console.error(err);
+
 			callback({
 				type: "error",
 				data: err.message,
@@ -1591,6 +1593,8 @@
 			if (err.name === "AbortError") {
 				return;
 			}
+
+			console.error(err);
 
 			notify(err);
 		}
@@ -2296,6 +2300,8 @@
 
 			download("request.json", "application/json", JSON.stringify(dumped.request, null, 4));
 		} catch (err) {
+			console.error(err);
+
 			notify(err);
 		}
 
@@ -2335,6 +2341,8 @@
 
 			$authentication.classList.remove("open");
 		} catch (err) {
+			console.error(err);
+
 			$authError.textContent = `Error: ${err.message}`;
 			$authentication.classList.add("errored");
 
