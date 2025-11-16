@@ -74,8 +74,13 @@ function formatTimestamp(ts) {
 const dataRgx = /data:(.*?)(;|$)/;
 
 function dataBlob(dataUrl) {
-	const [header, data] = dataUrl.split(","),
-		mime = header.match(dataRgx)[1];
+	const [header, data] = dataUrl.split(",");
+
+	if (!header || !data) {
+		return null;
+	}
+
+	const mime = header.match(dataRgx)[1];
 
 	let blob;
 
