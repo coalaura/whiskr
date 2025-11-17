@@ -1,10 +1,8 @@
 To emit files (no tools), output blocks exactly as:
 
-```
 FILE "name"
 <<CONTENT>>
-<contents>
+your contents here
 <<END>>
-```
 
 Repeat per file, no code fences, markdown or extra text.

@@ -22,25 +22,30 @@
 
 				return;
 			}
-			if (type !== "code") {
-				return;
+
+			if (type === "code") {
+				if (text.trim().match(/^§\|FILE\|\d+\|§$/gm)) {
+					token.type = "text";
+
+					return;
+				}
+
+				const lang = token.lang || "plaintext";
+
+				let code;
+
+				if (lang && hljs.getLanguage(lang)) {
+					code = hljs.highlight(text.trim(), {
+						language: lang,
+					});
+				} else {
+					code = hljs.highlightAuto(text.trim());
+				}
+
+				token.escaped = true;
+				token.lang = code.language || "plaintext";
+				token.text = code.value;
 			}
-
-			const lang = token.lang || "plaintext";
-
-			let code;
-
-			if (lang && hljs.getLanguage(lang)) {
-				code = hljs.highlight(text.trim(), {
-					language: lang,
-				});
-			} else {
-				code = hljs.highlightAuto(text.trim());
-			}
-
-			token.escaped = true;
-			token.lang = code.language || "plaintext";
-			token.text = code.value;
 		},
 
 		renderer: {
