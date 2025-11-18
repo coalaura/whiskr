@@ -14,14 +14,20 @@ import (
 	"github.com/revrost/go-openrouter"
 )
 
+type ToolReasoning struct {
+	Format    string `msgpack:"format"`
+	Encrypted string `msgpack:"encrypted"`
+}
+
 type ToolCall struct {
-	ID      string  `msgpack:"id"`
-	Name    string  `msgpack:"name"`
-	Args    string  `msgpack:"args"`
-	Result  string  `msgpack:"result,omitempty"`
-	Done    bool    `msgpack:"done,omitempty"`
-	Invalid bool    `msgpack:"invalid,omitempty"`
-	Cost    float64 `msgpack:"cost,omitempty"`
+	ID        string         `msgpack:"id"`
+	Name      string         `msgpack:"name"`
+	Args      string         `msgpack:"args"`
+	Result    string         `msgpack:"result,omitempty"`
+	Done      bool           `msgpack:"done,omitempty"`
+	Invalid   bool           `msgpack:"invalid,omitempty"`
+	Cost      float64        `msgpack:"cost,omitempty"`
+	Reasoning *ToolReasoning `msgpack:"reasoning,omitempty"`
 }
 
 type TextFile struct {
@@ -69,7 +75,7 @@ func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletion
 		content = " "
 	}
 
-	return openrouter.ChatCompletionMessage{
+	call := openrouter.ChatCompletionMessage{
 		Role: openrouter.ChatMessageRoleAssistant,
 		Content: openrouter.Content{
 			Text: content,
@@ -85,6 +91,20 @@ func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletion
 			},
 		},
 	}
+
+	if t.Reasoning != nil {
+		call.ReasoningDetails = []openrouter.ChatCompletionReasoningDetails{
+			{
+				Type:   openrouter.ReasoningDetailsTypeEncrypted,
+				Data:   t.Reasoning.Encrypted,
+				ID:     t.ID,
+				Format: t.Reasoning.Format,
+				Index:  0,
+			},
+		}
+	}
+
+	return call
 }
 
 func (t *ToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
@@ -519,6 +539,19 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			if call.Function.Name != "" && !strings.HasSuffix(tool.Name, call.Function.Name) {
 				tool.Name += call.Function.Name
+			}
+
+			if len(delta.ReasoningDetails) != 0 && tool.Reasoning == nil {
+				for _, details := range delta.ReasoningDetails {
+					if details.Type != openrouter.ReasoningDetailsTypeEncrypted {
+						continue
+					}
+
+					tool.Reasoning = &ToolReasoning{
+						Format:    details.Format,
+						Encrypted: details.Data,
+					}
+				}
 			}
 
 			open += strings.Count(call.Function.Arguments, "{")
