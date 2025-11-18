@@ -1707,11 +1707,7 @@
 		updateTotalCost();
 
 		// render version
-		if (data.version === "dev") {
-			$version.remove();
-		} else {
-			$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> <a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`;
-		}
+		$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
 
 		// update search availability
 		searchAvailable = data.config.search;
