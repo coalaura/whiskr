@@ -225,6 +225,7 @@ body:not(.loading) #loading {
 	display: block;
 	height: 14px;
 	flex-shrink: 0;
+	margin-bottom: -40px;
 }
 
 #messages:empty::before {
