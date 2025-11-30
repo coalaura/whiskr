@@ -215,9 +215,17 @@ body:not(.loading) #loading {
 	gap: 40px;
 	height: 100%;
 	overflow-y: auto;
-	padding: 14px 12px;
+	padding: 0 12px;
 	padding-bottom: 20px;
 	overflow-anchor: none;
+}
+
+#messages::before {
+	content: "";
+	display: block;
+	height: 14px;
+	flex-shrink: 0;
+	margin-bottom: -40px;
 }
 
 #messages:empty::before {
@@ -225,7 +233,7 @@ body:not(.loading) #loading {
 	color: var(--c-subtext);
 	font-style: italic;
 	align-self: center;
-	margin-top: 5px;
+	margin-top: 20px;
 }
 
 #message,
@@ -242,9 +250,11 @@ body:not(.loading) #loading {
 	max-width: min(700px, 100%);
 	min-width: 280px;
 	width: max-content;
-	padding-top: 28px;
-	background: var(--c-surface0);
+	background: transparent;
 	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
 .message::after {
@@ -259,6 +269,7 @@ body:not(.loading) #loading {
 	bottom: 0;
 	transition: opacity 150ms;
 	border-radius: 6px;
+	z-index: 15;
 }
 
 .message.marked::after {
@@ -273,16 +284,25 @@ body:not(.loading) #loading {
 	align-self: center;
 }
 
+.message .header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 6px;
+	background: var(--c-surface0);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	border-radius: 6px;
+}
+
 .message .role {
-	position: absolute;
 	display: flex;
 	gap: 4px;
 	align-items: center;
 	font-family: var(--font-mono);
 	font-size: 12px;
 	line-height: 12px;
-	top: 6px;
-	left: 6px;
 }
 
 .statistics .provider::after,
@@ -425,8 +445,7 @@ body:not(.loading) #loading {
 
 .message .body {
 	position: relative;
-	border-bottom-left-radius: 6px;
-	border-bottom-right-radius: 6px;
+	border-radius: 6px;
 	overflow: hidden;
 	padding: 14px 12px;
 	display: flex;
@@ -584,12 +603,11 @@ body:not(.loading) #loading {
 .message .options {
 	display: flex;
 	gap: 4px;
-	position: absolute;
-	top: 4px;
-	right: 6px;
 	opacity: 0;
 	pointer-events: none;
 	transition: 150ms;
+	background: var(--c-surface0);
+	border-radius: 4px;
 }
 
 .message.editing .options,

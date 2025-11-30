@@ -253,10 +253,15 @@
 			// main message div
 			this.#_message = make("div", "message", this.#role, collapsed ? "collapsed" : "");
 
+			// header
+			const _header = make("div", "header");
+
+			this.#_message.appendChild(_header);
+
 			// message role (wrapper)
 			const _wrapper = make("div", "role", this.#role);
 
-			this.#_message.appendChild(_wrapper);
+			_header.appendChild(_wrapper);
 
 			observer.observe(_wrapper);
 
@@ -271,6 +276,130 @@
 			this.#_tags = make("div", "tags");
 
 			_wrapper.appendChild(this.#_tags);
+
+			// message options
+			const _opts = make("div", "options");
+
+			_header.appendChild(_opts);
+
+			// collapse option
+			const _optCollapse = make("button", "collapse");
+
+			_optCollapse.title = "Collapse/Expand message";
+
+			_opts.appendChild(_optCollapse);
+
+			_optCollapse.addEventListener("click", () => {
+				this.#_message.classList.toggle("collapsed");
+
+				updateScrollButton();
+
+				setFollowTail(distanceFromBottom() <= nearBottom);
+
+				this.#save();
+			});
+
+			// attach option
+			if (this.#role === "user") {
+				const _attach = make("button", "attach");
+
+				_attach.title = "Add files to this message";
+
+				_opts.appendChild(_attach);
+
+				_attach.addEventListener("click", () => {
+					uploadToMessage(_attach, this);
+				});
+			}
+
+			// copy option
+			const _optCopy = make("button", "copy");
+
+			_optCopy.title = "Copy message content";
+
+			_opts.appendChild(_optCopy);
+
+			let timeout;
+
+			_optCopy.addEventListener("click", () => {
+				this.stopEdit();
+
+				clearTimeout(timeout);
+
+				navigator.clipboard.writeText(this.#text);
+
+				_optCopy.classList.add("copied");
+
+				timeout = setTimeout(() => {
+					_optCopy.classList.remove("copied");
+				}, 1000);
+			});
+
+			// retry option
+			const _assistant = this.#role === "assistant",
+				_retryLabel = _assistant ? "Delete message and messages after this one and try again" : "Delete messages after this one and try again";
+
+			const _optRetry = make("button", "retry");
+
+			_optRetry.title = _retryLabel;
+
+			_opts.appendChild(_optRetry);
+
+			_optRetry.addEventListener("mouseenter", () => {
+				const index = this.index(_assistant ? 0 : 1);
+
+				mark(index);
+			});
+
+			_optRetry.addEventListener("mouseleave", () => {
+				mark(false);
+			});
+
+			_optRetry.addEventListener("click", () => {
+				const index = this.index(_assistant ? 0 : 1);
+
+				if (index === false) {
+					return;
+				}
+
+				abortNow();
+
+				this.stopEdit();
+
+				while (messages.length > index) {
+					messages[messages.length - 1].delete();
+				}
+
+				mark(false);
+
+				generate(false, true);
+			});
+
+			// edit option
+			const _optEdit = make("button", "edit");
+
+			_optEdit.title = "Edit message content";
+
+			_opts.appendChild(_optEdit);
+
+			_optEdit.addEventListener("click", () => {
+				if (this.#_message.classList.contains("collapsed")) {
+					_optCollapse.click();
+				}
+
+				this.toggleEdit();
+			});
+
+			// delete option
+			const _optDelete = make("button", "delete");
+
+			_optDelete.title = "Delete message";
+
+			_opts.appendChild(_optDelete);
+
+			_optDelete.addEventListener("click", () => {
+				this.delete();
+			});
 
 			// message body
 			const _body = make("div", "body");
@@ -407,130 +536,6 @@
 			const _callResult = make("div", "result", "markdown");
 
 			this.#_tool.appendChild(_callResult);
-
-			// message options
-			const _opts = make("div", "options");
-
-			this.#_message.appendChild(_opts);
-
-			// collapse option
-			const _optCollapse = make("button", "collapse");
-
-			_optCollapse.title = "Collapse/Expand message";
-
-			_opts.appendChild(_optCollapse);
-
-			_optCollapse.addEventListener("click", () => {
-				this.#_message.classList.toggle("collapsed");
-
-				updateScrollButton();
-
-				setFollowTail(distanceFromBottom() <= nearBottom);
-
-				this.#save();
-			});
-
-			// attach option
-			if (this.#role === "user") {
-				const _attach = make("button", "attach");
-
-				_attach.title = "Add files to this message";
-
-				_opts.appendChild(_attach);
-
-				_attach.addEventListener("click", () => {
-					uploadToMessage(_attach, this);
-				});
-			}
-
-			// copy option
-			const _optCopy = make("button", "copy");
-
-			_optCopy.title = "Copy message content";
-
-			_opts.appendChild(_optCopy);
-
-			let timeout;
-
-			_optCopy.addEventListener("click", () => {
-				this.stopEdit();
-
-				clearTimeout(timeout);
-
-				navigator.clipboard.writeText(this.#text);
-
-				_optCopy.classList.add("copied");
-
-				timeout = setTimeout(() => {
-					_optCopy.classList.remove("copied");
-				}, 1000);
-			});
-
-			// retry option
-			const _assistant = this.#role === "assistant",
-				_retryLabel = _assistant ? "Delete message and messages after this one and try again" : "Delete messages after this one and try again";
-
-			const _optRetry = make("button", "retry");
-
-			_optRetry.title = _retryLabel;
-
-			_opts.appendChild(_optRetry);
-
-			_optRetry.addEventListener("mouseenter", () => {
-				const index = this.index(_assistant ? 0 : 1);
-
-				mark(index);
-			});
-
-			_optRetry.addEventListener("mouseleave", () => {
-				mark(false);
-			});
-
-			_optRetry.addEventListener("click", () => {
-				const index = this.index(_assistant ? 0 : 1);
-
-				if (index === false) {
-					return;
-				}
-
-				abortNow();
-
-				this.stopEdit();
-
-				while (messages.length > index) {
-					messages[messages.length - 1].delete();
-				}
-
-				mark(false);
-
-				generate(false, true);
-			});
-
-			// edit option
-			const _optEdit = make("button", "edit");
-
-			_optEdit.title = "Edit message content";
-
-			_opts.appendChild(_optEdit);
-
-			_optEdit.addEventListener("click", () => {
-				if (this.#_message.classList.contains("collapsed")) {
-					_optCollapse.click();
-				}
-
-				this.toggleEdit();
-			});
-
-			// delete option
-			const _optDelete = make("button", "delete");
-
-			_optDelete.title = "Delete message";
-
-			_opts.appendChild(_optDelete);
-
-			_optDelete.addEventListener("click", () => {
-				this.delete();
-			});
 
 			// statistics
 			this.#_statistics = make("div", "statistics");
