@@ -36,10 +36,11 @@ type TextFile struct {
 }
 
 type Message struct {
-	Role  string     `json:"role"`
-	Text  string     `json:"text"`
-	Tool  *ToolCall  `json:"tool"`
-	Files []TextFile `json:"files"`
+	Role   string     `json:"role"`
+	Text   string     `json:"text"`
+	Tool   *ToolCall  `json:"tool"`
+	Files  []TextFile `json:"files"`
+	Images []string   `json:"images"`
 }
 
 type Reasoning struct {
@@ -306,6 +307,16 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 				Content: openrouter.Content{
 					Text: message.Text,
 				},
+			}
+
+			for index, image := range message.Images {
+				msg.Images = append(msg.Images, openrouter.ChatCompletionImage{
+					Index: index,
+					Type:  openrouter.StreamImageTypeImageURL,
+					ImageURL: openrouter.ChatCompletionImageURL{
+						URL: image,
+					},
+				})
 			}
 
 			tool := message.Tool

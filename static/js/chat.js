@@ -876,7 +876,7 @@
 				}
 			}
 
-			if (this.#images.length && full) {
+			if (this.#images.length) {
 				data.images = this.#images;
 			}
 
