@@ -79,7 +79,7 @@ func RunExaRequest(req *http.Request) (*ExaResults, error) {
 	return &result, nil
 }
 
-func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, error) {
+func ExaRunSearch(ctx context.Context, args *SearchWebArguments) (*ExaResults, error) {
 	if args.NumResults <= 0 {
 		args.NumResults = 6
 	} else if args.NumResults < 3 {
@@ -170,7 +170,7 @@ func ExaRunSearch(ctx context.Context, args SearchWebArguments) (*ExaResults, er
 	return RunExaRequest(req)
 }
 
-func ExaRunContents(ctx context.Context, args FetchContentsArguments) (*ExaResults, error) {
+func ExaRunContents(ctx context.Context, args *FetchContentsArguments) (*ExaResults, error) {
 	data := map[string]any{
 		"urls":    args.URLs,
 		"summary": map[string]any{},
@@ -196,7 +196,7 @@ func daysAgo(days int) string {
 	return time.Now().Add(-time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
 }
 
-func ExaGuidanceForIntent(args SearchWebArguments) string {
+func ExaGuidanceForIntent(args *SearchWebArguments) string {
 	var recency string
 
 	switch args.Recency {

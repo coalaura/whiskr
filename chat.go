@@ -435,25 +435,50 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		debug("got %q tool call", tool.Name)
 
-		response.WriteChunk(NewChunk(ChunkTool, tool))
-
 		switch tool.Name {
 		case "search_web":
-			err = HandleSearchWebTool(ctx, tool)
+			arguments, err := ParseAndUpdateArgs[SearchWebArguments](tool)
+			if err != nil {
+				response.WriteChunk(NewChunk(ChunkError, err))
+
+				return
+			}
+
+			response.WriteChunk(NewChunk(ChunkTool, tool))
+
+			err = HandleSearchWebTool(ctx, tool, arguments)
 			if err != nil {
 				response.WriteChunk(NewChunk(ChunkError, err))
 
 				return
 			}
 		case "fetch_contents":
-			err = HandleFetchContentsTool(ctx, tool)
+			arguments, err := ParseAndUpdateArgs[FetchContentsArguments](tool)
+			if err != nil {
+				response.WriteChunk(NewChunk(ChunkError, err))
+
+				return
+			}
+
+			response.WriteChunk(NewChunk(ChunkTool, tool))
+
+			err = HandleFetchContentsTool(ctx, tool, arguments)
 			if err != nil {
 				response.WriteChunk(NewChunk(ChunkError, err))
 
 				return
 			}
 		case "github_repository":
-			err = HandleGitHubRepositoryTool(ctx, tool)
+			arguments, err := ParseAndUpdateArgs[GitHubRepositoryArguments](tool)
+			if err != nil {
+				response.WriteChunk(NewChunk(ChunkError, err))
+
+				return
+			}
+
+			response.WriteChunk(NewChunk(ChunkTool, tool))
+
+			err = HandleGitHubRepositoryTool(ctx, tool, arguments)
 			if err != nil {
 				response.WriteChunk(NewChunk(ChunkError, err))
 

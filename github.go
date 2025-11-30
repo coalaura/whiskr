@@ -140,7 +140,7 @@ func GitHubRepositoryContentsJson(ctx context.Context, owner, repo, branch strin
 	return response, nil
 }
 
-func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (string, error) {
+func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (string, error) {
 	repository, err := GitHubRepositoryJson(ctx, arguments.Owner, arguments.Repo)
 	if err != nil {
 		return "", err
@@ -155,11 +155,7 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 	)
 
 	// fetch readme
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		readme, err := GitHubRepositoryReadmeJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
 		if err != nil {
 			log.Warnf("failed to get repository readme: %v\n", err)
@@ -175,14 +171,10 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 		}
 
 		readmeMarkdown = markdown
-	}()
+	})
 
 	// fetch contents
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		contents, err := GitHubRepositoryContentsJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
 		if err != nil {
 			log.Warnf("failed to get repository contents: %v\n", err)
@@ -215,7 +207,7 @@ func RepoOverview(ctx context.Context, arguments GitHubRepositoryArguments) (str
 
 		sort.Strings(directories)
 		sort.Strings(files)
-	}()
+	})
 
 	// wait and combine results
 	wg.Wait()

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -120,14 +121,7 @@ func GetSearchTools() []openrouter.Tool {
 	}
 }
 
-func HandleSearchWebTool(ctx context.Context, tool *ToolCall) error {
-	var arguments SearchWebArguments
-
-	err := ParseAndUpdateArgs(tool, &arguments)
-	if err != nil {
-		return err
-	}
-
+func HandleSearchWebTool(ctx context.Context, tool *ToolCall, arguments *SearchWebArguments) error {
 	if arguments.Query == "" {
 		return errors.New("no search query")
 	}
@@ -152,14 +146,7 @@ func HandleSearchWebTool(ctx context.Context, tool *ToolCall) error {
 	return nil
 }
 
-func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
-	var arguments FetchContentsArguments
-
-	err := ParseAndUpdateArgs(tool, &arguments)
-	if err != nil {
-		return err
-	}
-
+func HandleFetchContentsTool(ctx context.Context, tool *ToolCall, arguments *FetchContentsArguments) error {
 	if len(arguments.URLs) == 0 {
 		return errors.New("no urls")
 	}
@@ -184,14 +171,7 @@ func HandleFetchContentsTool(ctx context.Context, tool *ToolCall) error {
 	return nil
 }
 
-func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
-	var arguments GitHubRepositoryArguments
-
-	err := ParseAndUpdateArgs(tool, &arguments)
-	if err != nil {
-		return err
-	}
-
+func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall, arguments *GitHubRepositoryArguments) error {
 	result, err := RepoOverview(ctx, arguments)
 	if err != nil {
 		tool.Result = fmt.Sprintf("error: %v", err)
@@ -204,10 +184,16 @@ func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall) error {
 	return nil
 }
 
-func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
-	err := json.Unmarshal([]byte(tool.Args), arguments)
+func ParseAndUpdateArgs[T any](tool *ToolCall) (*T, error) {
+	var arguments T
+
+	// Some models are a bit confused by numbers so we unwrap "6" -> 6
+	rgx := regexp.MustCompile(`"(\d+)"`)
+	tool.Args = rgx.ReplaceAllString(tool.Args, "$1")
+
+	err := json.Unmarshal([]byte(tool.Args), &arguments)
 	if err != nil {
-		return fmt.Errorf("json.unmarshal: %v", err)
+		return nil, fmt.Errorf("json.unmarshal: %v", err)
 	}
 
 	buf := GetFreeBuffer()
@@ -216,12 +202,12 @@ func ParseAndUpdateArgs(tool *ToolCall, arguments any) error {
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
 
-	err = enc.Encode(arguments)
+	err = enc.Encode(&arguments)
 	if err != nil {
-		return fmt.Errorf("json.marshal: %v", err)
+		return nil, fmt.Errorf("json.marshal: %v", err)
 	}
 
 	tool.Args = buf.String()
 
-	return nil
+	return &arguments, nil
 }
