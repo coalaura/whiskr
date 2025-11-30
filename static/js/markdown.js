@@ -50,9 +50,10 @@
 
 		renderer: {
 			code: code => {
-				const header = `<div class="pre-header">${escapeHtml(code.lang)}<button class="pre-copy" title="Copy code contents"></button></div>`;
+				const header = `<div class="pre-header">${escapeHtml(code.lang)}</div>`;
+				const button = `<button class="pre-copy" title="Copy code contents"></button>`;
 
-				return `<pre class="l-${escapeHtml(code.lang)}">${header}<code>${code.text}</code></pre>`;
+				return `<pre class="l-${escapeHtml(code.lang)}">${header}${button}<code>${code.text}</code></pre>`;
 			},
 
 			link: link => `<a href="${link.href}" target="_blank">${escapeHtml(link.text || link.href)}</a>`,
@@ -140,9 +141,13 @@
 	}
 
 	addEventListener("click", event => {
-		const button = event.target,
-			header = button.closest(".pre-header"),
-			pre = header?.closest("pre"),
+		const button = event.target;
+
+		if (!button.classList.contains("pre-copy")) {
+			return;
+		}
+
+		const pre = button.closest("pre"),
 			code = pre?.querySelector("code");
 
 		if (!code) {

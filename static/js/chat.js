@@ -258,6 +258,17 @@
 
 			this.#_message.appendChild(_header);
 
+			_header.addEventListener("auxclick", event => {
+				if (event.button !== 1) {
+					return;
+				}
+
+				this.#_message.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+				});
+			});
+
 			// message role (wrapper)
 			const _wrapper = make("div", "role", this.#role);
 

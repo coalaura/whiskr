@@ -225,7 +225,6 @@ body:not(.loading) #loading {
 	display: block;
 	height: 14px;
 	flex-shrink: 0;
-	margin-bottom: -40px;
 }
 
 #messages:empty::before {
@@ -233,7 +232,7 @@ body:not(.loading) #loading {
 	color: var(--c-subtext);
 	font-style: italic;
 	align-self: center;
-	margin-top: 20px;
+	margin-top: 5px;
 }
 
 #message,
@@ -446,7 +445,7 @@ body:not(.loading) #loading {
 .message .body {
 	position: relative;
 	border-radius: 6px;
-	overflow: hidden;
+	overflow: visible;
 	padding: 14px 12px;
 	display: flex;
 	flex-direction: column;
@@ -456,6 +455,7 @@ body:not(.loading) #loading {
 
 .message.collapsed .body {
 	height: 32px;
+	overflow: hidden;
 }
 
 .message.collapsed .body>* {
@@ -1182,6 +1182,7 @@ label[for="reasoning-tokens"] {
 	height: 20px;
 	background-image: url(icons/up.svg);
 	transition: 150ms;
+	z-index: 15;
 }
 
 #bottom {

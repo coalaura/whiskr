@@ -2,7 +2,7 @@
 	font-size: 15px;
 	line-height: 23px;
 	color: var(--c-text);
-	overflow: hidden;
+	overflow: visible;
 	word-wrap: break-word;
 }
 
@@ -153,37 +153,38 @@
 .markdown pre {
 	background: var(--c-mantle);
 	white-space: pre-wrap;
-	padding: 10px 12px;
+	padding: 0;
 	border-radius: 6px;
 	line-height: 18px;
-	overflow: hidden;
 	tab-size: 4;
+	position: relative;
 }
 
 .markdown pre code {
+	display: block;
 	background: transparent;
-	padding: 0;
+	padding: 10px 12px;
 	margin: 0;
 }
 
 .markdown .pre-header {
-	position: relative;
 	background: var(--c-surface0);
 	padding: 8px 12px;
-	margin: -10px -12px;
-	margin-bottom: 10px;
+	margin: 0;
 	font-size: 12px;
 	line-height: 14px;
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
 }
 
 .markdown .pre-copy {
-	position: absolute;
-	top: 6px;
-	right: 10px;
-	width: 18px;
-	height: 18px;
-	opacity: 0;
-	transition: 150ms;
+	position: sticky;
+	top: 34px;
+	float: right;
+	margin-top: -30px;
+	width: 30px;
+	height: 30px;
+	background-size: 20px;
 }
 
 .markdown pre:hover .pre-copy {
@@ -200,22 +201,22 @@
 	padding-left: 28px;
 }
 
-.markdown > :first-child {
+.markdown> :first-child {
 	margin-top: 0;
 }
 
-.markdown blockquote > *,
-.markdown td > *,
-.markdown th > *,
-.markdown > * {
+.markdown blockquote>*,
+.markdown td>*,
+.markdown th>*,
+.markdown>* {
 	margin: 0;
 	margin-bottom: 14px;
 }
 
-.markdown blockquote > *:last-child,
-.markdown td > *:last-child,
-.markdown th > *:last-child,
-.markdown > *:last-child {
+.markdown blockquote>*:last-child,
+.markdown td>*:last-child,
+.markdown th>*:last-child,
+.markdown>*:last-child {
 	margin-bottom: 0;
 }
 
