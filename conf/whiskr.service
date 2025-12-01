@@ -1,0 +1,60 @@
+[Unit]
+Description=Whiskr (/var/whiskr)
+After=network-online.target
+StartLimitBurst=10
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+User=whiskr
+Group=whiskr
+
+WorkingDirectory=/var/whiskr
+ExecStart=/var/whiskr/whiskr
+
+StandardOutput=append:/var/whiskr/whiskr.log
+StandardError=append:/var/whiskr/whiskr.log
+
+# Memory Protection
+MemoryDenyWriteExecute=yes
+
+# Filesystem Sandboxing
+ProtectSystem=strict
+ReadWritePaths=/var/whiskr
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+UMask=0022
+RestrictSUIDSGID=true
+
+# Kernel & Hardware Protection
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+SystemCallArchitectures=native
+
+# Process & Identity Isolation
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=yes
+ProtectHostname=yes
+NoNewPrivileges=yes
+RestrictNamespaces=yes
+RemoveIPC=yes
+RestrictRealtime=yes
+
+# Capabilities & Syscalls
+CapabilityBoundingSet=
+SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @reboot @swap @resources @raw-io @privileged
+
+# Network Restriction
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+Restart=always
+RestartSec=3
+RuntimeMaxSec=5d
+
+[Install]
+WantedBy=multi-user.target
