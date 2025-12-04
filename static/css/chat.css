@@ -760,11 +760,6 @@ body:not(.loading) #loading {
 	display: none;
 }
 
-#messages .message.in-view .scroll-view {
-	opacity: 0;
-	pointer-events: none;
-}
-
 #messages .message .scroll-view {
 	position: absolute;
 	bottom: 5px;
@@ -773,6 +768,11 @@ body:not(.loading) #loading {
 	width: 14px;
 	height: 14px;
 	transition: 150ms;
+	opacity: 0;
+}
+
+#messages .message:hover .scroll-view {
+	opacity: 1;
 }
 
 #chat {

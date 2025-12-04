@@ -149,18 +149,6 @@
 		}
 	}
 
-	const observer = new IntersectionObserver(
-		entries => {
-			for (const entry of entries) {
-				entry.target.parentElement.classList.toggle("in-view", entry.isIntersecting);
-			}
-		},
-		{
-			root: $messages,
-			threshold: 1.0,
-		}
-	);
-
 	class Message {
 		#destroyed = false;
 
@@ -273,8 +261,6 @@
 			const _wrapper = make("div", "role", this.#role);
 
 			_header.appendChild(_wrapper);
-
-			observer.observe(_wrapper);
 
 			// message role
 			const _role = make("div");
