@@ -153,4 +153,26 @@
 
 	window.storeValue = (key, value = false) => db.store(key, value);
 	window.loadValue = (key, fallback = false) => db.load(key, fallback);
+
+	window.storeLocal = (key, value = false) => {
+		if (isNull(value)) {
+			localStorage.removeItem(key);
+		} else {
+			localStorage.setItem(key, JSON.stringify(value));
+		}
+	};
+
+	window.loadLocal = (key, fallback = false) => {
+		try {
+			const value = JSON.parse(localStorage.getItem(key));
+
+			if (!value) {
+				throw new Error("no value");
+			}
+
+			return value;
+		} catch {}
+
+		return fallback;
+	};
 })();

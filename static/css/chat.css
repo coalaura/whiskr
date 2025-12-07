@@ -965,6 +965,7 @@ select {
 	color: inherit;
 	outline: none;
 	margin: 0;
+	border-radius: 2px;
 }
 
 textarea {
@@ -1063,6 +1064,7 @@ body.loading #version,
 #export,
 #dump,
 #clear,
+#settings-opt,
 #add,
 #send,
 #chat .option label {
@@ -1088,6 +1090,7 @@ body.loading #version,
 	height: 16px;
 }
 
+textarea.invalid,
 input.invalid {
 	border: 1px solid var(--c-red);
 }
@@ -1227,7 +1230,8 @@ label[for="reasoning-tokens"] {
 #import,
 #export,
 #dump,
-#clear {
+#clear,
+#settings-opt {
 	position: unset !important;
 }
 
@@ -1280,6 +1284,10 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/trash.svg);
 }
 
+#settings-opt {
+	background-image: url(icons/settings.svg);
+}
+
 .completing #add {
 	display: none;
 }
@@ -1326,6 +1334,8 @@ label[for="reasoning-tokens"] {
 	border-radius: 6px;
 	box-shadow: 0px 0px 15px 5px rgba(0, 0, 0, 0.1);
 	z-index: 30;
+	min-width: 320px;
+	max-width: 100%;
 }
 
 .modal .header {
@@ -1376,6 +1386,7 @@ label[for="reasoning-tokens"] {
 	display: none;
 }
 
+.modal.errored textarea,
 .modal.errored input {
 	border: 1px solid var(--c-red);
 }
@@ -1385,12 +1396,30 @@ label[for="reasoning-tokens"] {
 	gap: 6px;
 }
 
+.modal .form-group.vertical {
+	flex-direction: column;
+}
+
+.modal .form-group.vertical:not(:last-child) {
+	margin-bottom: 14px;
+}
+
 .modal .form-group label {
 	width: 80px;
 }
 
+.modal .form-group.vertical label {
+	width: 100%;
+}
+
+.modal .form-group textarea,
 .modal .form-group input {
 	padding: 4px 6px;
+	font-size: 15px;
+}
+
+.modal .form-group textarea {
+	background: var(--c-surface0);
 }
 
 .modal .buttons {
@@ -1398,6 +1427,7 @@ label[for="reasoning-tokens"] {
 	justify-content: end;
 }
 
+#save-settings,
 #login {
 	background: var(--c-green);
 	color: var(--c-crust-dark);
@@ -1407,8 +1437,14 @@ label[for="reasoning-tokens"] {
 	transition: 150ms;
 }
 
+#save-settings:hover,
 #login:hover {
 	background: var(--c-green-dark);
+}
+
+#s-prompt {
+	width: 520px;
+	min-height: 160px;
 }
 
 @keyframes swivel {

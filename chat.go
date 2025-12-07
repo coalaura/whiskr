@@ -54,8 +54,14 @@ type Tools struct {
 }
 
 type Metadata struct {
-	Timezone string `json:"timezone"`
-	Platform string `json:"platform"`
+	Timezone string   `json:"timezone"`
+	Platform string   `json:"platform"`
+	Settings Settings `json:"settings"`
+}
+
+type Settings struct {
+	Name   string `json:"name"`
+	Prompt string `json:"prompt"`
 }
 
 type Request struct {
@@ -217,8 +223,6 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 	}
 
 	if prompt != "" {
-		prompt += "\n\n" + InternalGeneralPrompt
-
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
 

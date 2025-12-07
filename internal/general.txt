@@ -1,3 +1,11 @@
+{{ if .Settings.Name}}
+User's Name: {{.Settings.Name}}
+{{- end}}{{ if .Settings.Prompt}}
+
+User's Custom Instructions:
+{{.Settings.Prompt}}
+{{- end}}
+
 To emit files (no tools), output blocks exactly as:
 
 FILE "name"

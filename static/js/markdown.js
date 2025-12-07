@@ -92,19 +92,21 @@
 	}
 
 	function parse(markdown) {
-		const starts = (markdown.match(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+)?\s*\r?\n<<CONTENT>>\s*$/gm) || []).length,
+		const starts = (markdown.match(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+(?:-\d+)?)?\s*\r?\n<<CONTENT>>\s*$/gm) || []).length,
 			ends = (markdown.match(/^<<END(?:ING)?>>$/gm) || []).length;
 
-		if (starts !== ends) {
+		if (starts !== ends && starts > ends) {
 			markdown += "\n<<ENDING>>";
 		}
 
 		const files = [],
 			table = {};
 
-		markdown = markdown.replace(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+(\d+))?\s*\r?\n<<CONTENT>>\s*\r?\n([\s\S]*?)\r?\n<<END(ING)?>>$/gm, (_a, name, _b, content, ending) => {
+		markdown = markdown.replace(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+(?:-\d+)?)?\s*\r?\n<<CONTENT>>\s*\r?\n([\s\S]*?)\r?\n<<END(ING)?>>$/gm, (_a, name, content, ending) => {
 			const index = files.length,
 				id = generateID();
+
+			console.log(_a, name, content, ending);
 
 			files.push({
 				id: id,

@@ -57,10 +57,11 @@
 
 					<div class="option">
 						<button id="upload" title="Add files to message"></button>
-						<button id="export" title="Export the entire chat as a JSON file"></button>
 						<button id="import" title="Import a chat from an exported JSON file"></button>
+						<button id="export" title="Export the entire chat as a JSON file"></button>
 						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
 						<button id="clear" title="Clear the entire chat"></button>
+						<button id="settings-opt" title="Show settings and personalization"></button>
 					</div>
 				</div>
 
@@ -122,21 +123,20 @@
 		<div id="settings" class="modal">
 			<div class="background"></div>
 			<div class="content">
-				<div class="header">Settings</div>
+				<div class="header">Settings & Personalization</div>
 				<div class="body">
-					<div id="auth-error" class="error"></div>
-
-					<div class="form-group">
-						<label for="username">Username</label>
-						<input type="text" name="username" id="username" placeholder="admin" />
+					<div class="form-group vertical">
+						<label for="s-name">What should whiskr call you?</label>
+						<input type="text" id="s-name" placeholder="Your Name" />
 					</div>
-					<div class="form-group">
-						<label for="password">Password</label>
-						<input type="password" name="password" id="password" />
+
+					<div class="form-group vertical">
+						<label for="s-prompt">Anything whiskr should know about you?</label>
+						<textarea id="s-prompt" placeholder="Custom instructions, details..."></textarea>
 					</div>
 				</div>
 				<div class="buttons">
-					<button id="login">Login</button>
+					<button id="save-settings">Save</button>
 				</div>
 			</div>
 		</div>

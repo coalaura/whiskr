@@ -34,14 +34,19 @@
 		$iterations = document.getElementById("iterations"),
 		$json = document.getElementById("json"),
 		$search = document.getElementById("search"),
-		$upload = document.getElementById("upload"),
 		$add = document.getElementById("add"),
 		$send = document.getElementById("send"),
 		$scrolling = document.getElementById("scrolling"),
+		$settingsOpt = document.getElementById("settings-opt"),
+		$upload = document.getElementById("upload"),
 		$export = document.getElementById("export"),
 		$import = document.getElementById("import"),
 		$dump = document.getElementById("dump"),
 		$clear = document.getElementById("clear"),
+		$settings = document.getElementById("settings"),
+		$sName = document.getElementById("s-name"),
+		$sPrompt = document.getElementById("s-prompt"),
+		$saveSettings = document.getElementById("save-settings"),
 		$authentication = document.getElementById("authentication"),
 		$authError = document.getElementById("auth-error"),
 		$username = document.getElementById("username"),
@@ -58,6 +63,14 @@
 
 		console.info(`Detected platform: ${platform}`);
 	});
+
+	const settings = {
+		name: loadLocal("s-name", ""),
+		prompt: loadLocal("s-prompt", ""),
+	};
+
+	$sName.value = settings.name;
+	$sPrompt.value = settings.prompt;
 
 	const messages = [],
 		models = {},
@@ -1331,6 +1344,7 @@
 			metadata: {
 				timezone: timezone,
 				platform: platform,
+				settings: settings,
 			},
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
@@ -2356,6 +2370,30 @@
 
 	$password.addEventListener("input", () => {
 		$authentication.classList.remove("errored");
+	});
+
+	$settingsOpt.addEventListener("click", () => {
+		$settings.classList.add("open");
+	});
+
+	$sName.addEventListener("change", () => {
+		settings.name = $sName.value.trim();
+
+		$sName.value = settings.name;
+
+		storeLocal("s-name", settings.name);
+	});
+
+	$sPrompt.addEventListener("change", () => {
+		settings.prompt = $sPrompt.value.trim();
+
+		$sPrompt.value = settings.prompt;
+
+		storeLocal("s-prompt", settings.prompt);
+	});
+
+	$saveSettings.addEventListener("click", () => {
+		$settings.classList.remove("open");
 	});
 
 	$message.addEventListener("keydown", event => {

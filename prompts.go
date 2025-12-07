@@ -19,6 +19,7 @@ type PromptData struct {
 	Slug     string
 	Date     string
 	Platform string
+	Settings Settings
 }
 
 type Prompt struct {
@@ -94,7 +95,7 @@ func LoadPrompts() ([]Prompt, error) {
 		prompt := Prompt{
 			Key:  strings.Replace(filepath.Base(path), ".txt", "", 1),
 			Name: strings.TrimSpace(string(body[:index])),
-			Text: strings.TrimSpace(string(body[index+3:])),
+			Text: strings.TrimSpace(string(body[index+3:])) + "\n\n" + InternalGeneralPrompt,
 		}
 
 		prompts = append(prompts, prompt)
@@ -148,6 +149,7 @@ func BuildPrompt(name string, metadata Metadata, model *Model) (string, error) {
 		Slug:     model.ID,
 		Date:     time.Now().In(tz).Format(time.RFC1123),
 		Platform: metadata.Platform,
+		Settings: metadata.Settings,
 	})
 
 	if err != nil {
