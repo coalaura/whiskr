@@ -1,5 +1,5 @@
 [Unit]
-Description=Whiskr (/var/whiskr)
+Description=Whiskr
 After=network-online.target
 StartLimitBurst=10
 StartLimitIntervalSec=60
@@ -14,20 +14,19 @@ ExecStart=/var/whiskr/whiskr
 
 StandardOutput=append:/var/whiskr/whiskr.log
 StandardError=append:/var/whiskr/whiskr.log
-
-# Memory Protection
-MemoryDenyWriteExecute=yes
+StandardInput=null
 
 # Filesystem Sandboxing
 ProtectSystem=strict
-ReadWritePaths=/var/whiskr
+ReadOnlyPaths=/var/whiskr
 ProtectHome=yes
 PrivateTmp=yes
-PrivateDevices=yes
-UMask=0022
-RestrictSUIDSGID=true
+PrivateMounts=yes
+UMask=0077
 
 # Kernel & Hardware Protection
+PrivateDevices=yes
+DevicePolicy=closed
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes
@@ -40,21 +39,38 @@ ProtectProc=invisible
 ProcSubset=pid
 LockPersonality=yes
 ProtectHostname=yes
+UtmpMode=missing
 NoNewPrivileges=yes
+PrivateIPC=yes
 RestrictNamespaces=yes
 RemoveIPC=yes
 RestrictRealtime=yes
+RestrictSUIDSGID=true
+KeyringMode=private
 
-# Capabilities & Syscalls
-CapabilityBoundingSet=
-SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @reboot @swap @resources @raw-io @privileged
+# Memory Protection
+MemoryDenyWriteExecute=yes
 
 # Network Restriction
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+PrivateNetwork=no
+
+# Syscall Filtering
+CapabilityBoundingSet=
+SystemCallErrorNumber=EPERM
+SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @reboot @swap @resources @raw-io @privileged @keyring @pkey @memlock
+InaccessiblePaths=-/bin -/usr/bin -/sbin -/usr/sbin -/usr/local/bin
 
 Restart=always
 RestartSec=3
 RuntimeMaxSec=5d
+
+# Defaults
+LimitCORE=0
+LimitNOFILE=65536
+LimitNPROC=4096
+TimeoutStartSec=300
+TimeoutStopSec=300
 
 [Install]
 WantedBy=multi-user.target
