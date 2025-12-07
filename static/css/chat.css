@@ -617,12 +617,14 @@ body:not(.loading) #loading {
 	pointer-events: all;
 }
 
+#chat #upload,
 .message .attach,
 .message .collapse {
 	position: relative;
 	margin-right: 14px;
 }
 
+#upload::before,
 .message .attach::before,
 .message .collapse::before {
 	content: "";
@@ -636,6 +638,7 @@ body:not(.loading) #loading {
 	transform: scaleY(-100%);
 }
 
+#upload::after,
 .message .attach::after,
 .message .collapse::after {
 	position: absolute;
@@ -1005,6 +1008,7 @@ select {
 	gap: 4px;
 }
 
+#upload::after,
 .message .options .attach::after,
 .message .options .collapse::after,
 #chat .option+.option::before {
@@ -1040,6 +1044,8 @@ body.loading #version,
 .message .delete,
 .message .attach,
 .message .attach::before,
+#upload,
+#upload::before,
 .pre-copy,
 .tool .call .name::after,
 .tool .call::before,
@@ -1057,7 +1063,6 @@ body.loading #version,
 #export,
 #dump,
 #clear,
-#upload,
 #add,
 #send,
 #chat .option label {
@@ -1091,6 +1096,7 @@ input.invalid {
 	background-image: url(icons/collapse.svg);
 }
 
+#upload::before,
 .message .attach::before {
 	background-image: url(icons/attach_message.svg);
 }
@@ -1194,7 +1200,6 @@ label[for="reasoning-tokens"] {
 	right: 40px;
 }
 
-#upload,
 #add,
 #send {
 	bottom: 4px;
@@ -1210,13 +1215,8 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/add.svg);
 }
 
-#upload {
-	right: 84px;
-	background-image: url(icons/attach.svg);
-}
-
 .message .attach.loading::before,
-#upload.loading {
+#upload.loading::before {
 	animation: rotating 1.2s linear infinite;
 	background-image: url(icons/spinner.svg);
 }
@@ -1280,7 +1280,6 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/trash.svg);
 }
 
-.completing #upload,
 .completing #add {
 	display: none;
 }

@@ -56,6 +56,7 @@
 					</div>
 
 					<div class="option">
+						<button id="upload" title="Add files to message"></button>
 						<button id="export" title="Export the entire chat as a JSON file"></button>
 						<button id="import" title="Import a chat from an exported JSON file"></button>
 						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
@@ -65,7 +66,6 @@
 
 				<textarea id="message" placeholder="Type something..." autocomplete="off"></textarea>
 
-				<button id="upload" title="Add files to message"></button>
 				<button id="add" title="Add message to chat"></button>
 				<button id="send" title="Add message to chat and start completion"></button>
 
@@ -115,6 +115,28 @@
 					<div class="option">
 						<button id="scrolling" title="Turn on auto-scrolling"></button>
 					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="settings" class="modal">
+			<div class="background"></div>
+			<div class="content">
+				<div class="header">Settings</div>
+				<div class="body">
+					<div id="auth-error" class="error"></div>
+
+					<div class="form-group">
+						<label for="username">Username</label>
+						<input type="text" name="username" id="username" placeholder="admin" />
+					</div>
+					<div class="form-group">
+						<label for="password">Password</label>
+						<input type="password" name="password" id="password" />
+					</div>
+				</div>
+				<div class="buttons">
+					<button id="login">Login</button>
 				</div>
 			</div>
 		</div>
