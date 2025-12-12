@@ -56,6 +56,14 @@
 	--c-base-dark: color-mix(in oklab, var(--c-base), black 10%);
 	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 10%);
 	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 10%);
+
+	--gradient-0: #a6da95;
+	--gradient-1: #8bd5ca;
+	--gradient-2: #8aadf4;
+	--gradient-3: #c6a0f6;
+	--gradient-4: #eed49f;
+	--gradient-5: #f5a97f;
+	--gradient-6: #ed8796;
 }
 
 * {

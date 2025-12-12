@@ -72,6 +72,10 @@
 	background: var(--c-surface0);
 }
 
+.dropdown .opt:not(:last-child) {
+	border-bottom: 1px solid var(--c-base);
+}
+
 .dropdown .opt:nth-child(2n + 1) {
 	background: var(--c-surface0-dark);
 }
@@ -110,6 +114,56 @@
 	top: -2px;
 	color: var(--c-red);
 	font-weight: 500;
+}
+
+.dropdown .opt.model {
+	position: relative;
+	padding-left: 10px;
+}
+
+.dropdown .opt.model.active {
+	padding-left: 28px;
+}
+
+.dropdown .opt.model.active::before {
+	left: 10px;
+}
+
+.dropdown .opt.model::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 12px;
+}
+
+.dropdown .opt.free::after {
+	background: linear-gradient(90deg, var(--gradient-0) 0%, transparent 100%);
+}
+
+.dropdown .opt.very-cheap::after {
+	background: linear-gradient(90deg, var(--gradient-1) 0%, transparent 100%);
+}
+
+.dropdown .opt.cheap::after {
+	background: linear-gradient(90deg, var(--gradient-2) 0%, transparent 100%);
+}
+
+.dropdown .opt.normal::after {
+	background: linear-gradient(90deg, var(--gradient-3) 0%, transparent 100%);
+}
+
+.dropdown .opt.expensive::after {
+	background: linear-gradient(90deg, var(--gradient-4) 0%, transparent 100%);
+}
+
+.dropdown .opt.very-expensive::after {
+	background: linear-gradient(90deg, var(--gradient-5) 0%, transparent 100%);
+}
+
+.dropdown .opt.super-expensive::after {
+	background: linear-gradient(90deg, var(--gradient-6) 0%, transparent 100%);
 }
 
 .dropdown .label {

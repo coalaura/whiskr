@@ -233,7 +233,7 @@ body:not(.loading) #loading {
 	color: var(--c-subtext);
 	font-style: italic;
 	align-self: center;
-	margin-top: 5px;
+	margin-top: 15px;
 }
 
 #message,

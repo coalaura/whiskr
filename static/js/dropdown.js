@@ -17,7 +17,8 @@
 			this.#search = "searchable" in el.dataset;
 
 			this.#_select.querySelectorAll("option").forEach(option => {
-				const tags = option.dataset.tags?.trim(),
+				const classes = option.dataset.classes?.trim(),
+					tags = option.dataset.tags?.trim(),
 					isNew = !!option.dataset.new;
 
 				this.#options.push({
@@ -25,6 +26,7 @@
 					label: option.textContent,
 
 					title: option.title || "",
+					classes: classes ? classes.split(",") : [],
 					tags: tags ? tags.split(",") : [],
 					new: isNew,
 
@@ -90,6 +92,8 @@
 				const _opt = make("div", "opt");
 
 				_opt.title = option.title || "";
+
+				_opt.classList.add(...option.classes);
 
 				_opt.addEventListener("click", () => {
 					this.#_select.value = option.value;

@@ -1764,6 +1764,26 @@
 				el.dataset.new = "yes";
 			}
 
+			const maxPrice = Math.max(model.pricing.input, model.pricing.output);
+
+			if (maxPrice >= 40) {
+				el.dataset.classes = "super-expensive";
+			} else if (maxPrice >= 30) {
+				el.dataset.classes = "very-expensive";
+			} else if (maxPrice >= 20) {
+				el.dataset.classes = "expensive";
+			} else if (maxPrice <= 0) {
+				el.dataset.classes = "free";
+			} else if (maxPrice <= 1) {
+				el.dataset.classes = "very-cheap";
+			} else if (maxPrice <= 5) {
+				el.dataset.classes = "cheap";
+			} else {
+				el.dataset.classes = "normal";
+			}
+
+			el.dataset.classes += ",model";
+
 			el.dataset.tags = (model.tags || []).join(",");
 
 			models[model.id] = model;
