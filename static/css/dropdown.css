@@ -135,35 +135,39 @@
 	top: 0;
 	left: 0;
 	bottom: 0;
-	width: 12px;
+	width: 20px;
+
+	background: linear-gradient(90deg, var(--back) 0%, var(--mid), 25%, transparent 100%);
+
+	--mid: color-mix(in srgb, var(--back) 40%, transparent)
 }
 
 .dropdown .opt.free::after {
-	background: linear-gradient(90deg, var(--gradient-0) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-0) 85%, white);
 }
 
 .dropdown .opt.very-cheap::after {
-	background: linear-gradient(90deg, var(--gradient-1) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-1) 85%, white);
 }
 
 .dropdown .opt.cheap::after {
-	background: linear-gradient(90deg, var(--gradient-2) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-2) 85%, white);
 }
 
 .dropdown .opt.normal::after {
-	background: linear-gradient(90deg, var(--gradient-3) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-3) 85%, white);
 }
 
 .dropdown .opt.expensive::after {
-	background: linear-gradient(90deg, var(--gradient-4) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-4) 85%, white);
 }
 
 .dropdown .opt.very-expensive::after {
-	background: linear-gradient(90deg, var(--gradient-5) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-5) 85%, white);
 }
 
 .dropdown .opt.super-expensive::after {
-	background: linear-gradient(90deg, var(--gradient-6) 0%, transparent 100%);
+	--back: color-mix(in oklch, var(--gradient-6) 85%, white);
 }
 
 .dropdown .label {
