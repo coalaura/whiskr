@@ -143,31 +143,31 @@
 }
 
 .dropdown .opt.free::after {
-	--back: color-mix(in oklch, var(--gradient-0) 85%, white);
+	--back: var(--gradient-0);
 }
 
 .dropdown .opt.very-cheap::after {
-	--back: color-mix(in oklch, var(--gradient-1) 85%, white);
+	--back: var(--gradient-1);
 }
 
 .dropdown .opt.cheap::after {
-	--back: color-mix(in oklch, var(--gradient-2) 85%, white);
+	--back: var(--gradient-2);
 }
 
 .dropdown .opt.normal::after {
-	--back: color-mix(in oklch, var(--gradient-3) 85%, white);
+	--back: var(--gradient-3);
 }
 
 .dropdown .opt.expensive::after {
-	--back: color-mix(in oklch, var(--gradient-4) 85%, white);
+	--back: var(--gradient-4);
 }
 
 .dropdown .opt.very-expensive::after {
-	--back: color-mix(in oklch, var(--gradient-5) 85%, white);
+	--back: var(--gradient-5);
 }
 
 .dropdown .opt.super-expensive::after {
-	--back: color-mix(in oklch, var(--gradient-6) 85%, white);
+	--back: var(--gradient-6);
 }
 
 .dropdown .label {

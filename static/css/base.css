@@ -57,13 +57,13 @@
 	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 10%);
 	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 10%);
 
-	--gradient-0: #40a02b;
-	--gradient-1: #179299;
-	--gradient-2: #1e66f5;
-	--gradient-3: #8839ef;
-	--gradient-4: #df8e1d;
-	--gradient-5: #fe640b;
-	--gradient-6: #d20f39;
+	--gradient-0: color-mix(in oklch, #40a02b 50%, #a6da95);
+	--gradient-1: color-mix(in oklch, #179299 50%, #8bd5ca);
+	--gradient-2: color-mix(in oklch, #1e66f5 50%, #8aadf4);
+	--gradient-3: color-mix(in oklch, #8839ef 50%, #c6a0f6);
+	--gradient-4: color-mix(in oklch, #df8e1d 50%, #eed49f);
+	--gradient-5: color-mix(in oklch, #fe640b 50%, #f5a97f);
+	--gradient-6: color-mix(in oklch, #d20f39 50%, #ed8796);
 }
 
 * {
