@@ -44,6 +44,7 @@
 		$dump = document.getElementById("dump"),
 		$clear = document.getElementById("clear"),
 		$settings = document.getElementById("settings"),
+		$sEnabled = document.getElementById("s-enabled"),
 		$sName = document.getElementById("s-name"),
 		$sPrompt = document.getElementById("s-prompt"),
 		$saveSettings = document.getElementById("save-settings"),
@@ -65,12 +66,17 @@
 	});
 
 	const settings = {
+		enabled: loadLocal("s-enabled", true),
 		name: loadLocal("s-name", ""),
 		prompt: loadLocal("s-prompt", ""),
 	};
 
+	$sEnabled.checked = settings.enabled;
 	$sName.value = settings.name;
 	$sPrompt.value = settings.prompt;
+
+	$settings.classList.toggle("disabled", !settings.enabled);
+	$settingsOpt.classList.toggle("disabled", !settings.enabled);
 
 	const messages = [],
 		models = {},
@@ -1344,7 +1350,7 @@
 			metadata: {
 				timezone: timezone,
 				platform: platform,
-				settings: settings,
+				settings: settings.enabled ? settings : null,
 			},
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
@@ -2394,6 +2400,17 @@
 
 	$settingsOpt.addEventListener("click", () => {
 		$settings.classList.add("open");
+	});
+
+	$sEnabled.addEventListener("change", () => {
+		settings.enabled = $sEnabled.checked;
+
+		$sEnabled.value = settings.enabled;
+
+		storeLocal("s-enabled", settings.enabled);
+
+		$settings.classList.toggle("disabled", !settings.enabled);
+		$settingsOpt.classList.toggle("disabled", !settings.enabled);
 	});
 
 	$sName.addEventListener("change", () => {

@@ -5,7 +5,7 @@
 		StorageName = "chat";
 
 	function isNull(value) {
-		return value === null || value === false || value === undefined;
+		return value === "" || value === null || value === undefined;
 	}
 
 	class Database {
@@ -156,8 +156,10 @@
 
 	window.storeLocal = (key, value = false) => {
 		if (isNull(value)) {
+			console.log("remove", key, value);
 			localStorage.removeItem(key);
 		} else {
+			console.log("set", key, value);
 			localStorage.setItem(key, JSON.stringify(value));
 		}
 	};
@@ -166,7 +168,7 @@
 		try {
 			const value = JSON.parse(localStorage.getItem(key));
 
-			if (!value) {
+			if (isNull(value)) {
 				throw new Error("no value");
 			}
 

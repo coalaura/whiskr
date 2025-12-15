@@ -987,6 +987,53 @@ select {
 	font-size: 14px;
 }
 
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	position: relative;
+	width: 46px;
+	height: 22px;
+	background-color: var(--c-surface2);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+input[type="checkbox"]::after {
+	content: "";
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	background-color: var(--c-text);
+	border-radius: 4px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	transition: transform 150ms cubic-bezier(0.4, 0.0, 0.2, 1), background-color 150ms ease;
+}
+
+input[type="checkbox"]:checked {
+	background-color: var(--c-green);
+}
+
+input[type="checkbox"]:checked::after {
+	transform: translateX(23px);
+	background-color: #ffffff;
+}
+
+input[type="checkbox"]:hover {
+	background-color: var(--c-overlay0);
+}
+
+input[type="checkbox"]:checked:hover {
+	background-color: var(--c-green-dark);
+}
+
+input[type="checkbox"]:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 2px var(--c-base), 0 0 0 4px var(--c-mauve);
+}
+
 #chat button {
 	position: absolute;
 }
@@ -1288,6 +1335,11 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/settings.svg);
 }
 
+#settings-opt.disabled {
+	filter: saturate(0);
+	opacity: 0.8;
+}
+
 .completing #add {
 	display: none;
 }
@@ -1339,6 +1391,9 @@ label[for="reasoning-tokens"] {
 }
 
 .modal .header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 	background: var(--c-surface0);
 	height: 42px;
 	margin: -18px -20px;
@@ -1425,6 +1480,11 @@ label[for="reasoning-tokens"] {
 .modal .buttons {
 	display: flex;
 	justify-content: end;
+}
+
+#settings.disabled .body {
+	opacity: 0.75;
+	font-style: italic;
 }
 
 #save-settings,
