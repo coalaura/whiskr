@@ -1333,6 +1333,13 @@
 			pushMessage();
 		}
 
+		const opts = settings.enabled
+			? {
+					name: settings.name,
+					prompt: settings.prompt,
+				}
+			: null;
+
 		return {
 			prompt: $prompt.value,
 			model: $model.value,
@@ -1350,7 +1357,7 @@
 			metadata: {
 				timezone: timezone,
 				platform: platform,
-				settings: settings.enabled ? settings : null,
+				settings: opts,
 			},
 			messages: messages.map(message => message.getData()).filter(Boolean),
 		};
