@@ -44,6 +44,7 @@
 		$dump = document.getElementById("dump"),
 		$clear = document.getElementById("clear"),
 		$settings = document.getElementById("settings"),
+		$settingsBack = $settings.querySelector(".background"),
 		$sEnabled = document.getElementById("s-enabled"),
 		$sName = document.getElementById("s-name"),
 		$sPrompt = document.getElementById("s-prompt"),
@@ -2436,6 +2437,10 @@
 		storeLocal("s-prompt", settings.prompt);
 	});
 
+	$settingsBack.addEventListener("click", () => {
+		$settings.classList.remove("open");
+	});
+
 	$saveSettings.addEventListener("click", () => {
 		$settings.classList.remove("open");
 	});
@@ -2472,6 +2477,10 @@
 	});
 
 	addEventListener("keydown", event => {
+		if (event.key === "Escape") {
+			$settings.classList.remove("open");
+		}
+
 		if (["TEXTAREA", "INPUT", "SELECT"].includes(document.activeElement?.tagName)) {
 			return;
 		}
