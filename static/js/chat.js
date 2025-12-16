@@ -1859,6 +1859,8 @@
 
 		if (!searchTool && loadValue("search")) {
 			$search.click();
+		} else {
+			$iterations.parentNode.classList.add("none");
 		}
 
 		if (!autoScrolling && loadValue("scrolling")) {
@@ -2170,6 +2172,7 @@
 		$search.classList.toggle("none", !hasSearch);
 
 		$search.parentNode.classList.toggle("none", !hasJson && !hasSearch);
+		$iterations.parentNode.classList.toggle("none", !hasSearch);
 	});
 
 	$prompt.addEventListener("change", () => {
@@ -2231,6 +2234,8 @@
 		storeValue("search", searchTool);
 
 		$search.classList.toggle("on", searchTool);
+
+		$iterations.parentNode.classList.toggle("none", !searchTool);
 	});
 
 	$message.addEventListener("input", () => {
