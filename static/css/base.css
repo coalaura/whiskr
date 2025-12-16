@@ -51,11 +51,11 @@
 
 	--c-green-dark: color-mix(in oklab, var(--c-green), black 25%);
 
-	--c-overlay0-dark: color-mix(in oklab, var(--c-overlay0), black 10%);
-	--c-surface0-dark: color-mix(in oklab, var(--c-surface0), black 10%);
-	--c-base-dark: color-mix(in oklab, var(--c-base), black 10%);
-	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 10%);
-	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 10%);
+	--c-overlay0-dark: color-mix(in oklab, var(--c-overlay0), black 12%);
+	--c-surface0-dark: color-mix(in oklab, var(--c-surface0), black 12%);
+	--c-base-dark: color-mix(in oklab, var(--c-base), black 12%);
+	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 12%);
+	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 12%);
 
 	--gradient-0: color-mix(in oklch, #40a02b 50%, #a6da95);
 	--gradient-1: color-mix(in oklch, #179299 50%, #8bd5ca);
