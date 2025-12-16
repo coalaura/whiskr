@@ -27,6 +27,8 @@
 		$role = document.getElementById("role").querySelector("select"),
 		$model = document.getElementById("model"),
 		$providerSorting = document.getElementById("provider-sorting"),
+		$imageResolution = document.getElementById("image-resolution"),
+		$imageAspect = document.getElementById("image-aspect"),
 		$reasoningEffort = document.getElementById("reasoning-effort"),
 		$reasoningTokens = document.getElementById("reasoning-tokens"),
 		$prompt = document.getElementById("prompt"),
@@ -1351,6 +1353,10 @@
 				json: jsonMode,
 				search: searchTool,
 			},
+			image: {
+				resolution: $imageResolution.value,
+				aspect: $imageAspect.value,
+			},
 			reasoning: {
 				effort: effort,
 				tokens: tokens || 0,
@@ -1844,6 +1850,8 @@
 		$temperature.value = loadValue("temperature", 0.85);
 		$iterations.value = loadValue("iterations", 3);
 		$providerSorting.value = loadValue("provider", "");
+		$imageResolution.value = loadValue("image-resolution", "1K");
+		$imageAspect.value = loadValue("image-aspect", "");
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
@@ -2165,6 +2173,14 @@
 			$reasoningTokens.parentNode.classList.add("none");
 		}
 
+		if (tags.includes("image")) {
+			$imageResolution.parentNode.classList.remove("none");
+			$imageAspect.parentNode.classList.remove("none");
+		} else {
+			$imageResolution.parentNode.classList.add("none");
+			$imageAspect.parentNode.classList.add("none");
+		}
+
 		const hasJson = tags.includes("json"),
 			hasSearch = searchAvailable && tags.includes("tools");
 
@@ -2201,6 +2217,18 @@
 		const provider = $providerSorting.value;
 
 		storeValue("provider", provider);
+	});
+
+	$imageResolution.addEventListener("change", () => {
+		const resolution = $imageResolution.value;
+
+		storeValue("resolution", resolution);
+	});
+
+	$imageAspect.addEventListener("change", () => {
+		const aspectRatio = $imageAspect.value;
+
+		storeValue("aspect-ratio", aspectRatio);
 	});
 
 	$reasoningEffort.addEventListener("change", () => {
@@ -2273,6 +2301,10 @@
 			prompt: $prompt.value,
 			temperature: $temperature.value,
 			iterations: $iterations.value,
+			image: {
+				resolution: $imageResolution.value,
+				aspect: $imageAspect.value,
+			},
 			reasoning: {
 				effort: $reasoningEffort.value,
 				tokens: $reasoningTokens.value,
@@ -2314,6 +2346,8 @@
 		storeValue("prompt", data.prompt);
 		storeValue("temperature", data.temperature);
 		storeValue("iterations", data.iterations);
+		storeValue("resolution", data.image?.resolution);
+		storeValue("aspect-ratio", data.image?.aspect);
 		storeValue("reasoning-effort", data.reasoning?.effort);
 		storeValue("reasoning-tokens", data.reasoning?.tokens);
 		storeValue("json", data.json);
@@ -2537,6 +2571,8 @@
 
 	dropdown($role);
 	dropdown($providerSorting);
+	dropdown($imageResolution);
+	dropdown($imageAspect);
 	dropdown($reasoningEffort);
 
 	loadData().then(() => {

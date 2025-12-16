@@ -48,6 +48,11 @@ type Reasoning struct {
 	Tokens int    `json:"tokens"`
 }
 
+type Image struct {
+	Resolution string `json:"resolution"`
+	Aspect     string `json:"aspect"`
+}
+
 type Tools struct {
 	JSON   bool `json:"json"`
 	Search bool `json:"search"`
@@ -71,6 +76,7 @@ type Request struct {
 	Temperature float64   `json:"temperature"`
 	Iterations  int64     `json:"iterations"`
 	Tools       Tools     `json:"tools"`
+	Image       Image     `json:"image"`
 	Reasoning   Reasoning `json:"reasoning"`
 	Metadata    Metadata  `json:"metadata"`
 	Messages    []Message `json:"messages"`
@@ -167,6 +173,40 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	if env.Settings.ImageGeneration && model.Images {
 		request.Modalities = append(request.Modalities, openrouter.ModalityImage)
+
+		request.ImageConfig = &openrouter.ChatCompletionImageConfig{
+			ImageSize: openrouter.ImageSize1K,
+		}
+
+		switch r.Image.Resolution {
+		case "2K":
+			request.ImageConfig.ImageSize = openrouter.ImageSize2K
+		case "4K":
+			request.ImageConfig.ImageSize = openrouter.ImageSize4K
+		}
+
+		switch r.Image.Aspect {
+		case "1:1":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio1x1
+		case "2:3":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio2x3
+		case "3:2":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio3x2
+		case "3:4":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio3x4
+		case "4:3":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio4x3
+		case "4:5":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio4x5
+		case "5:4":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio5x4
+		case "9:16":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio9x16
+		case "16:9":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio16x9
+		case "21:9":
+			request.ImageConfig.AspectRatio = openrouter.AspectRatio21x9
+		}
 	}
 
 	request.Transforms = append(request.Transforms, env.Settings.Transformation)

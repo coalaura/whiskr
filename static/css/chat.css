@@ -1223,6 +1223,14 @@ label[for="provider-sorting"] {
 	background-image: url(icons/provider.svg);
 }
 
+label[for="image-resolution"] {
+	background-image: url(icons/resolution.svg);
+}
+
+label[for="image-aspect"] {
+	background-image: url(icons/aspect.svg);
+}
+
 label[for="reasoning-effort"] {
 	background-image: url(icons/reasoning.svg);
 }

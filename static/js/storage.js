@@ -156,10 +156,8 @@
 
 	window.storeLocal = (key, value = false) => {
 		if (isNull(value)) {
-			console.log("remove", key, value);
 			localStorage.removeItem(key);
 		} else {
-			console.log("set", key, value);
 			localStorage.setItem(key, JSON.stringify(value));
 		}
 	};
