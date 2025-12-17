@@ -1759,7 +1759,27 @@
 		}
 
 		// render models
-		const newTime = Math.round(Date.now() / 1000) - 2 * 7 * 24 * 60 * 60;
+		const favorites = new Set(loadValue("model-favorites", [])),
+			modelTab = loadValue("model-tab"),
+			newTime = Math.round(Date.now() / 1000) - 2 * 7 * 24 * 60 * 60;
+
+		$model.addEventListener("tab", event => {
+			const tab = event.detail;
+
+			storeValue("model-tab", tab);
+		});
+
+		$model.addEventListener("favorite", event => {
+			const { value, favorite } = event.detail;
+
+			if (favorite) {
+				favorites.add(value);
+			} else {
+				favorites.delete(value);
+			}
+
+			storeValue("model-favorites", [...favorites]);
+		});
 
 		fillSelect($model, data.models, (el, model) => {
 			const separator = "─".repeat(24);
@@ -1782,6 +1802,10 @@
 
 			if ((model.created || 0) >= newTime) {
 				el.dataset.new = "yes";
+			}
+
+			if (favorites.has(model.id)) {
+				el.dataset.favorite = "yes";
 			}
 
 			const maxPrice = Math.max(model.pricing.input, model.pricing.output);
@@ -1810,7 +1834,7 @@
 			modelList.push(model);
 		});
 
-		dropdown($model, 6);
+		dropdown($model, 6, true).switchTab(modelTab === "favorites");
 
 		// render prompts
 		data.prompts.unshift({

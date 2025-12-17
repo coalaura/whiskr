@@ -42,20 +42,85 @@
 	flex-direction: column;
 	background: var(--c-surface0);
 	max-height: 250px;
-	box-shadow:
-		0 1px 2px rgba(0, 0, 0, 0.05),
-		0 1px 3px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
 	border: 1px solid var(--c-surface1);
+}
+
+.dropdown.full-height .cont {
+	min-height: 250px;
 }
 
 .dropdown:not(.open) .cont {
 	display: none;
 }
 
+.dropdown .tabs {
+	display: flex;
+	background: var(--c-surface0-dark);
+	align-items: center;
+}
+
+.dropdown.no-tabs .tabs {
+	display: none;
+}
+
+.dropdown .tabs::after {
+	content: "";
+	border-bottom: 2px solid var(--c-surface2);
+	width: 100%;
+	margin-top: auto;
+}
+
+.dropdown .tabs .tab-title {
+	padding: 4px 6px;
+	padding-left: 6px;
+	cursor: pointer;
+	color: var(--c-subtext);
+	background: var(--c-surface0);
+	border: 1px solid var(--c-surface2);
+	border-bottom-width: 2px;
+	transition: 150ms;
+}
+
+.dropdown .tabs .tab-title:last-child {
+	border-right-width: 2px;
+}
+
+.dropdown .tabs .tab-title.active {
+	background: var(--c-base);
+	color: var(--c-text);
+	border-color: var(--c-surface1);
+	border-bottom-color: var(--c-mauve);
+}
+
+.dropdown .tabs .tab-title:hover {
+	background: var(--c-surface2);
+	color: var(--c-text);
+}
+
+.dropdown .tabs .tab-title .count {
+	font-size: 10px;
+	padding-left: 4px;
+}
+
 .dropdown .opts {
+	overflow-y: auto;
+}
+
+.dropdown .opts .tab {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+}
+
+.dropdown .opts .tab:not(.active) {
+	display: none;
+}
+
+.dropdown .opts .tab:empty::before {
+	content: "No entries";
+	font-style: italic;
+	padding: 4px 6px;
 }
 
 .dropdown .selected,
@@ -171,10 +236,26 @@
 }
 
 .dropdown .label {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	max-width: 300px;
+	overflow: hidden;
+}
+
+.dropdown .label span {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	max-width: 300px;
+}
+
+.dropdown .opt.favorite .label::before {
+	content: "";
+	display: block;
+	background: url("icons/favorite.svg");
+	background-size: contain;
+	background-position: center;
+	flex-shrink: 0;
 }
 
 .dropdown .tags {
@@ -182,6 +263,7 @@
 	gap: 2px;
 }
 
+.dropdown .opt.favorite .label::before,
 .dropdown .tags .tag {
 	width: 18px;
 	height: 18px;
@@ -246,4 +328,5 @@
 	border-top: 2px solid var(--c-surface1);
 	font-size: 15px;
 	padding: 4px 6px;
+	margin-top: auto;
 }
