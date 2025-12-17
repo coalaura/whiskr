@@ -2500,7 +2500,7 @@
 		}
 
 		const total = window.innerHeight,
-			height = clamp(window.innerHeight - event.clientY + (attachments.length ? 50 : 0), 100, total - 240);
+			height = clamp(window.innerHeight - event.clientY + (attachments.length ? 50 : 0), 140, total - 240);
 
 		$chat.style.height = `${height}px`;
 
