@@ -2212,7 +2212,7 @@
 		$search.classList.toggle("none", !hasSearch);
 
 		$search.parentNode.classList.toggle("none", !hasJson && !hasSearch);
-		$iterations.parentNode.classList.toggle("none", !hasSearch);
+		$iterations.parentNode.classList.toggle("none", !hasSearch || !searchTool);
 	});
 
 	$prompt.addEventListener("change", () => {
