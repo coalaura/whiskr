@@ -355,6 +355,12 @@
 
 			this.#favorites.container.appendChild(option.clone);
 
+			option.clone.addEventListener("click", () => {
+				this.#_select.value = option.value;
+
+				this.#_dropdown.classList.remove("open");
+			});
+
 			option.clone.addEventListener("auxclick", event => {
 				if (event.button !== 1) {
 					return;
