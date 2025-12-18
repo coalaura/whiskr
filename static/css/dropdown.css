@@ -37,6 +37,7 @@
 .dropdown .cont {
 	display: flex;
 	position: absolute;
+	z-index: 10;
 	bottom: calc(100% + 4px);
 	left: 0;
 	flex-direction: column;
