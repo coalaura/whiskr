@@ -26,7 +26,7 @@ models:
   image-generation: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
   transformation: middle-out
-  # boolean expression to filter available models (optional; fields: `price`, `slug`, `name`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)
+  # boolean expression to filter available models (optional; fields: `price`, `slug`, `name`, `tags`, `created`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)
   filters: ""
 
 ui:
