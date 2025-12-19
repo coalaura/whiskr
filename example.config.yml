@@ -19,7 +19,11 @@ settings:
   # allow image generation (optional; default: true)
   image-generation: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
-  transformation: "middle-out"
+  transformation: middle-out
+  # the http timeout to use for completion requests in seconds (optional; default: 300s)
+  timeout: 1200
+  # the interval in which the model list is refreshed in minutes (optional; default: 30m)
+  refresh-interval: 30
 
 ui:
   # disables things like the floating stars in the background (optional; default: false)
