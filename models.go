@@ -117,8 +117,15 @@ func LoadModels(initial bool) error {
 
 		GetModelTags(model, m)
 
-		if env.Models.filters != nil && !env.Models.filters.Match(m) {
-			continue
+		if env.Models.filters != nil {
+			matched, err := env.Models.filters.Match(m)
+			if err != nil {
+				return err
+			}
+
+			if !matched {
+				continue
+			}
 		}
 
 		newList = append(newList, m)

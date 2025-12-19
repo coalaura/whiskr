@@ -30,7 +30,7 @@ type EnvModels struct {
 	Transformation  string `yaml:"transformation"`
 	Filters         string `yaml:"filters"`
 
-	filters FilterList
+	filters *Filters
 }
 
 type EnvUI struct {

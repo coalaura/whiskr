@@ -1,159 +1,84 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
+
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/vm"
 )
 
-type Operator string
-
-const (
-	OpLess       Operator = "<"
-	OpGreater    Operator = ">"
-	OpEqual      Operator = "="
-	OpContains   Operator = "~"
-	OpStartsWith Operator = "^"
-	OpEndsWith   Operator = "$"
-)
-
-type FieldDef struct {
-	Type      string
-	AllowedOp map[Operator]bool
-	Matcher   func(m *Model, op Operator, val string) bool
+type Filters struct {
+	program *vm.Program
 }
 
-var fieldRegistry = map[string]FieldDef{
-	"price": {
-		Type:      "number",
-		AllowedOp: map[Operator]bool{OpLess: true, OpGreater: true, OpEqual: true},
-		Matcher: func(m *Model, op Operator, val string) bool {
-			fv, _ := strconv.ParseFloat(val, 64)
-
-			return compare(max(m.Pricing.Input, m.Pricing.Output), fv, op)
-		},
-	},
-	"name": {
-		Type:      "string",
-		AllowedOp: map[Operator]bool{OpEqual: true, OpContains: true, OpStartsWith: true, OpEndsWith: true},
-		Matcher: func(m *Model, op Operator, val string) bool {
-			return compareString(strings.ToLower(m.Name), val, op)
-		},
-	},
-	"id": {
-		Type:      "string",
-		AllowedOp: map[Operator]bool{OpEqual: true, OpContains: true},
-		Matcher: func(m *Model, op Operator, val string) bool {
-			return compareString(m.ID, val, op)
-		},
-	},
+type FilterModel struct {
+	Slug  string  `expr:"slug"`
+	Name  string  `expr:"name"`
+	Price float64 `expr:"price"`
 }
 
-type Filter struct {
-	field    string
-	operator Operator
-	rawValue string
-}
+func (f *Filters) Match(md *Model) (bool, error) {
+	match, err := expr.Run(f.program, FilterModel{
+		Slug:  md.ID,
+		Name:  md.Name,
+		Price: max(md.Pricing.Input, md.Pricing.Output),
+	})
 
-type FilterList []*Filter
-
-func (f FilterList) Match(md *Model) bool {
-	for _, filter := range f {
-		if filter.Match(md) {
-			return true
-		}
+	if err != nil {
+		return false, err
 	}
 
-	return false
+	return match.(bool), nil
 }
 
-func (f *Filter) Match(md *Model) bool {
-	def, ok := fieldRegistry[f.field]
-	if !ok {
-		return false
-	}
-
-	return def.Matcher(md, f.operator, f.rawValue)
-}
-
-func ParseFilters(filterStrs string) (FilterList, error) {
-	if strings.TrimSpace(filterStrs) == "" {
+func ParseFilters(query string) (*Filters, error) {
+	if strings.TrimSpace(query) == "" {
 		return nil, nil
 	}
 
-	parts := strings.Split(filterStrs, ",")
+	query = strings.ReplaceAll(query, "~", " contains ")
+	query = strings.ReplaceAll(query, "^", " has_prefix ")
+	query = strings.ReplaceAll(query, "$", " has_suffix ")
 
-	filters := make(FilterList, 0, len(parts))
+	options := []expr.Option{
+		expr.AsBool(),
+		expr.Env(FilterModel{}),
 
-	for _, part := range parts {
-		f, err := ParseFilter(strings.TrimSpace(part))
-		if err != nil {
-			return nil, err
-		}
+		expr.Function("contains",
+			func(params ...any) (any, error) {
+				p1 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[0].(string))
 
-		filters = append(filters, f)
+				return strings.Contains(p1, p2), nil
+			},
+			new(func(string, string) bool),
+		),
+		expr.Function("has_prefix",
+			func(params ...any) (any, error) {
+				p1 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[0].(string))
+
+				return strings.HasPrefix(p1, p2), nil
+			},
+			new(func(string, string) bool),
+		),
+		expr.Function("has_suffix",
+			func(params ...any) (any, error) {
+				p1 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[0].(string))
+
+				return strings.HasSuffix(p1, p2), nil
+			},
+			new(func(string, string) bool),
+		),
 	}
 
-	return filters, nil
-}
-
-func ParseFilter(input string) (*Filter, error) {
-	idx := strings.IndexAny(input, "<>=~^$")
-	if idx <= 0 {
-		return nil, fmt.Errorf("invalid filter format: %q", input)
+	program, err := expr.Compile(query, options...)
+	if err != nil {
+		return nil, err
 	}
 
-	field := strings.ToLower(strings.TrimSpace(input[:idx]))
-	op := Operator(input[idx : idx+1])
-	val := strings.ToLower(strings.TrimSpace(input[idx+1:]))
-
-	def, ok := fieldRegistry[field]
-	if !ok {
-		return nil, fmt.Errorf("unknown field: %s", field)
-	}
-
-	if !def.AllowedOp[op] {
-		return nil, fmt.Errorf("operator %q not allowed for field %q", op, field)
-	}
-
-	if def.Type == "number" {
-		_, err := strconv.ParseFloat(val, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid number value: %q", val)
-		}
-	}
-
-	return &Filter{
-		field:    field,
-		operator: op,
-		rawValue: val,
+	return &Filters{
+		program: program,
 	}, nil
-}
-
-func compare[T float64 | int64](a, b T, op Operator) bool {
-	switch op {
-	case OpLess:
-		return a < b
-	case OpGreater:
-		return a > b
-	case OpEqual:
-		return a == b
-	default:
-		return false
-	}
-}
-
-func compareString(a, b string, op Operator) bool {
-	switch op {
-	case OpEqual:
-		return a == b
-	case OpContains:
-		return strings.Contains(a, b)
-	case OpStartsWith:
-		return strings.HasPrefix(a, b)
-	case OpEndsWith:
-		return strings.HasSuffix(a, b)
-	default:
-		return false
-	}
 }

@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/coalaura/plain v1.1.4
+	github.com/expr-lang/expr v1.17.7
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/goccy/go-yaml v1.19.0
 	github.com/revrost/go-openrouter v1.1.5
