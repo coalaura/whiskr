@@ -209,7 +209,7 @@ func (e *Environment) Store() error {
 			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 			"$.models.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
-			"$.models.filters":          {yaml.HeadComment(" filters to apply to the model list comma separated (optional; fields: `price`, `id`, `name`; operators: `<` (less than), `>` (greater than), `=` (equals), `~` (contains), `^` (starts-with), `$` (ends-with))")},
+			"$.models.filters":          {yaml.HeadComment(" boolean expression to filter available models (optional; fields: `price`, `slug`, `name`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)")},
 
 			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 

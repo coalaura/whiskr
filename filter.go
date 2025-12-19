@@ -47,7 +47,7 @@ func ParseFilters(query string) (*Filters, error) {
 		expr.Function("contains",
 			func(params ...any) (any, error) {
 				p1 := strings.ToLower(params[0].(string))
-				p2 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[1].(string))
 
 				return strings.Contains(p1, p2), nil
 			},
@@ -56,7 +56,7 @@ func ParseFilters(query string) (*Filters, error) {
 		expr.Function("has_prefix",
 			func(params ...any) (any, error) {
 				p1 := strings.ToLower(params[0].(string))
-				p2 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[1].(string))
 
 				return strings.HasPrefix(p1, p2), nil
 			},
@@ -65,7 +65,7 @@ func ParseFilters(query string) (*Filters, error) {
 		expr.Function("has_suffix",
 			func(params ...any) (any, error) {
 				p1 := strings.ToLower(params[0].(string))
-				p2 := strings.ToLower(params[0].(string))
+				p2 := strings.ToLower(params[1].(string))
 
 				return strings.HasSuffix(p1, p2), nil
 			},

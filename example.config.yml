@@ -26,7 +26,7 @@ models:
   image-generation: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
   transformation: middle-out
-  # filters to apply to the model list comma separated (optional; fields: `price`, `id`, `name`; operators: `<` (less than), `>` (greater than), `=` (equals), `~` (contains), `^` (starts-with), `$` (ends-with))
+  # boolean expression to filter available models (optional; fields: `price`, `slug`, `name`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)
   filters: ""
 
 ui:
