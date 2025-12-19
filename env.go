@@ -12,53 +12,62 @@ import (
 )
 
 type EnvTokens struct {
-	Secret     string `json:"secret"`
-	OpenRouter string `json:"openrouter"`
-	Exa        string `json:"exa"`
-	GitHub     string `json:"github"`
+	Secret     string `yaml:"secret"`
+	OpenRouter string `yaml:"openrouter"`
+	Exa        string `yaml:"exa"`
+	GitHub     string `yaml:"github"`
 }
 
 type EnvSettings struct {
-	CleanContent    bool   `json:"cleanup"`
-	TitleModel      string `json:"title-model"`
-	ImageGeneration bool   `json:"image-generation"`
-	Transformation  string `json:"transformation"`
-	Timeout         int64  `json:"timeout"`
-	RefreshInterval int64  `json:"refresh-interval"`
+	CleanContent    bool  `yaml:"cleanup"`
+	Timeout         int64 `yaml:"timeout"`
+	RefreshInterval int64 `yaml:"refresh-interval"`
+}
+
+type EnvModels struct {
+	TitleModel      string `yaml:"title-model"`
+	ImageGeneration bool   `yaml:"image-generation"`
+	Transformation  string `yaml:"transformation"`
+	Filters         string `yaml:"filters"`
+
+	filters FilterList
 }
 
 type EnvUI struct {
-	ReducedMotion bool `json:"reduced-motion"`
+	ReducedMotion bool `yaml:"reduced-motion"`
 }
 
 type EnvUser struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	ID       string `yaml:"id"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 type EnvAuthentication struct {
 	lookup map[string]*EnvUser
 
-	Enabled bool       `json:"enabled"`
-	Users   []*EnvUser `json:"users"`
+	Enabled bool       `yaml:"enabled"`
+	Users   []*EnvUser `yaml:"users"`
 }
 
 type Environment struct {
-	Debug          bool              `json:"debug"`
-	Tokens         EnvTokens         `json:"tokens"`
-	Settings       EnvSettings       `json:"settings"`
-	UI             EnvUI             `json:"ui"`
-	Authentication EnvAuthentication `json:"authentication"`
+	Debug          bool              `yaml:"debug"`
+	Tokens         EnvTokens         `yaml:"tokens"`
+	Settings       EnvSettings       `yaml:"settings"`
+	Models         EnvModels         `yaml:"models"`
+	UI             EnvUI             `yaml:"ui"`
+	Authentication EnvAuthentication `yaml:"authentication"`
 }
 
 var env = Environment{
 	// defaults
 	Settings: EnvSettings{
 		CleanContent:    true,
-		ImageGeneration: true,
 		Timeout:         1200,
 		RefreshInterval: 30,
+	},
+	Models: EnvModels{
+		ImageGeneration: true,
 	},
 }
 
@@ -83,7 +92,7 @@ func (e *Environment) Init() error {
 	}
 
 	// print if image generation is enabled
-	if e.Settings.ImageGeneration {
+	if e.Models.ImageGeneration {
 		log.Warnln("Image generation enabled")
 	} else {
 		log.Warnln("Image generation disabled")
@@ -119,23 +128,30 @@ func (e *Environment) Init() error {
 	}
 
 	// default title model
-	if e.Settings.TitleModel == "" {
-		e.Settings.TitleModel = "google/gemini-2.5-flash-lite"
+	if e.Models.TitleModel == "" {
+		e.Models.TitleModel = "google/gemini-2.5-flash-lite"
 	}
 
 	// default transformation method
-	if e.Settings.Transformation == "" {
-		e.Settings.Transformation = "middle-out"
+	if e.Models.Transformation == "" {
+		e.Models.Transformation = "middle-out"
 	}
 
+	filters, err := ParseFilters(e.Models.Filters)
+	if err != nil {
+		return err
+	}
+
+	e.Models.filters = filters
+
 	// default timeout
-	if env.Settings.Timeout <= 0 {
-		env.Settings.Timeout = 300
+	if e.Settings.Timeout <= 0 {
+		e.Settings.Timeout = 300
 	}
 
 	// default model refresh interval
-	if env.Settings.RefreshInterval <= 0 {
-		env.Settings.RefreshInterval = 30
+	if e.Settings.RefreshInterval <= 0 {
+		e.Settings.RefreshInterval = 30
 	}
 
 	// create user lookup map
@@ -187,11 +203,13 @@ func (e *Environment) Store() error {
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
-			"$.settings.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
-			"$.settings.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
-			"$.settings.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
+
+			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
+			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
+			"$.models.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
+			"$.models.filters":          {yaml.HeadComment(" filters to apply to the model list comma separated (optional; fields: `price`, `id`, `name`; operators: `<` (less than), `>` (greater than), `=` (equals), `~` (contains), `^` (starts-with), `$` (ends-with))")},
 
 			"$.ui.reduced-motion": {yaml.HeadComment(" disables things like the floating stars in the background (optional; default: false)")},
 

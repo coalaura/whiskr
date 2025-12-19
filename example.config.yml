@@ -14,16 +14,20 @@ tokens:
 settings:
   # normalize unicode in assistant output (optional; default: true)
   cleanup: true
+  # the http timeout to use for completion requests in seconds (optional; default: 300s)
+  timeout: 1200
+  # the interval in which the model list is refreshed in minutes (optional; default: 30m)
+  refresh-interval: 30
+
+models:
   # model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)
   title-model: google/gemini-2.5-flash-lite
   # allow image generation (optional; default: true)
   image-generation: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
   transformation: middle-out
-  # the http timeout to use for completion requests in seconds (optional; default: 300s)
-  timeout: 1200
-  # the interval in which the model list is refreshed in minutes (optional; default: 30m)
-  refresh-interval: 30
+  # filters to apply to the model list comma separated (optional; fields: `price`, `id`, `name`; operators: `<` (less than), `>` (greater than), `=` (equals), `~` (contains), `^` (starts-with), `$` (ends-with))
+  filters: ""
 
 ui:
   # disables things like the floating stars in the background (optional; default: false)

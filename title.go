@@ -94,7 +94,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request := openrouter.ChatCompletionRequest{
-		Model: env.Settings.TitleModel,
+		Model: env.Models.TitleModel,
 		Messages: []openrouter.ChatCompletionMessage{
 			openrouter.SystemMessage(buf.String()),
 			openrouter.UserMessage(strings.Join(messages, "\n")),

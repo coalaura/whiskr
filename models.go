@@ -87,11 +87,11 @@ func LoadModels(initial bool) error {
 	})
 
 	var (
-		newList = make([]*Model, len(list))
+		newList = make([]*Model, 0, len(list))
 		newMap  = make(map[string]*Model, len(list))
 	)
 
-	for index, model := range list {
+	for _, model := range list {
 		name := model.Name
 
 		if index := strings.Index(name, ": "); index != -1 {
@@ -117,7 +117,11 @@ func LoadModels(initial bool) error {
 
 		GetModelTags(model, m)
 
-		newList[index] = m
+		if env.Models.filters != nil && !env.Models.filters.Match(m) {
+			continue
+		}
+
+		newList = append(newList, m)
 		newMap[model.ID] = m
 	}
 

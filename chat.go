@@ -171,7 +171,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		openrouter.ModalityText,
 	}
 
-	if env.Settings.ImageGeneration && model.Images {
+	if env.Models.ImageGeneration && model.Images {
 		request.Modalities = append(request.Modalities, openrouter.ModalityImage)
 
 		request.ImageConfig = &openrouter.ChatCompletionImageConfig{
@@ -209,7 +209,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 	}
 
-	request.Transforms = append(request.Transforms, env.Settings.Transformation)
+	request.Transforms = append(request.Transforms, env.Models.Transformation)
 
 	if r.Iterations < 1 || r.Iterations > 50 {
 		return nil, fmt.Errorf("invalid iterations (1-50): %d", r.Iterations)

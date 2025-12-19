@@ -1879,6 +1879,10 @@
 		$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 		$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
+		if (!modelList.find(model => model.id === $model.value)) {
+			$model.value = modelList[0].id;
+		}
+
 		const files = loadValue("attachments", []);
 
 		for (const file of files) {
