@@ -407,16 +407,47 @@ body:not(.loading) #loading {
 	border: 2px solid var(--c-red);
 }
 
+.images:has(.i-1) .i-0 {
+	display: none;
+}
+
 .images .image {
 	display: block;
 	font-size: 0;
+	width: max-content;
+	border-radius: 6px;
+	border: 2px solid var(--c-surface0);
+	position: relative;
+	overflow: hidden;
 }
 
 .images .image img {
 	max-width: 100%;
 	width: 420px;
-	border-radius: 6px;
-	border: 2px solid var(--c-surface0);
+}
+
+.message.busy .images .i-0::before,
+.message.busy .images .i-0::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.message.busy .images .i-0::before {
+	backdrop-filter: blur(8px);
+	background: rgba(255, 255, 255, 0.15);
+}
+
+.message.busy .images .i-0::after {
+	background: url("./icons/spinner.svg");
+	background-size: 54px;
+	background-repeat: no-repeat;
+	background-position: center;
+	animation: rotating 1.2s linear infinite;
+	filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.2));
 }
 
 .tool .result pre,
