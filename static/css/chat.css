@@ -19,6 +19,20 @@ body.resizing * {
 	cursor: grabbing !important;
 }
 
+body.christmas #page::before {
+	content: "";
+	position: absolute;
+	top: -12px;
+	right: -12px;
+	background: url("./icons/christmas.png");
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+	width: 36px;
+	height: 36px;
+	z-index: 2;
+}
+
 #total,
 #version {
 	position: absolute;

@@ -2597,6 +2597,8 @@
 		updateScrollButton();
 	});
 
+	document.body.classList.toggle("christmas", new Date().getMonth() === 11);
+
 	dropdown($role);
 	dropdown($providerSorting);
 	dropdown($imageResolution);
