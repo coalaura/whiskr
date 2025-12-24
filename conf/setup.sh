@@ -6,29 +6,33 @@ echo "Linking sysusers config..."
 
 mkdir -p /etc/sysusers.d
 
-if [ ! -f /etc/sysusers.d/whiskr.conf ]; then
-    ln -s "/var/whiskr/conf/whiskr.conf" /etc/sysusers.d/whiskr.conf
+if [ -f /etc/sysusers.d/whiskr.conf ]; then
+    rm /etc/sysusers.d/whiskr.conf
 fi
+
+ln -s "/var/wskr.sh/conf/whiskr.conf" /etc/sysusers.d/whiskr.conf
 
 echo "Creating user..."
 systemd-sysusers
 
 echo "Linking unit..."
-rm /etc/systemd/system/whiskr.service
+if [ -f /etc/systemd/system/whiskr.service ]; then
+    rm /etc/systemd/system/whiskr.service
+fi
 
-systemctl link "/var/whiskr/conf/whiskr.service"
+systemctl link "/var/wskr.sh/conf/whiskr.service"
 
 echo "Reloading daemon..."
 systemctl daemon-reload
 systemctl enable whiskr
 
 echo "Fixing initial permissions..."
-chown -R whiskr:whiskr "/var/whiskr"
+chown -R whiskr:whiskr "/var/wskr.sh"
 
-find "/var/whiskr" -type d -exec chmod 755 {} +
-find "/var/whiskr" -type f -exec chmod 644 {} +
+find "/var/wskr.sh" -type d -exec chmod 755 {} +
+find "/var/wskr.sh" -type f -exec chmod 644 {} +
 
-chmod +x "/var/whiskr/whiskr"
+chmod +x "/var/wskr.sh/whiskr"
 
 echo "Setup complete, starting service..."
 

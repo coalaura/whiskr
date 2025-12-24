@@ -9,16 +9,16 @@ Type=simple
 User=whiskr
 Group=whiskr
 
-WorkingDirectory=/var/whiskr
-ExecStart=/var/whiskr/whiskr
+WorkingDirectory=/var/wskr.sh
+ExecStart=/var/wskr.sh/whiskr
 
-StandardOutput=append:/var/whiskr/whiskr.log
-StandardError=append:/var/whiskr/whiskr.log
+StandardOutput=append:/var/wskr.sh/whiskr.log
+StandardError=append:/var/wskr.sh/whiskr.log
 StandardInput=null
 
 # Filesystem Sandboxing
 ProtectSystem=strict
-ReadOnlyPaths=/var/whiskr
+ReadOnlyPaths=/var/wskr.sh
 ProtectHome=yes
 PrivateTmp=yes
 PrivateMounts=yes
