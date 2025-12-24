@@ -68,8 +68,10 @@ func main() {
 		gr.Post("/-/preview", HandlePreview)
 	})
 
-	log.Println("Listening at http://localhost:3443/")
-	http.ListenAndServe(":3443", r)
+	addr := env.Addr()
+
+	log.Printf("Listening at http://localhost%s/\n", addr)
+	http.ListenAndServe(addr, r)
 }
 
 func cache(next http.Handler) http.Handler {

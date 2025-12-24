@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -16,6 +17,10 @@ type EnvTokens struct {
 	OpenRouter string `yaml:"openrouter"`
 	Exa        string `yaml:"exa"`
 	GitHub     string `yaml:"github"`
+}
+
+type EnvServer struct {
+	Port int64 `yaml:"port"`
 }
 
 type EnvSettings struct {
@@ -53,14 +58,18 @@ type EnvAuthentication struct {
 type Environment struct {
 	Debug          bool              `yaml:"debug"`
 	Tokens         EnvTokens         `yaml:"tokens"`
+	Server         EnvServer         `yaml:"server"`
 	Settings       EnvSettings       `yaml:"settings"`
 	Models         EnvModels         `yaml:"models"`
 	UI             EnvUI             `yaml:"ui"`
 	Authentication EnvAuthentication `yaml:"authentication"`
 }
 
+// defaults
 var env = Environment{
-	// defaults
+	Server: EnvServer{
+		Port: 3443,
+	},
 	Settings: EnvSettings{
 		CleanContent:    true,
 		Timeout:         1200,
@@ -81,6 +90,10 @@ func init() {
 	log.MustFail(err)
 
 	log.MustFail(env.Init())
+}
+
+func (e *Environment) Addr() string {
+	return fmt.Sprintf(":%d", e.Server.Port)
 }
 
 func (e *Environment) Init() error {
@@ -125,6 +138,11 @@ func (e *Environment) Init() error {
 	// check if github token is set
 	if e.Tokens.GitHub == "" {
 		log.Warnln("Missing token.github, limited api requests")
+	}
+
+	// check if port is valid
+	if e.Server.Port <= 0 || e.Server.Port >= 65535 {
+		return fmt.Errorf("invalid port %q", e.Server.Port)
 	}
 
 	// default title model
@@ -201,6 +219,8 @@ func (e *Environment) Store() error {
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
+
+			"$.server.port": {yaml.HeadComment(" port to serve whiskr on (required; default 3443)")},
 
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
