@@ -329,7 +329,7 @@ body:not(.loading) #loading {
 .message:not(.has-tool) .tool,
 .message:not(.has-reasoning) .reasoning,
 .message:not(.has-images) .images,
-.message:not(.has-text) .text,
+.message:not(.has-text):not(.editing) .text,
 .message:not(.has-tags) .tags {
 	display: none;
 }
