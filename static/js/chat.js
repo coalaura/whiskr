@@ -1050,16 +1050,16 @@
 				this.#_message.classList.remove(this.#state);
 			}
 
-			if (state && state !== "editing") {
-				this.#_message.classList.add(state, "busy");
+			this.#_message.classList.toggle("busy", state && state !== "editing");
+
+			if (state) {
+				this.#_message.classList.add(state);
 			} else {
 				if (this.#tool && !this.#tool.result) {
 					this.#tool.result = "failed to run tool";
 
 					this.#render("tool");
 				}
-
-				this.#_message.classList.remove("busy");
 			}
 
 			this.#state = state;
