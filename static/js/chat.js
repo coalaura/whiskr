@@ -1050,7 +1050,7 @@
 				this.#_message.classList.remove(this.#state);
 			}
 
-			if (state) {
+			if (state && state !== "editing") {
 				this.#_message.classList.add(state, "busy");
 			} else {
 				if (this.#tool && !this.#tool.result) {
