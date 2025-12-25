@@ -30,7 +30,7 @@ body.christmas #page::before {
 	background-repeat: no-repeat;
 	width: 36px;
 	height: 36px;
-	z-index: 2;
+	z-index: 20;
 }
 
 #total,
