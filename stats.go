@@ -46,8 +46,6 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		log.Println(err)
-
 		attempt++
 
 		time.Sleep(backoff)
@@ -56,6 +54,14 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "not found") {
+			RespondJson(w, http.StatusNotFound, map[string]any{
+				"error": "not found",
+			})
+
+			return
+		}
+
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),
 		})
