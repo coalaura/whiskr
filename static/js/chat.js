@@ -956,7 +956,7 @@
 			}
 		}
 
-		async loadGenerationData(generationID, retrying = false) {
+		async loadGenerationData(generationID) {
 			if (!generationID || this.#destroyed) {
 				return;
 			}
@@ -976,10 +976,6 @@
 				updateTotalCost();
 			} catch (err) {
 				console.error(err);
-
-				if (!retrying && err.message.includes("not found")) {
-					setTimeout(this.loadGenerationData.bind(this), 1500, generationID, true);
-				}
 			}
 		}
 
@@ -1428,9 +1424,7 @@
 
 			msg.setState(false);
 
-			setTimeout(() => {
-				msg.loadGenerationData(genID);
-			}, 1000);
+			msg.loadGenerationData(genID);
 
 			receivedToken = false;
 

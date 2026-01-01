@@ -3,8 +3,10 @@ package main
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/revrost/go-openrouter"
 )
 
 type Statistics struct {
@@ -28,7 +30,31 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	generation, err := OpenRouterGetGeneration(r.Context(), id)
+	ctx := r.Context()
+
+	var (
+		attempt    int
+		generation openrouter.Generation
+		err        error
+
+		backoff = time.Second
+	)
+
+	for attempt < 4 {
+		generation, err = OpenRouterGetGeneration(ctx, id)
+		if err == nil {
+			break
+		}
+
+		log.Println(err)
+
+		attempt++
+
+		time.Sleep(backoff)
+
+		backoff = min(4*time.Second, backoff*2)
+	}
+
 	if err != nil {
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),
