@@ -1748,7 +1748,7 @@
 		}
 
 		// show login modal
-		if (data.config.authentication && !data.authenticated) {
+		if (data.config.auth && !data.authenticated) {
 			$authentication.classList.add("open");
 		}
 
