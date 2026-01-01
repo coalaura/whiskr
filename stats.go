@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/revrost/go-openrouter"
 )
 
@@ -19,6 +21,15 @@ type Statistics struct {
 	OutputTokens int     `json:"output"`
 }
 
+type StatisticsEntry struct {
+	Found *Statistics
+	Error error
+}
+
+var statisticsCache = ttlcache.New[string, StatisticsEntry](
+	ttlcache.WithTTL[string, StatisticsEntry](30 * time.Minute),
+)
+
 func HandleStats(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
@@ -30,8 +41,37 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
+	entry, _ := statisticsCache.GetOrSetFunc(id, func() StatisticsEntry {
+		var entry StatisticsEntry
 
+		statistics, err := FetchStatistics(r.Context(), id)
+		if err != nil {
+			if !strings.HasSuffix(err.Error(), "not found") {
+				entry.Error = err
+			}
+		} else {
+			entry.Found = statistics
+		}
+
+		return entry
+	})
+
+	value := entry.Value()
+
+	if value.Found != nil {
+		RespondJson(w, http.StatusOK, value.Found)
+	} else if value.Error != nil {
+		RespondJson(w, http.StatusInternalServerError, map[string]any{
+			"error": value.Error,
+		})
+	} else {
+		RespondJson(w, http.StatusNotFound, map[string]any{
+			"error": "not found",
+		})
+	}
+}
+
+func FetchStatistics(ctx context.Context, id string) (*Statistics, error) {
 	var (
 		attempt    int
 		generation openrouter.Generation
@@ -54,19 +94,7 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		if strings.HasSuffix(err.Error(), "not found") {
-			RespondJson(w, http.StatusNotFound, map[string]any{
-				"error": "not found",
-			})
-
-			return
-		}
-
-		RespondJson(w, http.StatusInternalServerError, map[string]any{
-			"error": err.Error(),
-		})
-
-		return
+		return nil, err
 	}
 
 	statistics := Statistics{
@@ -91,7 +119,7 @@ func HandleStats(w http.ResponseWriter, r *http.Request) {
 
 	statistics.OutputTokens = max(nativeOut, normalOut)
 
-	RespondJson(w, http.StatusOK, statistics)
+	return &statistics, nil
 }
 
 func Nullable[T any](ptr *T, def T) T {
