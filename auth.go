@@ -2,9 +2,10 @@ package main
 
 import (
 	"crypto/hmac"
-	"crypto/sha256"
+	"crypto/sha3"
 	"encoding/hex"
 	"encoding/json"
+	"hash"
 	"net/http"
 	"strings"
 
@@ -16,8 +17,12 @@ type AuthenticationRequest struct {
 	Password string `json:"password"`
 }
 
+func NewHash() hash.Hash {
+	return sha3.New512()
+}
+
 func (u *EnvUser) Signature(secret string) []byte {
-	mac := hmac.New(sha256.New, []byte(secret))
+	mac := hmac.New(NewHash, []byte(secret))
 
 	mac.Write([]byte(u.Password))
 	mac.Write([]byte(u.Username))
