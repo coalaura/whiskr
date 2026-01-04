@@ -106,8 +106,6 @@
 			const index = files.length,
 				id = generateID();
 
-			console.log(_a, name, content, ending);
-
 			files.push({
 				id: id,
 				name: name,
