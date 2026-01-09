@@ -225,7 +225,7 @@
 	display: flex;
 	gap: 4px;
 	align-items: center;
-	background: var(--c-base);
+	background: var(--c-surface1);
 	width: max-content;
 	max-width: 100%;
 	white-space: nowrap;
@@ -259,11 +259,12 @@
 	font-family: var(--font-mono);
 }
 
-.markdown .inline-file .download {
+.markdown button.download {
 	background-image: url(icons/download.svg);
 	flex-shrink: 0;
 }
 
+.message.busy .markdown .inline-svg.busy::after,
 .message.busy .markdown .inline-file.busy::after {
 	content: "";
 	display: block;
@@ -275,4 +276,31 @@
 	opacity: 0.5;
 	bottom: -1px;
 	left: 0;
+}
+
+.markdown .inline-svg {
+	position: relative;
+	width: 400px;
+	max-width: 100%;
+	border-radius: 6px;
+	border: 1px solid var(--c-surface0);
+	background: var(--c-surface0);
+	overflow: hidden;
+}
+
+.markdown .inline-svg .image {
+	box-shadow: none;
+	width: 100%;
+}
+
+.markdown .inline-svg button.download {
+	position: absolute;
+	top: -1px;
+	right: -1px;
+	width: 30px;
+	height: 30px;
+	background-size: 20px;
+	background-color: var(--c-surface1);
+	border: 1px solid var(--c-surface0);
+	border-bottom-left-radius: 6px;
 }

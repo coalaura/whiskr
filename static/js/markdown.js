@@ -91,7 +91,86 @@
 		return `${val.toFixed(dec)}${sizes[i]}`;
 	}
 
+	function fixStreamBuffer(markdown) {
+		// fix the model forgetting to add the <<CONTENT>> line
+		return markdown.replace(/(FILE\s+"[^"]+"(?:\s+LINES\s+[\d-]+)?)/g, (match, _header, offset, fullString) => {
+			const rest = fullString.slice(offset + match.length);
+
+			if (/^\s*<<CONTENT>>/.test(rest)) {
+				return match;
+			}
+
+			if (/^\s*[\r\n]/.test(rest)) {
+				return `${match}\n<<CONTENT>>`;
+			}
+
+			return match;
+		});
+	}
+
+	function fixProgressiveSvg(raw) {
+		const lastTagEnd = raw.lastIndexOf(">");
+
+		if (lastTagEnd === -1) {
+			return "";
+		}
+
+		let clean = raw.slice(0, lastTagEnd + 1);
+
+		const stack = [];
+		// Regex matches: <tag ... >, </tag>, <tag ... />
+		// Group 1: Slash (if closing)
+		// Group 2: Tag Name
+		// Group 3: Slash (if self-closing)
+		const tagRegex = /<(\/)?([a-zA-Z0-9:_-]+)[^>]*?(\/)?>/g;
+		let match;
+
+		while ((match = tagRegex.exec(clean)) !== null) {
+			const [fullMatch, isClosing, tagName, isSelfClosing] = match;
+
+			// Ignore processing instructions (<?xml) or comments (though regex handles tags mostly)
+			if (tagName.toLowerCase() === "?xml" || fullMatch.startsWith("<!--")) {
+				continue;
+			}
+
+			if (isSelfClosing) {
+				continue; // <path /> - no action needed
+			}
+
+			if (isClosing) {
+				// </g> - Pop matching tag from stack
+				// In a perfect world, we check if it matches the top of stack.
+				// In a streaming world, we assume the LLM is mostly correct logic-wise.
+				if (stack.length > 0 && stack[stack.length - 1] === tagName) {
+					stack.pop();
+				}
+			} else {
+				// <g> - Push to stack
+				// Handle void tags if necessary (though rare in SVG besides image/path/rect which are usually self-closed)
+				stack.push(tagName);
+			}
+		}
+
+		// 3. Append missing closing tags in reverse order
+		while (stack.length > 0) {
+			const tag = stack.pop();
+			clean += `</${tag}>`;
+		}
+
+		// 4. Encode to Base64
+		// We use encodeURIComponent to handle Unicode characters correctly in btoa
+		try {
+			const b64 = btoa(encodeURIComponent(clean).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode("0x" + p1)));
+			return `data:image/svg+xml;base64,${b64}`;
+		} catch (err) {
+			console.error("SVG generation error", err);
+			return "";
+		}
+	}
+
 	function parse(markdown) {
+		markdown = fixStreamBuffer(markdown);
+
 		const starts = (markdown.match(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+(?:-\d+)?)?\s*\r?\n<<CONTENT>>\s*$/gm) || []).length,
 			ends = (markdown.match(/^<<END(?:ING)?>>$/gm) || []).length;
 
@@ -127,6 +206,12 @@
 			if (index < files.length) {
 				const file = files[index],
 					name = escapeHtml(file.name);
+
+				if (file.name.endsWith(".svg")) {
+					const svg = fixProgressiveSvg(table[file.id].content);
+
+					return `<div class="inline-svg ${file.busy ? "busy" : ""}" data-id="${file.id}"><img class="image" src="${svg}" /><button class="download" title="Download file"></button></div>`;
+				}
 
 				return `<div class="inline-file ${file.busy ? "busy" : ""}" data-id="${file.id}"><div class="name" title="${name}">${name}</div><div class="size"><sup>${formatBytes(file.size)}</sup></div><button class="download" title="Download file"></button></div>`;
 			}

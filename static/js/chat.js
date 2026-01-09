@@ -582,7 +582,7 @@
 		}
 
 		#handlePreview(event) {
-			const inline = event.target.closest(".inline-file[data-id]"),
+			const inline = event.target.closest(".inline-file[data-id],.inline-svg[data-id]"),
 				id = inline?.dataset?.id;
 
 			if (!id) {
