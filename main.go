@@ -93,7 +93,7 @@ func cache(next http.Handler) http.Handler {
 
 func frontend() http.Handler {
 	if !env.Debug {
-		return http.FileServer(http.Dir("./dist"))
+		return http.FileServer(http.Dir("./public"))
 	}
 
 	target, _ := url.Parse("http://localhost:3000")
