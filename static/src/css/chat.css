@@ -1,3 +1,10 @@
+@import "./catppuccin.min.css";
+
+@import "./base.css";
+@import "./dropdown.css";
+@import "./markdown.css";
+@import "./preview.css";
+
 html,
 body {
 	font-family: var(--font);
@@ -509,7 +516,7 @@ body:not(.loading) #loading {
 	overflow: hidden;
 }
 
-.message.collapsed .body>* {
+.message.collapsed .body > * {
 	opacity: 0;
 }
 
@@ -1046,7 +1053,9 @@ input[type="checkbox"] {
 	background-color: var(--c-surface2);
 	border-radius: 6px;
 	cursor: pointer;
-	transition: background-color 150ms ease, box-shadow 150ms ease;
+	transition:
+		background-color 150ms ease,
+		box-shadow 150ms ease;
 }
 
 input[type="checkbox"]::after {
@@ -1059,7 +1068,9 @@ input[type="checkbox"]::after {
 	background-color: var(--c-text);
 	border-radius: 4px;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-	transition: transform 150ms cubic-bezier(0.4, 0.0, 0.2, 1), background-color 150ms ease;
+	transition:
+		transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 150ms ease;
 }
 
 input[type="checkbox"]:checked {
@@ -1081,7 +1092,9 @@ input[type="checkbox"]:checked:hover {
 
 input[type="checkbox"]:focus-visible {
 	outline: none;
-	box-shadow: 0 0 0 2px var(--c-base), 0 0 0 4px var(--c-mauve);
+	box-shadow:
+		0 0 0 2px var(--c-base),
+		0 0 0 4px var(--c-mauve);
 }
 
 #chat button {
@@ -1306,7 +1319,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden)+#bottom {
+#top:not(.hidden) + #bottom {
 	right: 40px;
 }
 
@@ -1568,7 +1581,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
-
 	0%,
 	100% {
 		left: 0px;
@@ -1581,7 +1593,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
-
 	0%,
 	75%,
 	100% {
@@ -1634,7 +1645,6 @@ label[for="reasoning-tokens"] {
 }
 
 @media (max-width: 745px) {
-
 	.message,
 	.message.assistant {
 		width: 100%;

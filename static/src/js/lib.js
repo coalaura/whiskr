@@ -1,6 +1,4 @@
-/** biome-ignore-all lint/correctness/noUnusedVariables: utility */
-
-function schedule(cb) {
+export function schedule(cb) {
 	if (document.visibilityState === "visible") {
 		requestAnimationFrame(cb);
 
@@ -10,11 +8,11 @@ function schedule(cb) {
 	setTimeout(cb, 80);
 }
 
-function uid() {
+export function uid() {
 	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function make(tag, ...classes) {
+export function make(tag, ...classes) {
 	classes = classes.filter(Boolean);
 
 	const el = document.createElement(tag);
@@ -26,7 +24,7 @@ function make(tag, ...classes) {
 	return el;
 }
 
-function fillSelect($select, options, callback) {
+export function fillSelect($select, options, callback) {
 	$select.innerHTML = "";
 
 	for (const option of options) {
@@ -38,21 +36,21 @@ function fillSelect($select, options, callback) {
 	}
 }
 
-function wait(ms) {
+export function wait(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function escapeHtml(text) {
+export function escapeHtml(text) {
 	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 const fracZerosRgx = /(?:(\.\d*?[1-9])0+|\.0+)$/;
 
-function round(num, digits) {
+export function round(num, digits) {
 	return num.toFixed(digits).replace(fracZerosRgx, "$1") || "0";
 }
 
-function formatMilliseconds(ms) {
+export function formatMilliseconds(ms) {
 	if (ms < 1000) {
 		return `${ms}ms`;
 	}
@@ -67,13 +65,13 @@ function formatMilliseconds(ms) {
 	return `${minutes}m ${round(seconds / 1000, 1)}s`;
 }
 
-function formatTimestamp(ts) {
+export function formatTimestamp(ts) {
 	return new Date(ts * 1000).toLocaleDateString();
 }
 
 const dataRgx = /data:(.*?)(;|$)/;
 
-function dataBlob(dataUrl) {
+export function dataBlob(dataUrl) {
 	const [header, data] = dataUrl.split(",");
 
 	if (!header || !data) {
@@ -110,11 +108,11 @@ function dataBlob(dataUrl) {
 
 const trailingZeroRgx = /\.?0+$/m;
 
-function fixed(num, decimals = 0) {
+export function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(trailingZeroRgx, "");
 }
 
-function formatMoney(num) {
+export function formatMoney(num) {
 	if (num === 0) {
 		return "0ct";
 	}
@@ -136,11 +134,11 @@ function formatMoney(num) {
 	return `$${fixed(num, 2)}`;
 }
 
-function clamp(num, min, max) {
+export function clamp(num, min, max) {
 	return Math.min(Math.max(num, min), max);
 }
 
-function wrapJSON(txt) {
+export function wrapJSON(txt) {
 	if (!txt || !txt.startsWith("{")) {
 		return txt;
 	}
@@ -154,7 +152,7 @@ function wrapJSON(txt) {
 	return txt;
 }
 
-function download(name, type, data) {
+export function download(name, type, data) {
 	let blob;
 
 	if (data instanceof Blob) {
@@ -180,7 +178,7 @@ function download(name, type, data) {
 	URL.revokeObjectURL(url);
 }
 
-function lines(text) {
+export function lines(text) {
 	let count = 0,
 		index = 0;
 
@@ -198,7 +196,7 @@ function lines(text) {
 	return count + 1;
 }
 
-function previewFile(file) {
+export function previewFile(file) {
 	// build form
 	const form = make("form");
 
@@ -233,7 +231,7 @@ function previewFile(file) {
 	form.remove();
 }
 
-function readFile(file, handler, onError = false) {
+export function readFile(file, handler, onError = false) {
 	return new Promise(resolve => {
 		const reader = new FileReader();
 
@@ -260,7 +258,7 @@ function readFile(file, handler, onError = false) {
 	});
 }
 
-function selectFile(accept, multiple, handler, onError = false) {
+export function selectFile(accept, multiple, handler, onError = false) {
 	return new Promise(resolve => {
 		const input = make("input");
 
@@ -359,7 +357,7 @@ const architectureRegexes = [
 	[/mips/i, "mips"],
 ];
 
-async function detectPlatform() {
+export async function detectPlatform() {
 	let os,
 		arch,
 		platform = navigator.platform || "";
@@ -414,34 +412,32 @@ async function detectPlatform() {
 	return `${os || "Unknown OS"}${arch ? `, ${arch}` : ""}`;
 }
 
-(() => {
-	const $notifications = document.getElementById("notifications");
+const $notifications = document.getElementById("notifications");
 
-	window.notify = async (msg, persistent = false) => {
-		console.warn(msg);
+export async function notify(msg, persistent = false) {
+	console.warn(msg);
 
-		const notification = make("div", "notification", "off-screen");
+	const notification = make("div", "notification", "off-screen");
 
-		notification.textContent = msg instanceof Error ? msg.message : msg;
+	notification.textContent = msg instanceof Error ? msg.message : msg;
 
-		$notifications.appendChild(notification);
+	$notifications.appendChild(notification);
 
-		await wait(250);
+	await wait(250);
 
-		notification.classList.remove("off-screen");
+	notification.classList.remove("off-screen");
 
-		if (persistent) {
-			return;
-		}
+	if (persistent) {
+		return;
+	}
 
-		await wait(5000);
+	await wait(5000);
 
-		notification.style.height = `${notification.getBoundingClientRect().height}px`;
+	notification.style.height = `${notification.getBoundingClientRect().height}px`;
 
-		notification.classList.add("off-screen");
+	notification.classList.add("off-screen");
 
-		await wait(250);
+	await wait(250);
 
-		notification.remove();
-	};
-})();
+	notification.remove();
+}

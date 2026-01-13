@@ -1,0 +1,21 @@
+{
+  "name": "whiskr",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.7.2",
+    "@rspack/core": "^1.7.2"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.27",
+    "marked": "^17.0.1",
+    "marked-katex-extension": "^5.1.6",
+    "morphdom": "^2.7.7",
+    "msgpackr": "^1.11.8"
+  }
+}
