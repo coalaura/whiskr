@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -86,6 +87,10 @@ func LoadModels(initial bool) error {
 	)
 
 	for _, model := range list {
+		if slices.Contains(model.OutputModalities, "embeddings") {
+			continue
+		}
+
 		name := model.Name
 
 		if index := strings.Index(name, ": "); index != -1 {
