@@ -24,16 +24,18 @@ class Dropdown {
 	#selected = false;
 	#options = [];
 	#tabs = [];
+	#leftTags = new Set();
 
 	#activeTab = "all";
 	#tabScroll = {};
 
-	constructor(el, maxTags = false, favorites = false, tabs = []) {
+	constructor(el, maxTags = false, favorites = false, tabs = [], leftTags = []) {
 		this.#_select = el;
 
 		this.#maxTags = maxTags;
 		this.#search = "searchable" in el.dataset;
 		this.#tabs = Array.isArray(tabs) ? tabs : [];
+		this.#leftTags = new Set(Array.isArray(leftTags) ? leftTags : []);
 
 		this.#_select.querySelectorAll("option").forEach(option => {
 			const classes = option.dataset.classes?.trim(),
@@ -227,6 +229,29 @@ class Dropdown {
 
 			_opt.appendChild(_label);
 
+			// left tags (optional)
+			const leftTags = option.tags.filter(tag => this.#leftTags.has(tag));
+
+			if (leftTags.length) {
+				const _left = make("div", "tags", "left");
+
+				_left.title = `${this.#maxTags ? `${leftTags.length}/${this.#maxTags}: ` : ""}${leftTags.join(", ")}`;
+
+				if (this.#maxTags && leftTags.length >= this.#maxTags) {
+					const _all = make("div", "tag", "all");
+
+					_left.appendChild(_all);
+				} else {
+					for (const tag of leftTags) {
+						const _tag = make("div", "tag", tag);
+
+						_left.appendChild(_tag);
+					}
+				}
+
+				_label.appendChild(_left);
+			}
+
 			const _span = make("span");
 
 			_span.textContent = option.label;
@@ -243,20 +268,20 @@ class Dropdown {
 				_span.appendChild(_new);
 			}
 
-			// option tags (optional)
-			const tags = option.tags;
+			// right tags (optional)
+			const rightTags = option.tags.filter(tag => !this.#leftTags.has(tag));
 
-			if (option.tags.length) {
+			if (rightTags.length) {
 				const _tags = make("div", "tags");
 
-				_tags.title = `${this.#maxTags ? `${tags.length}/${this.#maxTags}: ` : ""}${tags.join(", ")}`;
+				_tags.title = `${this.#maxTags ? `${rightTags.length}/${this.#maxTags}: ` : ""}${rightTags.join(", ")}`;
 
-				if (this.#maxTags && tags.length >= this.#maxTags) {
+				if (this.#maxTags && rightTags.length >= this.#maxTags) {
 					const _all = make("div", "tag", "all");
 
 					_tags.appendChild(_all);
 				} else {
-					for (const tag of tags) {
+					for (const tag of rightTags) {
 						const _tag = make("div", "tag", tag);
 
 						_tags.appendChild(_tag);
@@ -577,6 +602,6 @@ document.body.addEventListener("click", event => {
 	});
 });
 
-export function dropdown(el, maxTags = false, favorites = false, tabs = []) {
-	return new Dropdown(el, maxTags, favorites, tabs);
+export function dropdown(el, maxTags = false, favorites = false, tabs = [], leftTags = []) {
+	return new Dropdown(el, maxTags, favorites, tabs, leftTags);
 }

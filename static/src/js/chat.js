@@ -1852,7 +1852,7 @@ async function loadData() {
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, true, ["images"]).switchTab(modelTab);
+	dropdown($model, 6, true, ["images"], ["image"]).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({
