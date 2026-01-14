@@ -1840,13 +1840,19 @@ async function loadData() {
 
 		el.dataset.classes += ",model";
 
-		el.dataset.tags = (model.tags || []).join(",");
+		const tags = model.tags || [];
+
+		el.dataset.tags = tags.join(",");
+
+		if (tags.includes("image")) {
+			el.dataset.tabs = "images";
+		}
 
 		models[model.id] = model;
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, true).switchTab(modelTab === "favorites");
+	dropdown($model, 6, true, ["images"]).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({

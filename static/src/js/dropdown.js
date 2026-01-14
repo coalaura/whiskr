@@ -3,6 +3,7 @@ import { make } from "./lib.js";
 class Dropdown {
 	#_select;
 	#_dropdown;
+	#_options;
 	#_selected;
 	#_search;
 
@@ -16,23 +17,40 @@ class Dropdown {
 		count: false,
 		container: false,
 	};
+	#tabData = {};
 
 	#maxTags = false;
 	#search = false;
 	#selected = false;
 	#options = [];
+	#tabs = [];
 
-	constructor(el, maxTags = false, favorites = false) {
+	#activeTab = "all";
+	#tabScroll = {};
+
+	constructor(el, maxTags = false, favorites = false, tabs = []) {
 		this.#_select = el;
 
 		this.#maxTags = maxTags;
 		this.#search = "searchable" in el.dataset;
+		this.#tabs = Array.isArray(tabs) ? tabs : [];
 
 		this.#_select.querySelectorAll("option").forEach(option => {
 			const classes = option.dataset.classes?.trim(),
 				tags = option.dataset.tags?.trim(),
 				isFavorite = !!option.dataset.favorite,
-				isNew = !!option.dataset.new;
+				isNew = !!option.dataset.new,
+				tabData = option.dataset.tabs?.trim();
+
+			const allowedTabs = this.#tabs.length ? new Set(this.#tabs) : null;
+
+			const optionTabs = tabData
+				? tabData
+						.split(",")
+						.map(t => t.trim())
+						.filter(Boolean)
+						.filter(t => !allowedTabs || allowedTabs.has(t))
+				: [];
 
 			this.#options.push({
 				value: option.value,
@@ -43,6 +61,7 @@ class Dropdown {
 				tags: tags ? tags.split(",") : [],
 				favorite: isFavorite,
 				new: isNew,
+				tabs: optionTabs,
 
 				search: searchable(option.textContent),
 			});
@@ -75,7 +94,7 @@ class Dropdown {
 		});
 
 		// dropdown
-		this.#_dropdown = make("div", "dropdown", favorites ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
+		this.#_dropdown = make("div", "dropdown", favorites || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
 
 		// selected item
 		this.#_selected = make("div", "selected");
@@ -107,9 +126,9 @@ class Dropdown {
 		_content.appendChild(_tabs);
 
 		// option wrapper
-		const _options = make("div", "opts");
+		this.#_options = make("div", "opts");
 
-		_content.appendChild(_options);
+		_content.appendChild(this.#_options);
 
 		// default tab
 		this.#all.label = make("div", "tab-title", "active");
@@ -129,12 +148,41 @@ class Dropdown {
 				return;
 			}
 
-			this.switchTab(false);
+			this.switchTab("all");
 		});
 
 		this.#all.container = make("div", "tab", "active");
 
-		_options.appendChild(this.#all.container);
+		this.#_options.appendChild(this.#all.container);
+
+		// custom tabs
+		for (const tab of this.#tabs) {
+			const label = make("div", "tab-title");
+
+			label.textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+
+			_tabs.appendChild(label);
+
+			const count = make("sup", "count");
+
+			count.textContent = this.#options.filter(opt => opt.tabs.includes(tab)).length;
+
+			label.appendChild(count);
+
+			label.addEventListener("click", () => {
+				this.switchTab(tab);
+			});
+
+			const container = make("div", "tab");
+
+			this.#_options.appendChild(container);
+
+			this.#tabData[tab] = {
+				label: label,
+				count: count,
+				container: container,
+			};
+		}
 
 		// favorites tab
 		if (favorites) {
@@ -151,12 +199,12 @@ class Dropdown {
 			this.#favorites.label.appendChild(this.#favorites.count);
 
 			this.#favorites.label.addEventListener("click", () => {
-				this.switchTab(true);
+				this.switchTab("favorites");
 			});
 
 			this.#favorites.container = make("div", "tab");
 
-			_options.appendChild(this.#favorites.container);
+			this.#_options.appendChild(this.#favorites.container);
 		}
 
 		// options
@@ -218,10 +266,40 @@ class Dropdown {
 				_opt.appendChild(_tags);
 			}
 
-			// add to options
+			// add to options (all)
 			this.#all.container.appendChild(_opt);
 
 			option.el = _opt;
+			option.clones = {};
+
+			// add to custom tabs
+			for (const tab of option.tabs) {
+				const tabMeta = this.#tabData[tab];
+
+				if (!tabMeta) {
+					continue;
+				}
+
+				const clone = option.el.cloneNode(true);
+
+				tabMeta.container.appendChild(clone);
+
+				clone.addEventListener("click", () => {
+					this.#_select.value = option.value;
+
+					this.#_dropdown.classList.remove("open");
+				});
+
+				clone.addEventListener("auxclick", event => {
+					if (event.button !== 1) {
+						return;
+					}
+
+					this.#makeFavorite(option);
+				});
+
+				option.clones[tab] = clone;
+			}
 
 			// handle favorite
 			if (favorites) {
@@ -287,13 +365,21 @@ class Dropdown {
 			const option = this.#options[key];
 
 			option.el.classList.remove("active");
-			option.clone?.classList?.remove("active");
+			option.favoriteClone?.classList?.remove("active");
+
+			for (const tab in option.clones) {
+				option.clones[tab].classList.remove("active");
+			}
 		}
 
 		const selection = this.#options[this.#selected];
 
 		selection.el.classList.add("active");
-		selection.clone?.classList?.add("active");
+		selection.favoriteClone?.classList?.add("active");
+
+		for (const tab in selection.clones) {
+			selection.clones[tab].classList.add("active");
+		}
 
 		this.#_selected.classList.toggle("all-tags", selection.tags.length >= this.#maxTags);
 
@@ -312,24 +398,79 @@ class Dropdown {
 		);
 	}
 
-	switchTab(favorites) {
-		this.#all.label.classList.toggle("active", !favorites);
-		this.#all.container.classList.toggle("active", !favorites);
+	switchTab(tab = "all") {
+		if (this.#activeTab) {
+			const current = this.#_options;
 
-		this.#favorites.label.classList.toggle("active", favorites);
-		this.#favorites.container.classList.toggle("active", favorites);
+			this.#tabScroll[this.#activeTab] = current.scrollTop;
+		}
 
-		this.#trigger("tab", favorites ? "favorites" : "all");
+		const isAll = tab === "all",
+			isFav = tab === "favorites";
+
+		this.#all.label.classList.toggle("active", isAll);
+		this.#all.container.classList.toggle("active", isAll);
+
+		if (this.#favorites.label) {
+			this.#favorites.label.classList.toggle("active", isFav);
+			this.#favorites.container.classList.toggle("active", isFav);
+		}
+
+		for (const tabName in this.#tabData) {
+			const tabMeta = this.#tabData[tabName],
+				active = tab === tabName;
+
+			tabMeta.label.classList.toggle("active", active);
+			tabMeta.container.classList.toggle("active", active);
+		}
+
+		this.#activeTab = tab;
+
+		const saved = this.#tabScroll[this.#activeTab];
+
+		if (typeof saved === "number") {
+			this.#_options.scrollTop = saved;
+		} else {
+			const selection = this.#options[this.#selected];
+
+			let el = null;
+
+			if (selection) {
+				if (tab === "all") {
+					el = selection.el;
+				} else if (tab === "favorites") {
+					el = selection.favoriteClone;
+				} else {
+					el = selection.clones?.[tab];
+				}
+			}
+
+			if (el) {
+				el.scrollIntoView({
+					behavior: "instant",
+					block: "nearest",
+					inline: "nearest",
+				});
+			} else {
+				this.#_options.scrollTop = 0;
+			}
+		}
+
+		this.#trigger("tab", tab);
 	}
 
 	#makeFavorite(option, force = false) {
 		function remove() {
 			option.el.classList.remove("favorite");
 
-			if (option.clone) {
-				option.clone.remove();
+			for (const tab in option.clones) {
+				option.clones[tab].classList.remove("favorite");
+			}
 
-				option.clone = null;
+			if (option.favoriteClone) {
+				option.favoriteClone.remove();
+
+				option.favoriteClone = null;
 			}
 		}
 
@@ -352,17 +493,21 @@ class Dropdown {
 
 		option.el.classList.add("favorite");
 
-		option.clone = option.el.cloneNode(true);
+		for (const tab in option.clones) {
+			option.clones[tab].classList.add("favorite");
+		}
 
-		this.#favorites.container.appendChild(option.clone);
+		option.favoriteClone = option.el.cloneNode(true);
 
-		option.clone.addEventListener("click", () => {
+		this.#favorites.container.appendChild(option.favoriteClone);
+
+		option.favoriteClone.addEventListener("click", () => {
 			this.#_select.value = option.value;
 
 			this.#_dropdown.classList.remove("open");
 		});
 
-		option.clone.addEventListener("auxclick", event => {
+		option.favoriteClone.addEventListener("auxclick", event => {
 			if (event.button !== 1) {
 				return;
 			}
@@ -381,10 +526,18 @@ class Dropdown {
 		for (const option of this.#options) {
 			if (query && !option.search.includes(query)) {
 				option.el.classList.add("filtered");
-				option.clone?.classList?.add("filtered");
+				option.favoriteClone?.classList?.add("filtered");
+
+				for (const tab in option.clones) {
+					option.clones[tab].classList.add("filtered");
+				}
 			} else {
 				option.el.classList.remove("filtered");
-				option.clone?.classList?.remove("filtered");
+				option.favoriteClone?.classList?.remove("filtered");
+
+				for (const tab in option.clones) {
+					option.clones[tab].classList.remove("filtered");
+				}
 			}
 		}
 	}
@@ -424,6 +577,6 @@ document.body.addEventListener("click", event => {
 	});
 });
 
-export function dropdown(el, maxTags = false, favorites = false) {
-	return new Dropdown(el, maxTags, favorites);
+export function dropdown(el, maxTags = false, favorites = false, tabs = []) {
+	return new Dropdown(el, maxTags, favorites, tabs);
 }
