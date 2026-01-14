@@ -1,6 +1,8 @@
+@import "../src/css/catppuccin.min.css";
+
 @font-face {
 	font-family: "Comic Code";
-	src: url(fonts/ComicCode-Regular.ttf);
+	src: url(../src/css/fonts/ComicCode-Regular.ttf);
 	font-weight: normal;
 }
 

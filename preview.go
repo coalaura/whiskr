@@ -1,37 +1,22 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
-	"html/template"
 	"io"
 	"mime/multipart"
 	"net/http"
 )
 
 var (
-	//go:embed internal/preview.html
-	InternalPreview string
-
-	InternalPreviewTmpl *template.Template
+	//go:embed static/internal/preview.html
+	InternalPreview []byte
 )
 
 type PreviewRequest struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
-}
-
-func init() {
-	InternalPreviewTmpl = template.Must(template.New("internal-preview").Funcs(template.FuncMap{
-		"json": func(val any) template.JS {
-			b, err := json.Marshal(val)
-			if err != nil {
-				return template.JS("null")
-			}
-
-			return template.JS(b)
-		},
-	}).Parse(InternalPreview))
 }
 
 func HandlePreview(w http.ResponseWriter, r *http.Request) {
@@ -48,10 +33,29 @@ func HandlePreview(w http.ResponseWriter, r *http.Request) {
 
 	debug("rendering preview")
 
+	var data bytes.Buffer
+
+	data.WriteString("<script>const data = ")
+
+	err = json.NewEncoder(&data).Encode(request)
+	if err != nil {
+		RespondJson(w, http.StatusInternalServerError, map[string]any{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	data.WriteString("</script>")
+
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 
-	InternalPreviewTmpl.Execute(w, request)
+	index := bytes.Index(InternalPreview, []byte("<head>")) + 6
+
+	w.Write(InternalPreview[:index])
+	w.Write(data.Bytes())
+	w.Write(InternalPreview[index:])
 }
 
 func ReadPreviewRequest(r *http.Request) (*PreviewRequest, error) {
