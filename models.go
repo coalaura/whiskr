@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/revrost/go-openrouter"
 )
 
 type ModelPricing struct {
@@ -47,8 +45,7 @@ func GetModel(name string) *Model {
 }
 
 func StartModelUpdateLoop() error {
-	err := LoadModels(true)
-	if err != nil {
+	if err := LoadModels(true); err != nil {
 		return err
 	}
 
@@ -56,8 +53,7 @@ func StartModelUpdateLoop() error {
 		ticker := time.NewTicker(time.Duration(env.Settings.RefreshInterval) * time.Minute)
 
 		for range ticker.C {
-			err := LoadModels(false)
-			if err != nil {
+			if err := LoadModels(false); err != nil {
 				log.Warnln(err)
 			}
 		}
@@ -69,9 +65,7 @@ func StartModelUpdateLoop() error {
 func LoadModels(initial bool) error {
 	log.Println("Refreshing model list...")
 
-	client := OpenRouterClient()
-
-	list, err := client.ListUserModels(context.Background())
+	list, err := OpenRouterListFrontendModels(context.Background())
 	if err != nil {
 		return err
 	}
@@ -83,7 +77,7 @@ func LoadModels(initial bool) error {
 	}
 
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].Created > list[j].Created
+		return list[i].CreatedAt.After(list[j].CreatedAt)
 	})
 
 	var (
@@ -98,13 +92,13 @@ func LoadModels(initial bool) error {
 			name = name[index+2:]
 		}
 
-		input, _ := strconv.ParseFloat(model.Pricing.Prompt, 64)
-		output, _ := strconv.ParseFloat(model.Pricing.Completion, 64)
-		image, _ := strconv.ParseFloat(model.Pricing.Image, 64)
+		input, _ := strconv.ParseFloat(model.Endpoint.Pricing.Prompt, 64)
+		output, _ := strconv.ParseFloat(model.Endpoint.Pricing.Completion, 64)
+		image, _ := strconv.ParseFloat(model.Endpoint.Pricing.Image, 64)
 
 		m := &Model{
-			ID:          model.ID,
-			Created:     model.Created,
+			ID:          model.Slug,
+			Created:     model.CreatedAt.Unix(),
 			Name:        name,
 			Description: model.Description,
 
@@ -129,7 +123,7 @@ func LoadModels(initial bool) error {
 		}
 
 		newList = append(newList, m)
-		newMap[model.ID] = m
+		newMap[m.ID] = m
 	}
 
 	log.Printf("Loaded %d models\n", len(newList))
@@ -144,8 +138,8 @@ func LoadModels(initial bool) error {
 	return nil
 }
 
-func GetModelTags(model openrouter.Model, m *Model) {
-	for _, parameter := range model.SupportedParameters {
+func GetModelTags(model FrontendModel, m *Model) {
+	for _, parameter := range model.Endpoint.SupportedParameters {
 		switch parameter {
 		case "reasoning":
 			m.Reasoning = true
@@ -162,7 +156,7 @@ func GetModelTags(model openrouter.Model, m *Model) {
 		}
 	}
 
-	for _, modality := range model.Architecture.InputModalities {
+	for _, modality := range model.InputModalities {
 		if modality == "image" {
 			m.Vision = true
 
@@ -170,7 +164,7 @@ func GetModelTags(model openrouter.Model, m *Model) {
 		}
 	}
 
-	for _, modality := range model.Architecture.OutputModalities {
+	for _, modality := range model.OutputModalities {
 		if modality == "image" {
 			m.Images = true
 
@@ -178,14 +172,14 @@ func GetModelTags(model openrouter.Model, m *Model) {
 		}
 	}
 
-	if model.Pricing.Prompt == "0" && model.Pricing.Completion == "0" {
+	if model.Endpoint.IsFree {
 		m.Tags = append(m.Tags, "free")
 	}
 
 	sort.Strings(m.Tags)
 }
 
-func HasModelListChanged(list []openrouter.Model) bool {
+func HasModelListChanged(list []FrontendModel) bool {
 	modelMx.RLock()
 	defer modelMx.RUnlock()
 
@@ -194,7 +188,7 @@ func HasModelListChanged(list []openrouter.Model) bool {
 	}
 
 	for i, model := range list {
-		if ModelList[i].ID != model.ID {
+		if ModelList[i].ID != model.Slug {
 			return true
 		}
 	}
