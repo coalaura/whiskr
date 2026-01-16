@@ -42,6 +42,7 @@ func main() {
 				"auth":   env.Authentication.Enabled,
 				"search": env.Tokens.Exa != "",
 				"motion": env.UI.ReducedMotion,
+				"images": env.Models.ImageGeneration,
 			},
 			"models":  ModelList,
 			"prompts": Prompts,

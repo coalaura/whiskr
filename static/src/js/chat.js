@@ -1877,14 +1877,18 @@ async function loadData() {
 		el.dataset.tags = tags.join(",");
 
 		if (tags.includes("image")) {
-			el.dataset.tabs = "images";
+			if (data.config.images) {
+				el.dataset.tabs = "images";
+			} else {
+				el.dataset.disabled = "yes";
+			}
 		}
 
 		models[model.id] = model;
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, true, ["images"], ["image"]).switchTab(modelTab);
+	dropdown($model, 6, true, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({

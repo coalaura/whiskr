@@ -148,7 +148,7 @@
 	background: var(--c-surface0-dark);
 }
 
-.dropdown .opt:hover {
+.dropdown .opt:not(.disabled):hover {
 	background: var(--c-base);
 }
 
@@ -173,6 +173,16 @@
 .dropdown .opt.filtered {
 	display: none;
 	font-weight: 500;
+}
+
+.dropdown .opt.disabled::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	background: var(--c-surface0);
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .dropdown .opt .new {

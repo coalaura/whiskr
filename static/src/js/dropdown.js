@@ -41,6 +41,7 @@ class Dropdown {
 			const classes = option.dataset.classes?.trim(),
 				tags = option.dataset.tags?.trim(),
 				isFavorite = !!option.dataset.favorite,
+				isDisabled = !!option.dataset.disabled,
 				isNew = !!option.dataset.new,
 				tabData = option.dataset.tabs?.trim();
 
@@ -62,6 +63,7 @@ class Dropdown {
 				classes: classes ? classes.split(",") : [],
 				tags: tags ? tags.split(",") : [],
 				favorite: isFavorite,
+				disabled: isDisabled,
 				new: isNew,
 				tabs: optionTabs,
 
@@ -218,7 +220,15 @@ class Dropdown {
 
 			_opt.classList.add(...option.classes);
 
+			if (option.disabled) {
+				_opt.classList.add("disabled");
+			}
+
 			_opt.addEventListener("click", () => {
+				if (option.disabled) {
+					return;
+				}
+
 				this.#_select.value = option.value;
 
 				this.#_dropdown.classList.remove("open");
@@ -310,6 +320,10 @@ class Dropdown {
 				tabMeta.container.appendChild(clone);
 
 				clone.addEventListener("click", () => {
+					if (option.disabled) {
+						return;
+					}
+
 					this.#_select.value = option.value;
 
 					this.#_dropdown.classList.remove("open");
@@ -527,6 +541,10 @@ class Dropdown {
 		this.#favorites.container.appendChild(option.favoriteClone);
 
 		option.favoriteClone.addEventListener("click", () => {
+			if (option.disabled) {
+				return;
+			}
+
 			this.#_select.value = option.value;
 
 			this.#_dropdown.classList.remove("open");
