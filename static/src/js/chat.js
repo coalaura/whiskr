@@ -25,6 +25,7 @@ import {
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
 import { connectDB, loadLocal, loadValue, storeLocal, storeValue } from "./storage.js";
+import { resetGenerationState, setGenerationState } from "./favicon.js";
 
 const ChunkType = {
 	0: "start",
@@ -125,7 +126,6 @@ let searchAvailable = false,
 	scrollResize = false,
 	isUploading = false,
 	isDumping = false,
-	isGenerating = false,
 	totalCost = 0;
 
 function updateTotalCost() {
@@ -141,7 +141,7 @@ function updateTitle() {
 
 	$titleText.textContent = title;
 
-	document.title = `whiskr${isGenerating ? "*" : ""}${chatTitle ? ` - ${chatTitle}` : ""}`;
+	document.title = `whiskr ${chatTitle ? `- ${chatTitle}` : ""}`;
 
 	storeValue("title", chatTitle);
 }
@@ -1117,6 +1117,18 @@ class Message {
 		this.#save();
 	}
 
+	isEmpty() {
+		if (this.#text.trim().length) {
+			return false;
+		}
+
+		if (this.#images.length) {
+			return false;
+		}
+
+		return !this.#tool;
+	}
+
 	setError(error) {
 		if (typeof error === "object") {
 			if ("Message" in error) {
@@ -1396,17 +1408,13 @@ function generate(cancel = false, noPush = false) {
 		setFollowTail(true);
 	}
 
-	isGenerating = true;
-
-	updateTitle();
-
 	const body = buildRequest(noPush);
 
 	const controller = new AbortController();
 
 	$chat.classList.add("completing");
 
-	let message, generationID, stopTimeout, timeInterval, started, receivedToken;
+	let message, generationID, stopTimeout, timeInterval, started, receivedToken, hasContent;
 
 	function startLoadingTimeout() {
 		stopTimeout?.();
@@ -1429,7 +1437,9 @@ function generate(cancel = false, noPush = false) {
 		};
 	}
 
-	function finish() {
+	let aborted;
+
+	function finish(error = false) {
 		if (!message) {
 			return;
 		}
@@ -1447,7 +1457,14 @@ function generate(cancel = false, noPush = false) {
 
 		msg.loadGenerationData(genID);
 
+		if (error || !hasContent) {
+			setGenerationState("error");
+		} else {
+			resetGenerationState();
+		}
+
 		receivedToken = false;
+		hasContent = false;
 
 		message = null;
 		generationID = null;
@@ -1455,6 +1472,9 @@ function generate(cancel = false, noPush = false) {
 
 	function start() {
 		started = Date.now();
+		hasContent = false;
+
+		setGenerationState("waiting");
 
 		message = new Message({
 			role: "assistant",
@@ -1481,8 +1501,6 @@ function generate(cancel = false, noPush = false) {
 		}, 100);
 	}
 
-	let aborted;
-
 	abortCallback = () => {
 		abortCallback = null;
 		aborted = true;
@@ -1490,10 +1508,6 @@ function generate(cancel = false, noPush = false) {
 		controller.abort();
 
 		stopTimeout?.();
-
-		isGenerating = false;
-
-		updateTitle();
 
 		finish();
 
@@ -1545,8 +1559,12 @@ function generate(cancel = false, noPush = false) {
 				case "tool":
 					receivedToken = true;
 
+					setGenerationState("completing");
+
 					message.setState("tooling");
 					message.setTool(chunk.data);
+
+					hasContent = !message.isEmpty();
 
 					if (chunk.data?.done) {
 						totalCost += chunk.data.cost || 0;
@@ -1560,11 +1578,19 @@ function generate(cancel = false, noPush = false) {
 				case "image":
 					receivedToken = true;
 
+					setGenerationState("completing");
+
 					message.addImage(chunk.data);
+
+					hasContent = !message.isEmpty();
 
 					break;
 				case "reason":
 					receivedToken = true;
+
+					if (!hasContent) {
+						setGenerationState("reasoning");
+					}
 
 					message.setState("reasoning");
 					message.addReasoning(chunk.data);
@@ -1579,11 +1605,17 @@ function generate(cancel = false, noPush = false) {
 				case "text":
 					receivedToken = true;
 
+					setGenerationState("completing");
+
 					message.setState("receiving");
 					message.addText(chunk.data);
 
+					hasContent = !message.isEmpty();
+
 					break;
 				case "error":
+					setGenerationState("error");
+
 					message.setError(chunk.data);
 
 					break;
@@ -2546,7 +2578,7 @@ addEventListener("mousemove", event => {
 	}
 
 	const total = window.innerHeight,
-		height = clamp(window.innerHeight - event.clientY + (attachments.length ? 50 : 0), 140, total - 240);
+		height = clamp(window.innerHeight - event.clientY + (attachments.length ? 50 : 0), 200, total - 240);
 
 	$chat.style.height = `${height}px`;
 
