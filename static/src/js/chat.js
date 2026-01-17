@@ -135,13 +135,13 @@ function updateTotalCost() {
 }
 
 function updateTitle() {
-	const title = chatTitle || (messages.length ? "New Chat" : "");
+	const title = chatTitle || "New Chat";
 
 	$title.classList.toggle("hidden", !messages.length);
 
 	$titleText.textContent = title;
 
-	document.title = `whiskr ${chatTitle ? `- ${chatTitle}` : ""}`;
+	document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
 
 	storeValue("title", chatTitle);
 }
@@ -1213,6 +1213,20 @@ class Message {
 		this.#save();
 
 		$messages.dispatchEvent(new Event("scroll"));
+
+		if (messages.length === 0) {
+			chatTitle = false;
+
+			updateTitle();
+		} else {
+			const userMessages = messages.filter(msg => msg.isUser());
+
+			if (userMessages.length === 0) {
+				chatTitle = false;
+
+				updateTitle();
+			}
+		}
 	}
 }
 
@@ -1419,6 +1433,12 @@ function generate(cancel = false, noPush = false) {
 	const controller = new AbortController();
 
 	$chat.classList.add("completing");
+
+	const contentMessages = messages.filter(msg => msg.getData().role !== "system");
+
+	if (contentMessages.length >= 1 && !chatTitle) {
+		refreshTitle();
+	}
 
 	let message, generationID, stopTimeout, timeInterval, started, receivedToken, hasContent;
 
