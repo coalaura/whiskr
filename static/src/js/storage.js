@@ -149,10 +149,18 @@ export async function connectDB() {
 }
 
 export function storeValue(key, value = false) {
+	if (!db) {
+		return;
+	}
+
 	db.store(key, value);
 }
 
 export function loadValue(key, fallback = false) {
+	if (!db) {
+		return fallback;
+	}
+
 	return db.load(key, fallback);
 }
 

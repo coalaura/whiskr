@@ -114,7 +114,7 @@ class Dropdown {
 				inline: "nearest",
 			});
 
-			this.#_search.focus();
+			this.#_search?.focus();
 		});
 
 		this.#_dropdown.appendChild(this.#_selected);
