@@ -2310,13 +2310,13 @@ $providerSorting.addEventListener("change", () => {
 $imageResolution.addEventListener("change", () => {
 	const resolution = $imageResolution.value;
 
-	storeValue("resolution", resolution);
+	storeValue("image-resolution", resolution);
 });
 
 $imageAspect.addEventListener("change", () => {
 	const aspectRatio = $imageAspect.value;
 
-	storeValue("aspect-ratio", aspectRatio);
+	storeValue("image-aspect", aspectRatio);
 });
 
 $reasoningEffort.addEventListener("change", () => {
@@ -2434,8 +2434,8 @@ $import.addEventListener("click", async () => {
 	storeValue("prompt", data.prompt);
 	storeValue("temperature", data.temperature);
 	storeValue("iterations", data.iterations);
-	storeValue("resolution", data.image?.resolution);
-	storeValue("aspect-ratio", data.image?.aspect);
+	storeValue("image-resolution", data.image?.resolution);
+	storeValue("image-aspect", data.image?.aspect);
 	storeValue("reasoning-effort", data.reasoning?.effort);
 	storeValue("reasoning-tokens", data.reasoning?.tokens);
 	storeValue("json", data.json);
