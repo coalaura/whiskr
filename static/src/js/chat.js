@@ -170,6 +170,12 @@ function scroll(force = false, instant = false) {
 		return;
 	}
 
+	if (!document.hasFocus()) {
+		$messages.scrollTop = $messages.scrollHeight;
+
+		return;
+	}
+
 	awaitingScroll = true;
 
 	requestAnimationFrame(() => {
