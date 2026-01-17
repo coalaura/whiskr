@@ -10,9 +10,12 @@ const states = {
 
 let currentState = "idle",
 	originalFavicon,
+	faviconLink,
 	canvas,
 	ctx,
-	faviconLink;
+	sourceCanvas,
+	sourceCtx,
+	isReady = false;
 
 function initFavicon() {
 	faviconLink = document.querySelector(`link[rel="icon"]`);
@@ -26,6 +29,36 @@ function initFavicon() {
 
 	ctx = canvas.getContext("2d");
 
+	sourceCanvas = make("canvas");
+
+	sourceCanvas.width = 32;
+	sourceCanvas.height = 32;
+
+	sourceCtx = sourceCanvas.getContext("2d");
+
+	const img = new Image();
+
+	img.crossOrigin = "anonymous";
+
+	img.onload = () => {
+		sourceCtx.drawImage(img, 0, 0, 32, 32);
+		isReady = true;
+
+		if (currentState !== "idle") {
+			drawFavicon(currentState);
+		}
+	};
+
+	img.onerror = () => {
+		isReady = true;
+
+		if (currentState !== "idle") {
+			drawFavicon(currentState);
+		}
+	};
+
+	img.src = originalFavicon;
+
 	addEventListener("focus", () => {
 		if (currentState === "error") {
 			resetGenerationState();
@@ -37,37 +70,33 @@ function drawFavicon(state) {
 	const color = states[state];
 
 	if (!color) {
-		if (originalFavicon) {
-			faviconLink.href = originalFavicon;
-		}
+		faviconLink.href = originalFavicon;
 
 		return;
 	}
 
-	const img = new Image();
+	if (!isReady) {
+		return;
+	}
 
-	img.crossOrigin = "anonymous";
+	ctx.clearRect(0, 0, 32, 32);
 
-	img.onload = () => {
-		ctx.clearRect(0, 0, 32, 32);
-		ctx.drawImage(img, 0, 0, 32, 32);
+	const imageData = sourceCtx.getImageData(0, 0, 32, 32),
+		hasPixels = imageData.data.some(channel => channel !== 0);
+
+	if (hasPixels) {
+		ctx.drawImage(sourceCanvas, 0, 0);
 
 		ctx.beginPath();
 		ctx.arc(24, 24, 7, 0, Math.PI * 2);
-		ctx.fillStyle = "#1e2030"; // Dark background
+		ctx.fillStyle = "#1e2030";
 		ctx.fill();
 
 		ctx.beginPath();
 		ctx.arc(24, 24, 5, 0, Math.PI * 2);
 		ctx.fillStyle = color;
 		ctx.fill();
-
-		faviconLink.href = canvas.toDataURL("image/png");
-	};
-
-	img.onerror = () => {
-		ctx.clearRect(0, 0, 32, 32);
-
+	} else {
 		ctx.beginPath();
 		ctx.arc(16, 16, 14, 0, Math.PI * 2);
 		ctx.fillStyle = "#1e2030";
@@ -77,11 +106,9 @@ function drawFavicon(state) {
 		ctx.arc(16, 16, 10, 0, Math.PI * 2);
 		ctx.fillStyle = color;
 		ctx.fill();
+	}
 
-		faviconLink.href = canvas.toDataURL("image/png");
-	};
-
-	img.src = originalFavicon || "";
+	faviconLink.href = canvas.toDataURL("image/png");
 }
 
 export function setGenerationState(newState) {
