@@ -12,13 +12,9 @@ class Database {
 	#writes = new Map();
 	#cache = new Map();
 
-	static async new() {
-		const db = new Database();
-
-		await db.#connect();
-		await db.#load();
-
-		return db;
+	async init() {
+		await this.#connect();
+		await this.#load();
 	}
 
 	#connect() {
@@ -145,7 +141,11 @@ class Database {
 let db;
 
 export async function connectDB() {
-	db = await Database.new();
+	const newDB = new Database();
+
+	await newDB.init();
+
+	db = newDB;
 }
 
 export function storeValue(key, value = false) {
