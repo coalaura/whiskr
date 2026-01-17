@@ -452,28 +452,25 @@ body:not(.loading) #loading {
 	width: 420px;
 }
 
-.message.busy .images .i-0::before,
+.message.busy .images .i-0::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	backdrop-filter: blur(4px);
+	z-index: 5;
+}
+
 .message.busy .images .i-0::after {
 	content: "";
 	position: absolute;
 	top: 0;
 	left: 0;
-	right: 0;
-	bottom: 0;
-}
-
-.message.busy .images .i-0::before {
-	backdrop-filter: blur(8px);
-	background: rgba(255, 255, 255, 0.15);
-}
-
-.message.busy .images .i-0::after {
-	background: url("./icons/spinner.svg");
-	background-size: 54px;
-	background-repeat: no-repeat;
-	background-position: center;
-	animation: rotating 1.2s linear infinite;
-	filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.2));
+	width: 100%;
+	height: 100%;
+	z-index: 10;
+	background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.1) 60%, rgba(0, 0, 0, 0) 100%);
+	transform: skewX(-20deg);
+	animation: shimmer 1.5s infinite;
 }
 
 .tool .result pre,
@@ -515,7 +512,7 @@ body:not(.loading) #loading {
 	overflow: hidden;
 }
 
-.message.collapsed .body > * {
+.message.collapsed .body>* {
 	opacity: 0;
 }
 
@@ -1318,7 +1315,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden) + #bottom {
+#top:not(.hidden)+#bottom {
 	right: 40px;
 }
 
@@ -1580,6 +1577,7 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
+
 	0%,
 	100% {
 		left: 0px;
@@ -1592,6 +1590,7 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
+
 	0%,
 	75%,
 	100% {
@@ -1637,6 +1636,16 @@ label[for="reasoning-tokens"] {
 	}
 }
 
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	#floaters {
 		display: none;
@@ -1644,6 +1653,7 @@ label[for="reasoning-tokens"] {
 }
 
 @media (max-width: 745px) {
+
 	.message,
 	.message.assistant {
 		width: 100%;
