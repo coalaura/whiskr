@@ -433,8 +433,12 @@ body:not(.loading) #loading {
 	border: 2px solid var(--c-red);
 }
 
-.images:has(.i-1) .i-0 {
-	display: none;
+.images:has(.i-1 .loaded) .i-0 {
+    display: none;
+}
+
+.images .i-1:not(.loaded) {
+    display: none;
 }
 
 .images .image {

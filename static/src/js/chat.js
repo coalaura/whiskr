@@ -740,6 +740,10 @@ class Message {
 
 				const _image = make("img");
 
+				_image.addEventListener("load", () => {
+					_image.classList.add("loaded");
+				});
+
 				_image.src = url;
 
 				_link.appendChild(_image);
