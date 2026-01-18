@@ -742,6 +742,10 @@ class Message {
 
 				_image.addEventListener("load", () => {
 					_image.classList.add("loaded");
+
+					noScroll || scroll();
+
+					updateScrollButton();
 				});
 
 				_image.src = url;

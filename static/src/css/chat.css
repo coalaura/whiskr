@@ -437,7 +437,7 @@ body:not(.loading) #loading {
     display: none;
 }
 
-.images .i-1:not(.loaded) {
+.images .i-1:not(:has(.loaded)) {
     display: none;
 }
 
