@@ -65,8 +65,16 @@ func HandleView(w http.ResponseWriter, r *http.Request) {
 
 	filename := fmt.Sprintf("%s%s.%s", hash[:4], hash[len(hash)-4:], ext)
 
+	var disposition string
+
+	if r.URL.Query().Has("download") {
+		disposition = "attachment"
+	} else {
+		disposition = "inline"
+	}
+
 	w.Header().Set("Content-Type", mime)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=\"%s\"", disposition, filename))
 	w.Header().Set("Cache-Control", "private, max-age=0, no-store")
 
 	w.WriteHeader(http.StatusOK)
