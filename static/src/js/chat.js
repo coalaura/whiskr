@@ -732,7 +732,7 @@ class Message {
 
 				const _link = make("a", "image", `i-${x}`);
 
-				_link.download = `image-${x + 1}`;
+				_link.download = `image-${Math.random().toString(36).slice(2, 8)}`;
 				_link.target = "_blank";
 				_link.href = url;
 
