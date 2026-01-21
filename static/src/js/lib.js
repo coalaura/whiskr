@@ -24,6 +24,10 @@ export function make(tag, ...classes) {
 	return el;
 }
 
+export function bHeight(el) {
+	return el.getBoundingClientRect().height;
+}
+
 export function fillSelect($select, options, callback) {
 	$select.innerHTML = "";
 

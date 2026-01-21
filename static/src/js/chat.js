@@ -5,8 +5,8 @@ import { unpack } from "msgpackr";
 
 import { dropdown } from "./dropdown.js";
 import {
+	bHeight,
 	clamp,
-	dataBlob,
 	detectPlatform,
 	download,
 	fillSelect,
@@ -26,6 +26,7 @@ import {
 import { render, renderInline, stripMarkdown } from "./markdown.js";
 import { connectDB, loadLocal, loadValue, storeLocal, storeValue } from "./storage.js";
 import { resetGenerationState, setGenerationState } from "./favicon.js";
+import { getDataUrlAspectRatio } from "./binary.js";
 
 const ChunkType = {
 	0: "start",
@@ -179,8 +180,6 @@ function scroll(force = false, instant = false) {
 	awaitingScroll = true;
 
 	requestAnimationFrame(() => {
-		awaitingScroll = false;
-
 		if (!followTail && !force) {
 			return;
 		}
@@ -189,6 +188,8 @@ function scroll(force = false, instant = false) {
 			top: $messages.scrollHeight,
 			behavior: instant ? "instant" : "smooth",
 		});
+
+		awaitingScroll = false;
 	});
 }
 
@@ -638,7 +639,7 @@ class Message {
 			img.classList.add("image");
 
 			img.addEventListener("load", () => {
-				scroll();
+				$messages.scrollTop += bHeight(img);
 			});
 		});
 	}
@@ -669,17 +670,19 @@ class Message {
 		});
 	}
 
-	#patch(name, element, md, after = false) {
+	#patch(name, element, md, noScroll = false, after = null) {
 		if (!element.firstChild) {
 			const { html, files } = render(md);
 
 			element.innerHTML = html;
 
+			after?.();
+
+			noScroll || scroll();
+
 			this.#inline = files;
 
 			this.#handleImages(element);
-
-			after?.();
 
 			return;
 		}
@@ -703,11 +706,13 @@ class Message {
 
 			this.#morph(element, this.#_diff);
 
+			after?.();
+
+			getDataUrlAspectRatio
+
 			this.#_diff.innerHTML = "";
 
 			this.#handleImages(element);
-
-			after?.();
 		});
 	}
 
@@ -726,38 +731,32 @@ class Message {
 					continue;
 				}
 
-				const image = this.#images[x],
-					blob = dataBlob(image),
-					url = blob ? URL.createObjectURL(blob) : `#`;
+				const image = this.#images[x];
 
 				const _link = make("a", "image", `i-${x}`);
 
-				_link.download = `image-${Math.random().toString(36).slice(2, 8)}`;
+				showFile(_link, image);
+
+				_link.download = "";
 				_link.target = "_blank";
-				_link.href = url;
+				_link.href = image;
 
 				this.#_images.appendChild(_link);
 
 				const _image = make("img");
 
+				_image.style.aspectRatio = getDataUrlAspectRatio(image);
+
 				_image.addEventListener("load", () => {
 					_image.classList.add("loaded");
-
-					noScroll || scroll();
-
-					updateScrollButton();
 				});
 
-				_image.src = url;
+				_image.src = image;
 
 				_link.appendChild(_image);
 			}
 
 			this.#_message.classList.toggle("has-images", !!this.#images.length);
-
-			noScroll || scroll();
-
-			updateScrollButton();
 		}
 
 		if (!only || only === "tool") {
@@ -790,10 +789,6 @@ class Message {
 			this.#_message.classList.toggle("has-tool", !!this.#tool);
 
 			this.#updateToolHeight();
-
-			noScroll || scroll();
-
-			updateScrollButton();
 		}
 
 		if (!only || only === "statistics") {
@@ -847,6 +842,10 @@ class Message {
 		}
 
 		if (this.#error) {
+			noScroll || scroll();
+
+			updateScrollButton();
+
 			return;
 		}
 
@@ -859,12 +858,8 @@ class Message {
 				});
 			}
 
-			this.#patch("reasoning", this.#_reasoning, reasoning, () => {
+			this.#patch("reasoning", this.#_reasoning, reasoning, noScroll, () => {
 				this.#updateReasoningHeight();
-
-				noScroll || scroll();
-
-				updateScrollButton();
 			});
 
 			this.#_message.classList.toggle("has-reasoning", !!reasoning);
@@ -877,14 +872,14 @@ class Message {
 				text = `\`\`\`json\n${text}\n\`\`\``;
 			}
 
-			this.#patch("text", this.#_text, text, () => {
-				noScroll || scroll();
-
-				updateScrollButton();
-			});
+			this.#patch("text", this.#_text, text, noScroll);
 
 			this.#_message.classList.toggle("has-text", !!this.#text);
 		}
+
+		noScroll || scroll();
+
+		updateScrollButton();
 	}
 
 	#save() {
@@ -1658,6 +1653,47 @@ function generate(cancel = false, noPush = false) {
 			startLoadingTimeout();
 		}
 	);
+}
+
+export function showFile(element, base64url) {
+	element.href ||= "#";
+	element.target = "_blank";
+
+	element.addEventListener("click", event => {
+		event.preventDefault();
+
+		const form = document.createElement("form");
+
+		form.method = "POST";
+		form.action = "/-/view";
+		form.target = "_blank";
+		form.enctype = "multipart/form-data";
+
+		form.addEventListener("formdata", evn => {
+			const comma = base64url.indexOf(","),
+				meta = base64url.slice(5, comma),
+				mime = meta.slice(0, meta.indexOf(";")),
+				b64 = base64url.slice(comma + 1);
+
+			const bin = atob(b64),
+				bytes = new Uint8Array(bin.length);
+
+			for (let i = 0; i < bin.length; i++) {
+				bytes[i] = bin.charCodeAt(i);
+			}
+
+			const blob = new Blob([bytes], {
+				type: mime,
+			});
+
+			evn.formData.append("file", blob, "image");
+		});
+
+		document.body.appendChild(form);
+
+		form.requestSubmit();
+		form.remove();
+	});
 }
 
 let titleController;
@@ -2454,21 +2490,23 @@ $import.addEventListener("click", async () => {
 
 	clearMessages();
 
-	storeValue("title", data.title);
-	storeValue("message", data.message);
-	storeValue("attachments", data.attachments);
-	storeValue("role", data.role);
-	storeValue("model", data.model);
-	storeValue("prompt", data.prompt);
-	storeValue("temperature", data.temperature);
-	storeValue("iterations", data.iterations);
-	storeValue("image-resolution", data.image?.resolution);
-	storeValue("image-aspect", data.image?.aspect);
-	storeValue("reasoning-effort", data.reasoning?.effort);
-	storeValue("reasoning-tokens", data.reasoning?.tokens);
-	storeValue("json", data.json);
-	storeValue("search", data.search);
-	storeValue("messages", data.messages);
+	await Promise.all([
+		storeValue("title", data.title),
+		storeValue("message", data.message),
+		storeValue("attachments", data.attachments),
+		storeValue("role", data.role),
+		storeValue("model", data.model),
+		storeValue("prompt", data.prompt),
+		storeValue("temperature", data.temperature),
+		storeValue("iterations", data.iterations),
+		storeValue("image-resolution", data.image?.resolution),
+		storeValue("image-aspect", data.image?.aspect),
+		storeValue("reasoning-effort", data.reasoning?.effort),
+		storeValue("reasoning-tokens", data.reasoning?.tokens),
+		storeValue("json", data.json),
+		storeValue("search", data.search),
+		storeValue("messages", data.messages),
+	]);
 
 	restore();
 });

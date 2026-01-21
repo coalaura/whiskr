@@ -71,10 +71,10 @@ class Database {
 		});
 	}
 
-	#write(key, retry) {
+	async #write(key, retry) {
 		if (this.#writes.has(key)) {
 			if (retry) {
-				this.#schedule(key);
+				await this.#schedule(key);
 			}
 
 			return;
@@ -94,7 +94,7 @@ class Database {
 				store.put(value, key);
 			}
 
-			return new Promise((resolve, reject) => {
+			await new Promise((resolve, reject) => {
 				transaction.oncomplete = () => resolve();
 				transaction.onerror = () => reject(transaction.error);
 			});
@@ -105,28 +105,32 @@ class Database {
 		}
 	}
 
-	#schedule(key) {
-		if (this.#scheduled.has(key)) {
-			clearTimeout(this.#scheduled.get(key));
-		}
-
-		const timeout = setTimeout(() => {
-			this.#scheduled.delete(key);
-
-			this.#write(key, true);
-		}, 500);
-
-		this.#scheduled.set(key, timeout);
+	#wait(ms) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 
-	store(key, value = false) {
+	async #schedule(key) {
+		if (this.#scheduled.has(key)) {
+			return;
+		}
+
+		this.#scheduled.set(key, true);
+
+		await this.#wait(500);
+
+		this.#scheduled.delete(key);
+
+		await this.#write(key, true);
+	}
+
+	async store(key, value = false) {
 		if (isNull(value)) {
 			this.#cache.delete(key);
 		} else {
 			this.#cache.set(key, value);
 		}
 
-		this.#schedule(key);
+		await this.#schedule(key);
 	}
 
 	load(key, fallback = false) {
