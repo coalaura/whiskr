@@ -181,6 +181,8 @@ export async function upgradeLinkToWorkerUrl(element, base64url) {
 		const hash = await sha256Hex(bytes),
 			filename = `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
 
+		element.download = filename;
+
 		const stored = await swPut(filename, mime, bytes);
 
 		if (!stored) {
