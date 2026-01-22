@@ -73,41 +73,128 @@ export function formatTimestamp(ts) {
 	return new Date(ts * 1000).toLocaleDateString();
 }
 
-const dataRgx = /data:(.*?)(;|$)/;
-
-export function dataBlob(dataUrl) {
-	const [header, data] = dataUrl.split(",");
-
-	if (!header || !data) {
-		return null;
+function mimeToExt(mime) {
+	switch (mime) {
+		case "image/png":
+			return "png";
+		case "image/jpeg":
+			return "jpg";
+		case "image/webp":
+			return "webp";
 	}
 
-	const mime = header.match(dataRgx)[1];
+	return null;
+}
 
-	let blob;
+function dataUrlToBytes(dataUrl) {
+	const comma = dataUrl.indexOf(","),
+		meta = dataUrl.slice(5, comma),
+		mime = meta.slice(0, meta.indexOf(";")),
+		b64 = dataUrl.slice(comma + 1);
 
-	if (header.includes(";base64")) {
-		const bytes = atob(data),
-			numbers = new Array(bytes.length);
+	const bin = atob(b64),
+		bytes = new Uint8Array(bin.length);
 
-		for (let i = 0; i < bytes.length; i++) {
-			numbers[i] = bytes.charCodeAt(i);
+	for (let i = 0; i < bin.length; i++) {
+		bytes[i] = bin.charCodeAt(i);
+	}
+
+	return {
+		mime: mime,
+		bytes: bytes,
+	};
+}
+
+async function sha256Hex(bytes) {
+	const digest = await crypto.subtle.digest("SHA-256", bytes),
+		hashBytes = new Uint8Array(digest);
+
+	let hex = "";
+
+	for (const bt of hashBytes) {
+		hex += bt.toString(16).padStart(2, "0");
+	}
+
+	return hex;
+}
+
+export async function swPut(filename, mime, bytes) {
+	if (!navigator.serviceWorker.controller) {
+		await new Promise(resolve => setTimeout(resolve, 100));
+	}
+
+	const controller = navigator.serviceWorker.controller;
+
+	if (!controller) {
+		console.warn("swPut: no controller");
+		return false;
+	}
+
+	const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+
+	const channel = new MessageChannel();
+
+	const ack = new Promise(resolve => {
+		const timeout = setTimeout(() => {
+			resolve({ ok: false, error: "timeout" });
+		}, 1000);
+
+		channel.port1.onmessage = event => {
+			clearTimeout(timeout);
+			resolve(event.data);
+		};
+	});
+
+	controller.postMessage(
+		{
+			type: "whiskr:image-put",
+			key: filename,
+			mime: mime,
+			bytes: ab,
+		},
+		[ab, channel.port2]
+	);
+
+	try {
+		const result = await ack;
+
+		return !!result?.ok;
+	} catch (err) {
+		console.error("swPut error:", err);
+		return false;
+	}
+}
+
+export async function upgradeLinkToWorkerUrl(element, base64url) {
+	element.href = base64url;
+
+	await new Promise(resolve => setTimeout(resolve, 0));
+
+	try {
+		const { mime, bytes } = dataUrlToBytes(base64url),
+			ext = mimeToExt(mime);
+
+		if (!ext) {
+			return;
 		}
 
-		const byteArray = new Uint8Array(numbers);
+		const hash = await sha256Hex(bytes),
+			filename = `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
 
-		blob = new Blob([byteArray], {
-			type: mime,
-		});
-	} else {
-		const text = decodeURIComponent(data);
+		const stored = await swPut(filename, mime, bytes);
 
-		blob = new Blob([text], {
-			type: mime,
-		});
-	}
+		if (!stored) {
+			return;
+		}
 
-	return blob;
+		if (!element.isConnected) {
+			return;
+		}
+
+		const baseUrl = `/-/local/${encodeURIComponent(filename)}`;
+
+		element.href = baseUrl;
+	} catch {}
 }
 
 const trailingZeroRgx = /\.?0+$/m;

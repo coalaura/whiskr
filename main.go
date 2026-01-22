@@ -61,8 +61,6 @@ func main() {
 		gr.Post("/-/chat", HandleChat)
 		gr.Post("/-/dump", HandleDump)
 
-		gr.Post("/-/view", HandleView)
-
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 		gr.Post("/-/preview", HandlePreview)
 	})

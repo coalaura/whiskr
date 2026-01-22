@@ -21,6 +21,7 @@ import {
 	schedule,
 	selectFile,
 	uid,
+	upgradeLinkToWorkerUrl,
 	wrapJSON,
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
@@ -735,7 +736,7 @@ class Message {
 
 				const _link = make("a", "image", `i-${x}`);
 
-				showFile(_link, image, true);
+				upgradeLinkToWorkerUrl(_link, image);
 
 				_link.target = "_blank";
 				_link.href = image;
@@ -1232,6 +1233,49 @@ class Message {
 	}
 }
 
+async function initServiceWorker() {
+	if (!("serviceWorker" in navigator)) {
+		return false;
+	}
+
+	try {
+		const reg = await navigator.serviceWorker.register("/sw.js", {
+			scope: "/",
+		});
+
+		await navigator.serviceWorker.ready;
+
+		if (!navigator.serviceWorker.controller && reg.active) {
+			reg.active.postMessage({
+				type: "whiskr:ping",
+			});
+		}
+
+		if (!navigator.serviceWorker.controller) {
+			await new Promise(resolve => {
+				const timeout = setTimeout(resolve, 1000);
+
+				navigator.serviceWorker.addEventListener(
+					"controllerchange",
+					() => {
+						clearTimeout(timeout);
+						resolve();
+					},
+					{
+						once: true,
+					}
+				);
+			});
+		}
+
+		return !!navigator.serviceWorker.controller;
+	} catch (err) {
+		console.warn("SW init failed:", err);
+
+		return false;
+	}
+}
+
 async function json(url) {
 	try {
 		const response = await fetch(url);
@@ -1654,63 +1698,6 @@ function generate(cancel = false, noPush = false) {
 	);
 }
 
-function sendShowFile(base64url, asDownload = false) {
-	const form = document.createElement("form");
-
-	form.method = "POST";
-	form.action = `/-/view${asDownload ? "?download" : ""}`;
-	form.target = "_blank";
-	form.enctype = "multipart/form-data";
-
-	form.addEventListener("formdata", event => {
-		const comma = base64url.indexOf(","),
-			meta = base64url.slice(5, comma),
-			mime = meta.slice(0, meta.indexOf(";")),
-			b64 = base64url.slice(comma + 1);
-
-		const bin = atob(b64),
-			bytes = new Uint8Array(bin.length);
-
-		for (let i = 0; i < bin.length; i++) {
-			bytes[i] = bin.charCodeAt(i);
-		}
-
-		const blob = new Blob([bytes], {
-			type: mime,
-		});
-
-		event.formData.append("file", blob, "image");
-	});
-
-	document.body.appendChild(form);
-
-	form.requestSubmit();
-	form.remove();
-}
-
-export function showFile(element, base64url) {
-	element.href ||= "#";
-	element.target = "_blank";
-
-	element.addEventListener("auxclick", event => {
-		if (event.button !== 1) {
-			return;
-		}
-
-		event.preventDefault();
-
-		sendShowFile(base64url);
-	});
-
-	element.addEventListener("click", event => {
-		event.preventDefault();
-
-		const isModified = event.ctrlKey || event.shiftKey;
-
-		sendShowFile(base64url, !isModified);
-	});
-}
-
 let titleController;
 
 async function refreshTitle() {
@@ -1858,7 +1845,7 @@ function initFloaters() {
 }
 
 async function loadData() {
-	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
+	const [_sw, _db, data] = await Promise.all([initServiceWorker(), connectDB(), json("/-/data")]);
 
 	if (!data) {
 		notify("Failed to load data.", true);
