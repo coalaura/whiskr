@@ -897,6 +897,10 @@ class Message {
 		storeValue("messages", messages.map(message => message.getData(true)).filter(Boolean));
 	}
 
+	isAssistant() {
+		return this.#role === "assistant";
+	}
+
 	isUser() {
 		return this.#role === "user";
 	}
@@ -1444,9 +1448,10 @@ function generate(cancel = false, noPush = false) {
 
 	$chat.classList.add("completing");
 
-	const contentMessages = messages.filter(msg => msg.getData().role !== "system");
+	const hasUser = !!messages.find(msg => msg.isUser()),
+		hasAssistant = !!messages.find(msg => msg.isAssistant());
 
-	if (contentMessages.length >= 1 && !chatTitle) {
+	if (!chatTitle || (hasUser && !hasAssistant)) {
 		refreshTitle();
 	}
 
