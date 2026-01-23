@@ -52,6 +52,8 @@ body.christmas #page::before {
 #total {
 	right: unset;
 	left: 4px;
+	cursor: pointer;
+	user-select: none;
 }
 
 #total.loading {
