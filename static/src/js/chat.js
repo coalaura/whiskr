@@ -114,6 +114,7 @@ $settingsOpt.classList.toggle("disabled", !settings.enabled);
 const messages = [],
 	models = {},
 	modelList = [],
+	disabledModels = [],
 	promptList = [];
 
 let autoScrolling = false,
@@ -1912,6 +1913,8 @@ async function loadData() {
 				el.dataset.tabs = "images";
 			} else {
 				el.dataset.disabled = "yes";
+
+				disabledModels.push(model.id);
 			}
 		}
 
@@ -1964,7 +1967,7 @@ function restore() {
 	$reasoningEffort.value = loadValue("reasoning-effort", "medium");
 	$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
 
-	if (!modelList.find(model => model.id === $model.value)) {
+	if (!modelList.find(model => model.id === $model.value && !disabledModels.includes(model.id))) {
 		$model.value = modelList.length ? modelList[0].id : "";
 	}
 
