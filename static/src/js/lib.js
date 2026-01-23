@@ -118,85 +118,12 @@ async function sha256Hex(bytes) {
 	return hex;
 }
 
-export async function swPut(filename, mime, bytes) {
-	if (!navigator.serviceWorker.controller) {
-		await new Promise(resolve => setTimeout(resolve, 100));
-	}
+export async function dataUrlFilename(dataUrl) {
+	const { mime, bytes } = dataUrlToBytes(dataUrl),
+		ext = mimeToExt(mime),
+		hash = await sha256Hex(bytes);
 
-	const controller = navigator.serviceWorker.controller;
-
-	if (!controller) {
-		console.warn("swPut: no controller");
-		return false;
-	}
-
-	const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-
-	const channel = new MessageChannel();
-
-	const ack = new Promise(resolve => {
-		const timeout = setTimeout(() => {
-			resolve({ ok: false, error: "timeout" });
-		}, 1000);
-
-		channel.port1.onmessage = event => {
-			clearTimeout(timeout);
-			resolve(event.data);
-		};
-	});
-
-	controller.postMessage(
-		{
-			type: "whiskr:image-put",
-			key: filename,
-			mime: mime,
-			bytes: ab,
-		},
-		[ab, channel.port2]
-	);
-
-	try {
-		const result = await ack;
-
-		return !!result?.ok;
-	} catch (err) {
-		console.error("swPut error:", err);
-		return false;
-	}
-}
-
-export async function upgradeLinkToWorkerUrl(element, base64url) {
-	element.href = base64url;
-
-	await new Promise(resolve => setTimeout(resolve, 0));
-
-	try {
-		const { mime, bytes } = dataUrlToBytes(base64url),
-			ext = mimeToExt(mime);
-
-		if (!ext) {
-			return;
-		}
-
-		const hash = await sha256Hex(bytes),
-			filename = `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
-
-		element.download = filename;
-
-		const stored = await swPut(filename, mime, bytes);
-
-		if (!stored) {
-			return;
-		}
-
-		if (!element.isConnected) {
-			return;
-		}
-
-		const baseUrl = `/-/local/${encodeURIComponent(filename)}`;
-
-		element.href = baseUrl;
-	} catch {}
+	return `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
 }
 
 const trailingZeroRgx = /\.?0+$/m;

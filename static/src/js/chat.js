@@ -7,6 +7,7 @@ import { dropdown } from "./dropdown.js";
 import {
 	bHeight,
 	clamp,
+	dataUrlFilename,
 	detectPlatform,
 	download,
 	fillSelect,
@@ -21,7 +22,6 @@ import {
 	schedule,
 	selectFile,
 	uid,
-	upgradeLinkToWorkerUrl,
 	wrapJSON,
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
@@ -736,10 +736,12 @@ class Message {
 
 				const _link = make("a", "image", `i-${x}`);
 
-				upgradeLinkToWorkerUrl(_link, image);
-
 				_link.target = "_blank";
 				_link.href = image;
+
+				dataUrlFilename(image).then(name => {
+					_link.download = name;
+				});
 
 				this.#_images.appendChild(_link);
 
@@ -1230,49 +1232,6 @@ class Message {
 				updateTitle();
 			}
 		}
-	}
-}
-
-async function initServiceWorker() {
-	if (!("serviceWorker" in navigator)) {
-		return false;
-	}
-
-	try {
-		const reg = await navigator.serviceWorker.register("/sw.js", {
-			scope: "/",
-		});
-
-		await navigator.serviceWorker.ready;
-
-		if (!navigator.serviceWorker.controller && reg.active) {
-			reg.active.postMessage({
-				type: "whiskr:ping",
-			});
-		}
-
-		if (!navigator.serviceWorker.controller) {
-			await new Promise(resolve => {
-				const timeout = setTimeout(resolve, 1000);
-
-				navigator.serviceWorker.addEventListener(
-					"controllerchange",
-					() => {
-						clearTimeout(timeout);
-						resolve();
-					},
-					{
-						once: true,
-					}
-				);
-			});
-		}
-
-		return !!navigator.serviceWorker.controller;
-	} catch (err) {
-		console.warn("SW init failed:", err);
-
-		return false;
 	}
 }
 
@@ -1845,7 +1804,7 @@ function initFloaters() {
 }
 
 async function loadData() {
-	const [_sw, _db, data] = await Promise.all([initServiceWorker(), connectDB(), json("/-/data")]);
+	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
 	if (!data) {
 		notify("Failed to load data.", true);
