@@ -2260,6 +2260,14 @@ $total.addEventListener("click", () => {
 	updateTotalUsage();
 });
 
+$total.addEventListener("auxclick", event => {
+	if (event.button !== 1) {
+		return;
+	}
+
+	refreshUsage();
+});
+
 $titleRefresh.addEventListener("click", () => {
 	refreshTitle();
 });

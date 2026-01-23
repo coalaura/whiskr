@@ -54,6 +54,10 @@ body.christmas #page::before {
 	left: 4px;
 }
 
+#total.loading {
+	filter: blur(3px);
+}
+
 #version a {
 	color: var(--c-subtext);
 	text-decoration: none;
@@ -216,6 +220,7 @@ body:not(.loading) #loading {
 	filter: blur(3px);
 }
 
+#total.loading::before,
 #title.refreshing #title-text::before {
 	content: "";
 	position: absolute;
@@ -227,6 +232,10 @@ body:not(.loading) #loading {
 	background: var(--c-overlay0);
 	opacity: 0.5;
 	border-radius: 6px;
+}
+
+#total.loading::before {
+	width: 16px;
 }
 
 #messages {
