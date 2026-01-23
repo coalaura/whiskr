@@ -129,12 +129,20 @@ let searchAvailable = false,
 	scrollResize = false,
 	isUploading = false,
 	isDumping = false,
-	totalCost = 0;
+	usageType = loadLocal("usage", "monthly"),
+	totalUsage = {};
 
-function updateTotalCost() {
-	storeValue("total-cost", totalCost);
+function updateTotalUsage() {
+	$total.textContent = `${usageType[0].toUpperCase()} / ${formatMoney(totalUsage[usageType] || 0)}`;
 
-	$total.textContent = formatMoney(totalCost);
+	const titles = {
+		total: "Whiskr: All-time usage",
+		monthly: "Whiskr: Usage this month",
+		weekly: "Whiskr: Usage this week",
+		daily: "Whiskr: Usage today",
+	};
+
+	$total.title = titles[usageType] || "Usage";
 }
 
 function updateTitle() {
@@ -1003,10 +1011,6 @@ class Message {
 			}
 
 			this.setStatistics(data);
-
-			totalCost += data.cost;
-
-			updateTotalCost();
 		} catch (err) {
 			console.error(err);
 		}
@@ -1489,6 +1493,8 @@ function generate(cancel = false, noPush = false) {
 
 		msg.loadGenerationData(genID);
 
+		refreshUsage();
+
 		if (error || !hasContent) {
 			setGenerationState("error");
 		} else {
@@ -1693,17 +1699,13 @@ async function refreshTitle() {
 			}),
 			result = await response.json();
 
-		if (result.cost) {
-			totalCost += result.cost;
-
-			updateTotalCost();
-		}
-
 		if (!response.ok || !result?.title) {
 			throw new Error(result?.error || response.statusText);
 		}
 
 		chatTitle = result.title;
+
+		refreshUsage();
 	} catch (err) {
 		if (err.name === "AbortError") {
 			return;
@@ -1804,6 +1806,43 @@ function initFloaters() {
 	}
 }
 
+let usageController;
+
+async function refreshUsage() {
+	usageController?.abort();
+
+	const controller = new AbortController();
+
+	usageController = controller;
+
+	$total.classList.add("loading");
+
+	try {
+		const response = await fetch("/-/usage", {
+				signal: controller.signal,
+			}),
+			data = await response.json();
+
+		if (!data || data.error) {
+			throw new Error(data?.error || response.statusText);
+		}
+
+		totalUsage = data;
+
+		updateTotalUsage();
+	} catch (err) {
+		if (!controller.signal.aborted) {
+			notify(`Failed to refresh usage: ${err.message}`);
+
+			usageController = null;
+		}
+	} finally {
+		if (!controller.signal.aborted) {
+			$total.classList.remove("loading");
+		}
+	}
+}
+
 async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
@@ -1812,11 +1851,6 @@ async function loadData() {
 
 		return;
 	}
-
-	// render total cost
-	totalCost = loadValue("total-cost", 0);
-
-	updateTotalCost();
 
 	// render version
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
@@ -2203,14 +2237,27 @@ async function uploadToMessage(self, message) {
 	isUploading = false;
 }
 
-$total.addEventListener("auxclick", event => {
-	if (event.button !== 1) {
-		return;
+$total.addEventListener("click", () => {
+	switch (usageType) {
+		case "total":
+			usageType = "daily";
+
+			break;
+		case "monthly":
+			usageType = "total";
+
+			break;
+		case "weekly":
+			usageType = "monthly";
+
+			break;
+		case "daily":
+			usageType = "weekly";
+
+			break;
 	}
 
-	totalCost = 0;
-
-	updateTotalCost();
+	updateTotalUsage();
 });
 
 $titleRefresh.addEventListener("click", () => {
@@ -2694,6 +2741,8 @@ dropdown($providerSorting);
 dropdown($imageResolution);
 dropdown($imageAspect);
 dropdown($reasoningEffort);
+
+refreshUsage();
 
 loadData().then(() => {
 	restore();

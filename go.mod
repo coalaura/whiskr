@@ -20,3 +20,5 @@ require (
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 )
+
+replace github.com/revrost/go-openrouter => github.com/coalaura/go-openrouter v0.2.9-0.20260123174818-eee5cfb46484

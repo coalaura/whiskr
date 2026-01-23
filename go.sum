@@ -1,3 +1,5 @@
+github.com/coalaura/go-openrouter v0.2.9-0.20260123174818-eee5cfb46484 h1:cm4nQWBMZJiSs8DOGzDahFgR+TUw7O9oceDR6lWiEG0=
+github.com/coalaura/go-openrouter v0.2.9-0.20260123174818-eee5cfb46484/go.mod h1:jZFcumFqvS25o8oEQc1/+4yeK7lHDSnwPMIJ/pKPdNc=
 github.com/coalaura/plain v1.1.4 h1:J1YKSYDHQS/fNzbGcpxm5kiXWdY42SlPXmpLksYrYic=
 github.com/coalaura/plain v1.1.4/go.mod h1:jcMR/C9RDdl8EQOHD4d/u8DoO1AI00fLDJfdfmrCFNA=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -14,8 +16,6 @@ github.com/jellydator/ttlcache/v3 v3.4.0 h1:YS4P125qQS0tNhtL6aeYkheEaB/m8HCqdMMP
 github.com/jellydator/ttlcache/v3 v3.4.0/go.mod h1:Hw9EgjymziQD3yGsQdf1FqFdpp7YjFMd4Srg5EJlgD4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/revrost/go-openrouter v1.1.5 h1:YkTxdRrkfTf5Y78Daa4a3k+WgX6KIKkLgDri2ZSndJ4=
-github.com/revrost/go-openrouter v1.1.5/go.mod h1:jZFcumFqvS25o8oEQc1/+4yeK7lHDSnwPMIJ/pKPdNc=
 github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=

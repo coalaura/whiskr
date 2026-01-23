@@ -55,6 +55,7 @@ func main() {
 	r.Group(func(gr chi.Router) {
 		gr.Use(Authenticate)
 
+		gr.Get("/-/usage", HandleUsage)
 		gr.Get("/-/stats/{id}", HandleStats)
 		gr.Post("/-/title", HandleTitle)
 

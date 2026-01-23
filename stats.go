@@ -26,7 +26,7 @@ type StatisticsEntry struct {
 	Error error
 }
 
-var statisticsCache = ttlcache.New[string, StatisticsEntry](
+var statisticsCache = ttlcache.New(
 	ttlcache.WithTTL[string, StatisticsEntry](30 * time.Minute),
 )
 
