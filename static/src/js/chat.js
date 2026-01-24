@@ -1610,8 +1610,6 @@ function generate(cancel = false, noPush = false) {
 					hasContent = !message.isEmpty();
 
 					if (chunk.data?.done) {
-						totalCost += chunk.data.cost || 0;
-
 						finish();
 					} else {
 						return; // prevent loading bar
