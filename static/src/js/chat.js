@@ -129,7 +129,7 @@ let searchAvailable = false,
 	scrollResize = false,
 	isUploading = false,
 	isDumping = false,
-	usageType = loadLocal("usage", "monthly"),
+	usageType = "monthly",
 	totalUsage = {};
 
 function updateTotalUsage() {
@@ -1858,6 +1858,11 @@ async function loadData() {
 	// render version
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
 
+	// usage
+	usageType = loadValue("usage-type", "monthly");
+
+	updateTotalUsage();
+
 	// update search availability
 	searchAvailable = data.config.search;
 
@@ -2259,6 +2264,8 @@ $total.addEventListener("click", () => {
 
 			break;
 	}
+
+	storeValue("usage-type", usageType);
 
 	updateTotalUsage();
 });
