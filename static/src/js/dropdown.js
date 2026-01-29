@@ -86,7 +86,7 @@ class Dropdown {
 		this.#build();
 
 		if (this.#options.length) {
-			this.#set(this.#options[0].value);
+			this.#set(this.#_select.value || this.#options[0].value);
 		}
 	}
 
@@ -116,6 +116,18 @@ class Dropdown {
 		this.#_selected = make("div", "selected");
 
 		this.#_selected.addEventListener("click", () => {
+			const willOpen = !this.#_dropdown.classList.contains("open");
+
+			if (willOpen) {
+				const rect = this.#_dropdown.getBoundingClientRect();
+
+				if (rect.top < 250 && rect.top < window.innerHeight - rect.bottom) {
+					this.#_dropdown.classList.add("open-down");
+				} else {
+					this.#_dropdown.classList.remove("open-down");
+				}
+			}
+
 			this.#_dropdown.classList.toggle("open");
 
 			const selection = this.#options[this.#selected];
@@ -765,7 +777,7 @@ class Dropdown {
 		}
 
 		if (!this.#favoriteOrder.includes(option.value)) {
-			this.#favoriteOrder.push(option.value);
+			this.#favoriteOrder.unshift(option.value);
 		}
 
 		this.#createFavoriteClone(option);

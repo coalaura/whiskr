@@ -246,6 +246,7 @@ class Message {
 	#_images;
 	#_tool;
 	#_statistics;
+	#_roleSelect;
 
 	constructor(data) {
 		this.#id = uid();
@@ -322,12 +323,28 @@ class Message {
 
 		_header.appendChild(_wrapper);
 
-		// message role
-		const _role = make("div");
+		// message role selector
+		this.#_roleSelect = make("select");
 
-		_role.textContent = this.#role;
+		this.#_roleSelect.innerHTML = [
+			`<option value="user" ${this.#role === "user" ? "selected" : ""}>user</option>`,
+			`<option value="assistant" ${this.#role === "assistant" ? "selected" : ""}>assistant</option>`,
+			`<option value="system" ${this.#role === "system" ? "selected" : ""}>system</option>`,
+		].join("");
 
-		_wrapper.appendChild(_role);
+		_wrapper.appendChild(this.#_roleSelect);
+
+		dropdown(this.#_roleSelect);
+
+		this.#_roleSelect.addEventListener("change", () => {
+			const newRole = this.#_roleSelect.value;
+
+			if (this.#role === newRole) {
+				return;
+			}
+
+			this.setRole(newRole);
+		});
 
 		// message tags
 		this.#_tags = make("div", "tags");
@@ -978,6 +995,56 @@ class Message {
 		}
 
 		return data;
+	}
+
+	setRole(role) {
+		if (this.#role === role) {
+			return;
+		}
+
+		const oldRole = this.#role;
+
+		this.#role = role;
+
+		this.#_message.classList.remove(oldRole);
+		this.#_message.classList.add(role);
+
+		const wrapper = this.#_message.querySelector(".role");
+
+		if (wrapper) {
+			wrapper.classList.remove(oldRole);
+			wrapper.classList.add(role);
+		}
+
+		const attachBtn = this.#_message.querySelector(".attach");
+
+		if (attachBtn) {
+			attachBtn.classList.toggle("none", role !== "user");
+		} else if (role === "user") {
+			const _opts = this.#_message.querySelector(".options"),
+				_optCopy = this.#_message.querySelector(".options .copy");
+
+			if (_opts && _optCopy) {
+				const _attach = make("button", "attach");
+
+				_attach.title = "Add files to this message";
+				_opts.insertBefore(_attach, _optCopy);
+
+				_attach.addEventListener("click", () => {
+					uploadToMessage(_attach, this);
+				});
+			}
+		}
+
+		const _optRetry = this.#_message.querySelector(".options .retry");
+
+		if (_optRetry) {
+			const _assistant = role === "assistant";
+
+			_optRetry.title = _assistant ? "Delete message and messages after this one and try again" : "Delete messages after this one and try again";
+		}
+
+		this.#save();
 	}
 
 	setStatistics(statistics) {

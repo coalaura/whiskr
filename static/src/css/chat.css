@@ -336,6 +336,32 @@ body:not(.loading) #loading {
 	line-height: 12px;
 }
 
+.message .role select {
+	font-family: inherit;
+	font-size: inherit;
+	background: transparent;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	padding: 0;
+	height: 14px;
+	width: auto;
+}
+
+.message .role .dropdown {
+	background: transparent;
+	padding: 0;
+	height: 14px;
+}
+
+.message .role .dropdown .selected {
+	text-transform: lowercase;
+}
+
+.message .role .dropdown .selected::after {
+	display: none;
+}
+
 .statistics .provider::after,
 .statistics .ttft::after,
 .statistics .tps::after,
@@ -445,11 +471,11 @@ body:not(.loading) #loading {
 }
 
 .images:has(.i-1 .loaded) .i-0 {
-    display: none;
+	display: none;
 }
 
 .images .i-1:not(:has(.loaded)) {
-    display: none;
+	display: none;
 }
 
 .images .image {
