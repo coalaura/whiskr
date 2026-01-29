@@ -1966,6 +1966,8 @@ async function loadData() {
 
 	dropdown($model, 6, true, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
 
+	$model.dispatchEvent(new Event("change"));
+
 	// render prompts
 	data.prompts.unshift({
 		key: "",
