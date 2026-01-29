@@ -1966,8 +1966,6 @@ async function loadData() {
 
 	dropdown($model, 6, true, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
 
-	$model.dispatchEvent(new Event("change"));
-
 	// render prompts
 	data.prompts.unshift({
 		key: "",
@@ -2014,6 +2012,8 @@ function restore() {
 	if (!modelList.find(model => model.id === $model.value && !disabledModels.includes(model.id))) {
 		$model.value = modelList.length ? modelList[0].id : "";
 	}
+
+	$model.dispatchEvent(new Event("change"));
 
 	const files = loadValue("attachments", []);
 
