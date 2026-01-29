@@ -1877,7 +1877,7 @@ async function loadData() {
 	}
 
 	// render models
-	const favorites = new Set(loadValue("model-favorites", [])),
+	const favorites = loadValue("model-favorites", []),
 		modelTab = loadValue("model-tab"),
 		newTime = Math.round(Date.now() / 1000) - 2 * 7 * 24 * 60 * 60;
 
@@ -1888,15 +1888,9 @@ async function loadData() {
 	});
 
 	$model.addEventListener("favorite", event => {
-		const { value, favorite } = event.detail;
+		const newFavorites = event.detail;
 
-		if (favorite) {
-			favorites.add(value);
-		} else {
-			favorites.delete(value);
-		}
-
-		storeValue("model-favorites", [...favorites]);
+		storeValue("model-favorites", newFavorites);
 	});
 
 	fillSelect($model, data.models, (el, model) => {
@@ -1922,7 +1916,7 @@ async function loadData() {
 			el.dataset.new = "yes";
 		}
 
-		if (favorites.has(model.id)) {
+		if (favorites.includes(model.id)) {
 			el.dataset.favorite = "yes";
 		}
 
@@ -1964,7 +1958,7 @@ async function loadData() {
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, true, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
+	dropdown($model, 6, favorites, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({

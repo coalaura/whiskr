@@ -29,6 +29,15 @@ class Dropdown {
 	#activeTab = "all";
 	#tabScroll = {};
 
+	#favoriteOrder = [];
+	#favoritesEnabled = false;
+
+	#dragState = {
+		draggedOption: false,
+		dropIndicator: false,
+		container: false,
+	};
+
 	constructor(el, maxTags = false, favorites = false, tabs = [], leftTags = []) {
 		this.#_select = el;
 
@@ -36,6 +45,9 @@ class Dropdown {
 		this.#search = "searchable" in el.dataset;
 		this.#tabs = Array.isArray(tabs) ? tabs : [];
 		this.#leftTags = new Set(Array.isArray(leftTags) ? leftTags : []);
+
+		this.#favoritesEnabled = Array.isArray(favorites);
+		this.#favoriteOrder = Array.isArray(favorites) ? [...favorites] : [];
 
 		this.#_select.querySelectorAll("option").forEach(option => {
 			const classes = option.dataset.classes?.trim(),
@@ -71,14 +83,14 @@ class Dropdown {
 			});
 		});
 
-		this.#build(favorites);
+		this.#build();
 
 		if (this.#options.length) {
 			this.#set(this.#options[0].value);
 		}
 	}
 
-	#build(favorites) {
+	#build() {
 		// prepare and hide original select
 		this.#_select.style.display = "none";
 
@@ -98,7 +110,7 @@ class Dropdown {
 		});
 
 		// dropdown
-		this.#_dropdown = make("div", "dropdown", favorites || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
+		this.#_dropdown = make("div", "dropdown", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
 
 		// selected item
 		this.#_selected = make("div", "selected");
@@ -148,7 +160,7 @@ class Dropdown {
 		this.#all.label.appendChild(this.#all.count);
 
 		this.#all.label.addEventListener("click", () => {
-			if (!favorites) {
+			if (!this.#favoritesEnabled) {
 				return;
 			}
 
@@ -189,7 +201,7 @@ class Dropdown {
 		}
 
 		// favorites tab
-		if (favorites) {
+		if (this.#favoritesEnabled) {
 			this.#favorites.label = make("div", "tab-title");
 
 			this.#favorites.label.textContent = "Favorites";
@@ -208,7 +220,11 @@ class Dropdown {
 
 			this.#favorites.container = make("div", "tab");
 
+			this.#favorites.container.classList.add("favorites-container");
+
 			this.#_options.appendChild(this.#favorites.container);
+
+			this.#setupFavoritesDragAndDrop();
 		}
 
 		// options
@@ -341,9 +357,9 @@ class Dropdown {
 			}
 
 			// handle favorite
-			if (favorites) {
-				if (option.favorite) {
-					this.#makeFavorite(option, true);
+			if (this.#favoritesEnabled) {
+				if (this.#favoriteOrder.includes(option.value)) {
+					option.favorite = true;
 				}
 
 				_opt.addEventListener("auxclick", event => {
@@ -354,6 +370,19 @@ class Dropdown {
 					this.#makeFavorite(option);
 				});
 			}
+		}
+
+		// render favorites in order
+		if (this.#favoritesEnabled) {
+			for (const favId of this.#favoriteOrder) {
+				const option = this.#options.find(opt => opt.value === favId);
+
+				if (option?.favorite) {
+					this.#createFavoriteClone(option, true);
+				}
+			}
+
+			this.#updateFavoritesCount();
 		}
 
 		// live search (if enabled)
@@ -390,6 +419,214 @@ class Dropdown {
 		this.#_select.after(this.#_dropdown);
 
 		this.#render();
+	}
+
+	#setupFavoritesDragAndDrop() {
+		const container = this.#favorites.container;
+
+		this.#dragState.container = container;
+
+		// drop indicator
+		this.#dragState.dropIndicator = document.createElement("div");
+
+		this.#dragState.dropIndicator.className = "drop-indicator";
+
+		container.addEventListener("dragover", event => {
+			event.preventDefault();
+
+			this.#handleDragOver(event.clientY);
+		});
+
+		document.addEventListener("dragover", this.#handleDocumentDragOver);
+
+		container.addEventListener("drop", event => {
+			event.preventDefault();
+
+			this.#handleDrop();
+		});
+
+		container.addEventListener("dragleave", event => {
+			if (!container.contains(event.relatedTarget)) {
+				this.#dragState.dropIndicator.remove();
+			}
+		});
+	}
+
+	#handleDocumentDragOver = event => {
+		if (!this.#dragState.draggedOption) {
+			return;
+		}
+
+		const container = this.#dragState.container,
+			rect = container.getBoundingClientRect();
+
+		if (event.clientY < rect.top) {
+			event.preventDefault();
+
+			const firstOpt = container.querySelector(".opt");
+
+			if (firstOpt) {
+				container.insertBefore(this.#dragState.dropIndicator, firstOpt);
+			} else {
+				container.appendChild(this.#dragState.dropIndicator);
+			}
+		} else if (event.clientY > rect.bottom) {
+			event.preventDefault();
+
+			container.appendChild(this.#dragState.dropIndicator);
+		}
+	};
+
+	#handleDragOver(clientY) {
+		const container = this.#dragState.container,
+			dropIndicator = this.#dragState.dropIndicator,
+			afterElement = this.#getDragAfterElement(container, clientY);
+
+		if (afterElement) {
+			afterElement.before(dropIndicator);
+		} else {
+			container.appendChild(dropIndicator);
+		}
+	}
+
+	#handleDrop() {
+		const container = this.#dragState.container,
+			dropIndicator = this.#dragState.dropIndicator,
+			draggable = container.querySelector(".dragging");
+
+		if (draggable && dropIndicator.parentNode) {
+			dropIndicator.before(draggable);
+
+			this.#updateFavoriteOrderFromDOM();
+		}
+	}
+
+	#getDragAfterElement(container, y) {
+		const draggableElements = [...container.querySelectorAll(".opt:not(.dragging)")];
+
+		return draggableElements.reduce(
+			(closest, child) => {
+				const box = child.getBoundingClientRect(),
+					offset = y - box.top - box.height / 2;
+
+				if (offset < 0 && offset > closest.offset) {
+					return {
+						offset: offset,
+						element: child,
+					};
+				}
+
+				return closest;
+			},
+			{
+				offset: Number.NEGATIVE_INFINITY,
+			}
+		).element;
+	}
+
+	#updateFavoriteOrderFromDOM() {
+		const newOrder = [];
+
+		this.#favorites.container.querySelectorAll(".opt").forEach(el => {
+			for (const option of this.#options) {
+				if (option.favoriteClone === el) {
+					newOrder.push(option.value);
+
+					break;
+				}
+			}
+		});
+
+		this.#favoriteOrder = newOrder;
+
+		this.#trigger("favorite", this.#favoriteOrder);
+	}
+
+	#updateFavoritesCount() {
+		if (this.#favorites.count) {
+			this.#favorites.count.textContent = this.#favoriteOrder.length;
+		}
+	}
+
+	#createFavoriteClone(option, silent = false) {
+		if (option.favoriteClone) {
+			option.favoriteClone.remove();
+		}
+
+		option.el.classList.add("favorite");
+
+		for (const tab in option.clones) {
+			option.clones[tab].classList.add("favorite");
+		}
+
+		option.favoriteClone = option.el.cloneNode(true);
+
+		option.favoriteClone.setAttribute("draggable", "true");
+		option.favoriteClone.classList.add("favorite-item");
+
+		option.favoriteClone.addEventListener("dragstart", event => {
+			event.dataTransfer.setData("text/plain", option.value);
+
+			event.dataTransfer.effectAllowed = "move";
+
+			option.favoriteClone.classList.add("dragging");
+
+			this.#dragState.draggedOption = option;
+		});
+
+		option.favoriteClone.addEventListener("dragend", () => {
+			option.favoriteClone.classList.remove("dragging");
+
+			this.#dragState.draggedOption = false;
+
+			const indicator = this.#dragState.dropIndicator;
+
+			if (indicator?.parentNode) {
+				indicator.remove();
+			}
+		});
+
+		// click to select
+		option.favoriteClone.addEventListener("click", () => {
+			if (option.disabled) {
+				return;
+			}
+
+			this.#_select.value = option.value;
+
+			this.#_dropdown.classList.remove("open");
+		});
+
+		// middle click to remove
+		option.favoriteClone.addEventListener("auxclick", event => {
+			if (event.button !== 1) {
+				return;
+			}
+
+			this.#makeFavorite(option);
+		});
+
+		// Insert in correct position based on order
+		const currentIndex = this.#favoriteOrder.indexOf(option.value),
+			nextFavId = this.#favoriteOrder[currentIndex + 1];
+
+		if (nextFavId) {
+			const nextOption = this.#options.find(opt => opt.value === nextFavId);
+
+			if (nextOption?.favoriteClone) {
+				this.#favorites.container.insertBefore(option.favoriteClone, nextOption.favoriteClone);
+			} else {
+				this.#favorites.container.appendChild(option.favoriteClone);
+			}
+		} else {
+			this.#favorites.container.appendChild(option.favoriteClone);
+		}
+
+		if (!silent) {
+			this.#updateFavoritesCount();
+
+			this.#trigger("favorite", this.#favoriteOrder);
+		}
 	}
 
 	#render() {
@@ -498,8 +735,16 @@ class Dropdown {
 		this.#trigger("tab", tab);
 	}
 
-	#makeFavorite(option, force = false) {
-		function remove() {
+	#makeFavorite(option) {
+		option.favorite = !option.favorite;
+
+		if (!option.favorite) {
+			const idx = this.#favoriteOrder.indexOf(option.value);
+
+			if (idx > -1) {
+				this.#favoriteOrder.splice(idx, 1);
+			}
+
 			option.el.classList.remove("favorite");
 
 			for (const tab in option.clones) {
@@ -511,52 +756,19 @@ class Dropdown {
 
 				option.favoriteClone = null;
 			}
-		}
 
-		option.favorite = !option.favorite || force;
+			this.#updateFavoritesCount();
 
-		this.#favorites.count.textContent = this.#options.filter(opt => opt.favorite).length;
-
-		if (!force) {
-			this.#trigger("favorite", {
-				value: option.value,
-				favorite: option.favorite,
-			});
-		}
-
-		if (!option.favorite) {
-			remove();
+			this.#trigger("favorite", this.#favoriteOrder);
 
 			return;
 		}
 
-		option.el.classList.add("favorite");
-
-		for (const tab in option.clones) {
-			option.clones[tab].classList.add("favorite");
+		if (!this.#favoriteOrder.includes(option.value)) {
+			this.#favoriteOrder.push(option.value);
 		}
 
-		option.favoriteClone = option.el.cloneNode(true);
-
-		this.#favorites.container.appendChild(option.favoriteClone);
-
-		option.favoriteClone.addEventListener("click", () => {
-			if (option.disabled) {
-				return;
-			}
-
-			this.#_select.value = option.value;
-
-			this.#_dropdown.classList.remove("open");
-		});
-
-		option.favoriteClone.addEventListener("auxclick", event => {
-			if (event.button !== 1) {
-				return;
-			}
-
-			remove();
-		});
+		this.#createFavoriteClone(option);
 	}
 
 	#filter() {

@@ -343,3 +343,33 @@
 	padding: 4px 6px;
 	margin-top: auto;
 }
+
+.dropdown .opts .tab.favorites-container .opt:active,
+.dropdown .opts .tab.favorites-container .opt.dragging {
+	cursor: grabbing;
+	opacity: 0.5;
+}
+
+.dropdown .opts .tab.favorites-container .opt.dragging {
+	background: var(--c-mauve);
+	color: var(--c-base);
+}
+
+.dropdown .opts .tab.favorites-container .drop-indicator {
+	height: 2px;
+	background: var(--c-mauve);
+	margin: 2px 0;
+	pointer-events: none;
+	animation: drop-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes drop-pulse {
+	0%, 100% { 
+		opacity: 1;
+		box-shadow: 0 0 4px var(--c-mauve);
+	}
+	50% { 
+		opacity: 0.6;
+		box-shadow: 0 0 8px var(--c-mauve);
+	}
+}
