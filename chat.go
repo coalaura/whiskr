@@ -225,7 +225,7 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Reasoning = &openrouter.ChatCompletionReasoning{}
 
 		switch r.Reasoning.Effort {
-		case "high", "medium", "low":
+		case "xhigh", "high", "medium", "low", "minimal", "none":
 			request.Reasoning.Effort = &r.Reasoning.Effort
 		default:
 			if r.Reasoning.Tokens <= 0 || r.Reasoning.Tokens > 1024*1024 {
