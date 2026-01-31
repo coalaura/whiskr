@@ -105,7 +105,7 @@ func SplitImagePairs(text string) []openrouter.ChatMessagePart {
 
 		url := text[urlStart:urlEnd]
 
-		if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+		if !strings.HasPrefix(url, "data:") && !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
 			push(index, end)
 
 			index = end

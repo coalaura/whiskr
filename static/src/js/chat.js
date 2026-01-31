@@ -19,6 +19,7 @@ import {
 	make,
 	notify,
 	previewFile,
+	readFileAsDataUrl,
 	schedule,
 	selectFile,
 	uid,
@@ -115,7 +116,8 @@ const messages = [],
 	models = {},
 	modelList = [],
 	disabledModels = [],
-	promptList = [];
+	promptList = [],
+	pendingImages = new Map();
 
 let autoScrolling = false,
 	followTail = true,
@@ -209,6 +211,35 @@ function mark(index) {
 	}
 }
 
+async function insertImageIntoTextarea(dataUrl, textarea) {
+	const filename = await dataUrlFilename(dataUrl),
+		// biome-ignore lint/performance/useTopLevelRegex: this is fine
+		hash = filename.replace(/\.[^/.]+$/, "");
+
+	if (textarea === $message) {
+		pendingImages.set(hash, dataUrl);
+	} else {
+		const msg = messages.find(_msg => _msg.getEditTextarea() === textarea);
+
+		if (msg) {
+			msg.addInlineImage(hash, dataUrl);
+		}
+	}
+
+	const placeholder = `![img](${filename})`,
+		start = textarea.selectionStart,
+		end = textarea.selectionEnd,
+		text = textarea.value;
+
+	textarea.value = text.slice(0, start) + placeholder + text.slice(end);
+
+	textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
+
+	if (textarea === $message) {
+		storeValue("message", textarea.value);
+	}
+}
+
 class Message {
 	#destroyed = false;
 
@@ -219,6 +250,7 @@ class Message {
 	#text;
 	#images = [];
 	#files = [];
+	#inlineImages = new Map();
 
 	#tool;
 	#tags = [];
@@ -257,6 +289,14 @@ class Message {
 
 		this.#time = data.time;
 		this.#ttft = data.ttft;
+
+		if (data.inlineImages) {
+			if (data.inlineImages instanceof Map) {
+				this.#inlineImages = new Map(data.inlineImages);
+			} else if (Array.isArray(data.inlineImages)) {
+				this.#inlineImages = new Map(data.inlineImages);
+			}
+		}
 
 		this.#_diff = document.createElement("div");
 
@@ -298,6 +338,7 @@ class Message {
 		this.#save();
 	}
 
+	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: it is used lol
 	#build(collapsed) {
 		// main message div
 		this.#_message = make("div", "message", this.#role, collapsed ? "collapsed" : "");
@@ -560,6 +601,26 @@ class Message {
 
 		this.#_edit.addEventListener("input", () => {
 			this.updateEditHeight();
+		});
+
+		// paste in edit textarea
+		this.#_edit.addEventListener("paste", async event => {
+			const items = event.clipboardData?.items;
+
+			if (!items) {
+				return;
+			}
+
+			for (const item of items) {
+				if (item.type.startsWith("image/")) {
+					event.preventDefault();
+
+					const file = item.getAsFile(),
+						dataUrl = await readFileAsDataUrl(file);
+
+					await insertImageIntoTextarea(dataUrl, this.#_edit);
+				}
+			}
 		});
 
 		// message images
@@ -896,6 +957,12 @@ class Message {
 		if (!only || only === "text") {
 			let text = this.#text;
 
+			// Replace image placeholders with actual data URLs for display
+			for (const [hash, dataUrl] of this.#inlineImages) {
+				const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
+				text = text.replace(regex, `![$1](${dataUrl})`);
+			}
+
 			if (text && this.#tags.includes("json")) {
 				text = `\`\`\`json\n${text}\n\`\`\``;
 			}
@@ -936,10 +1003,20 @@ class Message {
 		this.#_message.classList.toggle("marked", state);
 	}
 
-	getData(full = false) {
+	getData(full = false, expandImages = false) {
+		let text = this.#text;
+
+		if (expandImages) {
+			for (const [hash, dataUrl] of this.#inlineImages) {
+				const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
+
+				text = text.replace(regex, `![$1](${dataUrl})`);
+			}
+		}
+
 		const data = {
 			role: this.#role,
-			text: this.#text,
+			text: text,
 		};
 
 		if (this.#files.length) {
@@ -964,6 +1041,11 @@ class Message {
 
 		if (this.#images.length) {
 			data.images = this.#images;
+		}
+
+		// Store inline images for persistence (as array of entries)
+		if (this.#inlineImages.size > 0 && full) {
+			data.inlineImages = Array.from(this.#inlineImages.entries());
 		}
 
 		if (this.#error && full) {
@@ -1183,6 +1265,14 @@ class Message {
 		this.#save();
 	}
 
+	addInlineImage(hash, dataUrl) {
+		this.#inlineImages.set(hash, dataUrl);
+	}
+
+	getEditTextarea() {
+		return this.#_edit;
+	}
+
 	addReasoning(chunk) {
 		this.#reasoning += chunk;
 
@@ -1263,7 +1353,17 @@ class Message {
 
 			this.#_edit.focus();
 		} else {
-			this.#text = this.#_edit.value;
+			const newText = this.#_edit.value;
+
+			for (const [hash, _dataUrl] of this.#inlineImages) {
+				const regex = new RegExp(`\\(${hash}\\.[^)]+\\)`);
+
+				if (!regex.test(newText)) {
+					this.#inlineImages.delete(hash);
+				}
+			}
+
+			this.#text = newText;
 
 			this.setState(false);
 
@@ -1496,7 +1596,7 @@ function buildRequest(noPush = false) {
 			platform: platform,
 			settings: opts,
 		},
-		messages: messages.map(message => message.getData()).filter(Boolean),
+		messages: messages.map(message => message.getData(false, true)).filter(Boolean),
 	};
 }
 
@@ -2233,6 +2333,21 @@ function pushMessage() {
 		return false;
 	}
 
+	const usedImages = new Map(),
+		imageRegex = /!\[.*?\]\(([a-f0-9]{8})\.[^)]+\)/g;
+
+	let match;
+
+	while ((match = imageRegex.exec(text)) !== null) {
+		const hash = match[1];
+
+		if (pendingImages.has(hash)) {
+			usedImages.set(hash, pendingImages.get(hash));
+
+			pendingImages.delete(hash);
+		}
+	}
+
 	$message.value = "";
 	storeValue("message", "");
 
@@ -2240,6 +2355,7 @@ function pushMessage() {
 		role: $role.value,
 		text: text,
 		files: attachments,
+		inlineImages: usedImages,
 	});
 
 	clearAttachments();
@@ -2248,7 +2364,7 @@ function pushMessage() {
 	return message;
 }
 
-async function uploadToMessage(self, message) {
+async function uploadToMessage(self, message = false) {
 	if (isUploading) {
 		return;
 	}
@@ -2306,6 +2422,42 @@ async function uploadToMessage(self, message) {
 	self.classList.remove("loading");
 
 	isUploading = false;
+}
+
+async function uploadImageInline() {
+	if (isUploading) {
+		return;
+	}
+
+	const input = document.createElement("input");
+
+	input.type = "file";
+	input.accept = "image/*";
+	input.multiple = true;
+
+	input.onchange = async () => {
+		if (!input.files.length) {
+			return;
+		}
+
+		isUploading = true;
+		$upload.classList.add("loading");
+
+		for (const file of input.files) {
+			if (!file.type.startsWith("image/")) {
+				continue;
+			}
+
+			const dataUrl = await readFileAsDataUrl(file);
+
+			await insertImageIntoTextarea(dataUrl, $message);
+		}
+
+		$upload.classList.remove("loading");
+		isUploading = false;
+	};
+
+	input.click();
 }
 
 $total.addEventListener("click", () => {
@@ -2514,8 +2666,29 @@ $message.addEventListener("input", () => {
 	storeValue("message", $message.value);
 });
 
-$upload.addEventListener("click", () => {
-	uploadToMessage($upload, false);
+$message.addEventListener("paste", async event => {
+	const items = event.clipboardData?.items;
+
+	if (!items) {
+		return;
+	}
+
+	for (const item of items) {
+		if (item.type.startsWith("image/")) {
+			event.preventDefault();
+			const file = item.getAsFile();
+			const dataUrl = await readFileAsDataUrl(file);
+			await insertImageIntoTextarea(dataUrl, $message);
+		}
+	}
+});
+
+$upload.addEventListener("click", event => {
+	if (event.shiftKey) {
+		uploadImageInline();
+	} else {
+		uploadToMessage($upload, false);
+	}
 });
 
 $add.addEventListener("click", () => {

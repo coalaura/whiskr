@@ -118,6 +118,56 @@ async function sha256Hex(bytes) {
 	return hex;
 }
 
+function convertToJpeg(dataUrl) {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+
+		img.onload = () => {
+			const canvas = document.createElement("canvas");
+
+			canvas.width = img.width;
+			canvas.height = img.height;
+
+			const ctx = canvas.getContext("2d");
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+			ctx.drawImage(img, 0, 0);
+
+			const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+			resolve(jpegDataUrl);
+		};
+
+		img.onerror = () => {
+			reject(new Error("Failed to load image for conversion"));
+		};
+
+		img.src = dataUrl;
+	});
+}
+
+export function readFileAsDataUrl(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+
+		reader.onload = async () => {
+			try {
+				const jpegDataUrl = await convertToJpeg(reader.result);
+
+				resolve(jpegDataUrl);
+			} catch (err) {
+				reject(err);
+			}
+		};
+
+		reader.onerror = () => reject(new Error("Failed to read file"));
+
+		reader.readAsDataURL(file);
+	});
+}
+
 export async function dataUrlFilename(dataUrl) {
 	const { mime, bytes } = dataUrlToBytes(dataUrl),
 		ext = mimeToExt(mime),
