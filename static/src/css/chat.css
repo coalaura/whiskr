@@ -1760,9 +1760,8 @@ label[for="reasoning-tokens"] {
 
 #settings #s-prompt {
 	width: 100%;
-	min-height: 140px;
+	min-height: 350px;
 	line-height: 1.6;
-	resize: vertical;
 	font-family: var(--font);
 }
 
