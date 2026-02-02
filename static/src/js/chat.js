@@ -470,7 +470,7 @@ class Message {
 			mark(false);
 		});
 
-		optRetry.addEventListener("click", () => {
+		_optRetry.addEventListener("click", () => {
 			const index = this.index(_assistant ? 0 : 1);
 
 			if (index === false) {
