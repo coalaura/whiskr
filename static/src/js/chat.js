@@ -470,7 +470,7 @@ class Message {
 			mark(false);
 		});
 
-		_optRetry.addEventListener("click", () => {
+		optRetry.addEventListener("click", () => {
 			const index = this.index(_assistant ? 0 : 1);
 
 			if (index === false) {
@@ -480,6 +480,10 @@ class Message {
 			abortNow();
 
 			this.stopEdit();
+
+			for (let i = 0; i < index; i++) {
+				messages[i].stopEdit();
+			}
 
 			while (messages.length > index) {
 				messages[messages.length - 1].delete();
@@ -573,6 +577,24 @@ class Message {
 		_body.appendChild(this.#_text);
 
 		this.#_text.addEventListener("click", event => {
+			if (event.ctrlKey) {
+				event.preventDefault();
+
+				if (!this.#editing) {
+					if (this.#_message.classList.contains("collapsed")) {
+						this.#_message.classList.remove("collapsed");
+
+						updateScrollButton();
+
+						setFollowTail(distanceFromBottom() <= nearBottom);
+					}
+
+					this.toggleEdit();
+				}
+
+				return;
+			}
+
 			this.#handlePreview(event);
 		});
 
