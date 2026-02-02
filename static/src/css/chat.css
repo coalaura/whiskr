@@ -1593,7 +1593,7 @@ label[for="reasoning-tokens"] {
 }
 
 #settings .content {
-	min-width: 480px;
+	min-width: 680px;
 	padding: 0;
 	overflow: hidden;
 	border: 1px solid var(--c-surface1);
