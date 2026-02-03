@@ -1,0 +1,14 @@
+name: whiskr
+path: /var/wskr.sh
+network: true
+listening: true
+privileged_ports: false
+exec_memory: false
+writable_files: true
+runtime_dir: false
+devices: false
+full_devices: false
+subprocess: false
+separate_log_dir: true
+localhost_only: false
+private_users: false

@@ -31,12 +31,26 @@ fi
 
 systemctl link "/var/wskr.sh/conf/whiskr.service"
 
+if command -v logrotate >/dev/null 2>&1; then
+    echo "Linking logrotate config..."
+
+    if [ -f /etc/logrotate.d/whiskr ]; then
+        rm /etc/logrotate.d/whiskr
+    fi
+
+    ln -s "/var/wskr.sh/conf/whiskr_logs.conf" /etc/logrotate.d/whiskr
+else
+    echo "Logrotate not found, skipping..."
+fi
+
 echo "Reloading daemon..."
 
 systemctl daemon-reload
 systemctl enable whiskr
 
 echo "Fixing initial permissions..."
+
+mkdir -p "/var/wskr.sh/logs"
 
 chown -R whiskr:whiskr "/var/wskr.sh"
 

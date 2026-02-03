@@ -1,6 +1,7 @@
 [Unit]
 Description=Whiskr
 After=network-online.target
+Requires=network-online.target
 StartLimitBurst=10
 StartLimitIntervalSec=60
 
@@ -12,17 +13,17 @@ Group=whiskr
 WorkingDirectory=/var/wskr.sh
 ExecStart=/var/wskr.sh/whiskr
 
-StandardOutput=append:/var/wskr.sh/whiskr.log
-StandardError=append:/var/wskr.sh/whiskr.log
+StandardOutput=append:/var/wskr.sh/logs/whiskr.log
+StandardError=append:/var/wskr.sh/logs/whiskr.log
 StandardInput=null
 
 # Filesystem Sandboxing
 ProtectSystem=strict
-ReadOnlyPaths=/var/wskr.sh
+ReadWritePaths=/var/wskr.sh
 ProtectHome=yes
 PrivateTmp=yes
 PrivateMounts=yes
-UMask=0077
+UMask=0022
 
 # Kernel & Hardware Protection
 PrivateDevices=yes
@@ -39,14 +40,16 @@ ProtectProc=invisible
 ProcSubset=pid
 LockPersonality=yes
 ProtectHostname=yes
-UtmpMode=missing
+UtmpMode=no
 NoNewPrivileges=yes
 PrivateIPC=yes
+PrivateUsers=no
 RestrictNamespaces=yes
 RemoveIPC=yes
 RestrictRealtime=yes
 RestrictSUIDSGID=true
 KeyringMode=private
+CoredumpFilter=0
 
 # Memory Protection
 MemoryDenyWriteExecute=yes
@@ -61,6 +64,7 @@ SystemCallErrorNumber=EPERM
 SystemCallFilter=~@clock @cpu-emulation @debug @module @mount @obsolete @reboot @swap @resources @raw-io @privileged @keyring @pkey @memlock
 InaccessiblePaths=-/bin -/usr/bin -/sbin -/usr/sbin -/usr/local/bin
 
+# Restart & Runtime
 Restart=always
 RestartSec=3
 RuntimeMaxSec=5d
