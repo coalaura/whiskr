@@ -167,8 +167,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
-	request.Modalities = []openrouter.ChatCompletionModality{
-		openrouter.ModalityText,
+	if model.Text {
+		request.Modalities = append(request.Modalities, openrouter.ModalityText)
 	}
 
 	if env.Models.ImageGeneration && model.Images {

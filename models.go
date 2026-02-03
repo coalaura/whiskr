@@ -29,6 +29,7 @@ type Model struct {
 	JSON      bool `json:"-"`
 	Tools     bool `json:"-"`
 	Images    bool `json:"-"`
+	Text      bool `json:"-"`
 }
 
 var (
@@ -174,6 +175,8 @@ func GetModelTags(model FrontendModel, m *Model) {
 			m.Images = true
 
 			m.Tags = append(m.Tags, "image")
+		} else if modality == "text" {
+			m.Text = true
 		}
 	}
 
