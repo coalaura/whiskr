@@ -235,6 +235,7 @@
 	border-radius: 6px;
 	border: 1px solid var(--c-surface0);
 	overflow: hidden;
+	user-select: none;
 }
 
 .markdown .inline-file::before {

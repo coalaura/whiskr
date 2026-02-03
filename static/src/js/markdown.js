@@ -4,6 +4,8 @@ import hljs from "highlight.js";
 import katex from "katex";
 import { parse, parseInline, use } from "marked";
 
+import { formatBytes } from "./lib.js";
+
 const timeouts = new WeakMap(),
 	scrollState = {
 		el: null,
@@ -126,20 +128,6 @@ function escapeHtml(text) {
 	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function formatBytes(bytes) {
-	if (!+bytes) {
-		return "0B";
-	}
-
-	const sizes = ["B", "kB", "MB", "GB", "TB"],
-		i = Math.floor(Math.log(bytes) / Math.log(1000));
-
-	const val = bytes / Math.pow(1000, i),
-		dec = i === 0 ? 0 : val < 10 ? 2 : 1;
-
-	return `${val.toFixed(dec)}${sizes[i]}`;
-}
-
 function fixStreamBuffer(markdown) {
 	// fix the model forgetting to add the <<CONTENT>> line
 	return markdown.replace(/(FILE\s+"[^"]+"(?:\s+LINES\s+[\d-]+)?)/g, (match, _header, offset, fullString) => {
@@ -196,7 +184,7 @@ function fixProgressiveSvg(raw) {
 	}
 
 	try {
-		const b64 = btoa(encodeURIComponent(clean).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(`0x${p1}`)));
+		const b64 = btoa(encodeURIComponent(clean).replace(/%([0-9A-F]{2})/g, (_match, p1) => String.fromCharCode(`0x${p1}`)));
 
 		return `data:image/svg+xml;base64,${b64}`;
 	} catch (err) {

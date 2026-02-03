@@ -73,6 +73,20 @@ export function formatTimestamp(ts) {
 	return new Date(ts * 1000).toLocaleDateString();
 }
 
+export function formatBytes(bytes) {
+	if (!+bytes) {
+		return "0B";
+	}
+
+	const sizes = ["B", "kB", "MB", "GB", "TB"],
+		i = Math.floor(Math.log(bytes) / Math.log(1000));
+
+	const val = bytes / Math.pow(1000, i),
+		dec = i === 0 ? 0 : val < 10 ? 2 : 1;
+
+	return `${val.toFixed(dec)}${sizes[i]}`;
+}
+
 function mimeToExt(mime) {
 	switch (mime) {
 		case "image/png":

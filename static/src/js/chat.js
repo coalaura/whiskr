@@ -12,6 +12,7 @@ import {
 	download,
 	fillSelect,
 	fixed,
+	formatBytes,
 	formatMilliseconds,
 	formatMoney,
 	formatTimestamp,
@@ -213,7 +214,6 @@ function mark(index) {
 
 async function insertImageIntoTextarea(dataUrl, textarea) {
 	const filename = await dataUrlFilename(dataUrl),
-		// biome-ignore lint/performance/useTopLevelRegex: this is fine
 		hash = filename.replace(/\.[^/.]+$/, "");
 
 	if (textarea === $message) {
@@ -338,7 +338,6 @@ class Message {
 		this.#save();
 	}
 
-	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: it is used lol
 	#build(collapsed) {
 		// main message div
 		this.#_message = make("div", "message", this.#role, collapsed ? "collapsed" : "");
@@ -2282,14 +2281,28 @@ function buildFileElement(file, callback) {
 		previewFile(file);
 	});
 
-	// token count
+	// metadata overlay (size + tokens)
+	const _meta = make("div", "tokens");
+
+	// size line
+	const _size = make("div");
+
+	_size.textContent = formatBytes(new Blob([file.content]).size);
+
+	_meta.appendChild(_size);
+
+	// tokens line (if available)
 	if ("tokens" in file && Number.isInteger(file.tokens)) {
-		const _tokens = make("div", "tokens");
+		const _tokens = make("div");
 
 		_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(file.tokens)} tokens`;
 
-		_file.appendChild(_tokens);
+		_meta.appendChild(_tokens);
+
+		_meta.classList.add("has-tokens");
 	}
+
+	_file.appendChild(_meta);
 
 	// remove button
 	const _remove = make("button", "remove");
