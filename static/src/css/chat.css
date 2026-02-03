@@ -493,6 +493,32 @@ body:not(.loading) #loading {
 	width: 420px;
 }
 
+.image-wrapper .image-info {
+	display: block;
+	background: var(--c-base);
+	color: var(--c-text);
+	font-size: 10px;
+	font-family: var(--font-mono);
+	opacity: 0;
+	pointer-events: none;
+	z-index: 2;
+	border-radius: 4px;
+	padding: 6px;
+	transition: opacity .15s;
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	line-height: 1.2;
+}
+
+.image-wrapper:hover .image-info {
+	opacity: 1;
+}
+
+.image-wrapper .image-info:empty {
+	display: none;
+}
+
 .message.busy .images .i-0::before {
 	content: "";
 	position: absolute;

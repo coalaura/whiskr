@@ -743,16 +743,6 @@ class Message {
 		previewFile(file);
 	}
 
-	#handleImages(element) {
-		element.querySelectorAll("img:not(.image)").forEach(img => {
-			img.classList.add("image");
-
-			img.addEventListener("load", () => {
-				$messages.scrollTop += bHeight(img);
-			});
-		});
-	}
-
 	#updateReasoningHeight() {
 		const height = this.#_reasoning.scrollHeight;
 
@@ -770,11 +760,50 @@ class Message {
 		return height;
 	}
 
+	#setupImage(img) {
+		if (img.dataset.setup) {
+			return;
+		}
+
+		const container = img.closest(".image-wrapper");
+
+		if (!container) {
+			return;
+		}
+
+		img.dataset.setup = "true";
+
+		const infoBox = make("div", "image-info");
+
+		container.appendChild(infoBox);
+
+		const callback = () => {
+			img.classList.add("loaded");
+
+			infoBox.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+
+			$messages.scrollTop += bHeight(img);
+		};
+
+		if (img.complete) {
+			callback();
+		} else {
+			img.addEventListener("load", callback, {
+				once: true,
+			});
+		}
+	}
+
 	#morph(from, to) {
 		morphdom(from, to, {
 			childrenOnly: true,
 			onBeforeElUpdated: (fromEl, toEl) => {
 				return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
+			},
+			onNodeAdded: node => {
+				if (node.tagName === "IMG") {
+					this.#setupImage(node);
+				}
 			},
 		});
 	}
@@ -791,7 +820,9 @@ class Message {
 
 			this.#inline = files;
 
-			this.#handleImages(element);
+			element.querySelectorAll("img").forEach(img => {
+				this.#setupImage(img);
+			});
 
 			return;
 		}
@@ -820,8 +851,6 @@ class Message {
 			getDataUrlAspectRatio;
 
 			this.#_diff.innerHTML = "";
-
-			this.#handleImages(element);
 		});
 	}
 
@@ -842,7 +871,7 @@ class Message {
 
 				const image = this.#images[x];
 
-				const _link = make("a", "image", `i-${x}`);
+				const _link = make("a", "image", "image-wrapper", `i-${x}`);
 
 				_link.target = "_blank";
 				_link.href = image;
@@ -857,13 +886,11 @@ class Message {
 
 				_image.style.aspectRatio = getDataUrlAspectRatio(image);
 
-				_image.addEventListener("load", () => {
-					_image.classList.add("loaded");
-				});
-
 				_image.src = image;
 
 				_link.appendChild(_image);
+
+				this.#setupImage(_image);
 			}
 
 			this.#_message.classList.toggle("has-images", !!this.#images.length);

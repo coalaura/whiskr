@@ -100,6 +100,13 @@ use({
 	},
 
 	renderer: {
+		image: href => {
+			const title = href.title ? ` title="${escapeHtml(href.title)}"` : "",
+				alt = href.text ? ` alt="${escapeHtml(href.text)}"` : "";
+
+			return `<span class="image-wrapper"><img src="${escapeHtml(href.href)}"${alt}${title} class="image" /></span>`;
+		},
+
 		code: code => {
 			const header = `<div class="pre-header">${escapeHtml(code.lang)}</div>`;
 			const button = `<button class="pre-copy" title="Copy code contents"></button>`;
