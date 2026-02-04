@@ -46,16 +46,6 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - A list of top-level files and directories.
   - The full content of the repository's README file.
 
-## TODO
-
-- restrict model list (optionally allow all for authenticated users)
-- make authentication optional (unless no allowed models)
-- improved custom prompts
-- settings
-  - auto-retry on edit
-  - ctrl+enter vs enter for sending
-- multiple chats
-
 ## Built With
 
 **Frontend**
