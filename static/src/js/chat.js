@@ -122,6 +122,14 @@ if (personalizationCollapsed) {
 	$personalizationCollapse.classList.add("collapsed");
 }
 
+const sidebarOpen = loadLocal("sidebar-open", false);
+
+if (sidebarOpen) {
+	$sidebar.classList.add("open");
+
+	document.body.classList.add("sidebar-open");
+}
+
 updatePersonalizationVisualState();
 
 const messages = [],
@@ -2582,12 +2590,6 @@ function getChatData(name) {
 	};
 }
 
-function _openSidebar() {
-	$sidebar.classList.add("open");
-
-	document.body.classList.add("sidebar-open");
-}
-
 function closeSidebar() {
 	$sidebar.classList.remove("open");
 
@@ -2598,13 +2600,15 @@ function toggleSidebar() {
 	$sidebar.classList.toggle("open");
 
 	document.body.classList.toggle("sidebar-open");
+
+	storeLocal("sidebar-open", $sidebar.classList.contains("open"));
 }
 
 function getSavedChats() {
 	return loadValue("saved-chats", []);
 }
 
-function saveChatToStorage(name) {
+function saveChatToStorage(name, skipConfirm = false) {
 	name = name?.trim();
 
 	if (!name) {
@@ -2618,7 +2622,7 @@ function saveChatToStorage(name) {
 		existingIndex = savedChats.findIndex(chat => chat.name === name);
 
 	if (existingIndex !== -1) {
-		if (!confirm(`A chat named "${name}" already exists. Overwrite?`)) {
+		if (!skipConfirm && !confirm(`A chat named "${name}" already exists. Overwrite?`)) {
 			return false;
 		}
 
@@ -2750,6 +2754,21 @@ function renderSavedChats() {
 		});
 
 		actions.appendChild(loadBtn);
+
+		// overwrite chat
+		const overwriteBtn = make("button", "overwrite-chat");
+
+		overwriteBtn.title = "Overwrite with current chat";
+
+		overwriteBtn.addEventListener("click", event => {
+			event.stopPropagation();
+
+			if (confirm(`Overwrite saved chat "${chat.name}" with current chat state?`)) {
+				saveChatToStorage(chat.name, true);
+			}
+		});
+
+		actions.appendChild(overwriteBtn);
 
 		// delete chat
 		const deleteBtn = make("button", "delete-chat");
@@ -3305,4 +3324,6 @@ loadData().then(() => {
 	restore();
 
 	document.body.classList.remove("loading");
+
+	document.body.classList.add("ready");
 });
