@@ -2222,6 +2222,7 @@ async function loadData() {
 
 	fillSelect($prompt, data.prompts, (el, prompt) => {
 		el.value = prompt.key;
+		el.title = prompt.description;
 		el.textContent = prompt.name;
 
 		promptList.push(prompt);
