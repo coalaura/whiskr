@@ -23,8 +23,9 @@ type PromptData struct {
 }
 
 type Prompt struct {
-	Key  string `json:"key"`
-	Name string `json:"name"`
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 
 	Text string `json:"-"`
 }
@@ -87,15 +88,23 @@ func LoadPrompts() ([]Prompt, error) {
 
 		index := bytes.Index(body, []byte("---"))
 		if index == -1 {
-			log.Warnf("Invalid prompt file: %q\n", path)
+			log.Warnf("Invalid prompt file (no delimiter): %q\n", path)
+
+			return nil
+		}
+
+		nl := bytes.Index(body[:index], []byte("\n"))
+		if nl == -1 {
+			log.Warnf("Invalid prompt file (no description): %q\n", path)
 
 			return nil
 		}
 
 		prompt := Prompt{
-			Key:  strings.Replace(filepath.Base(path), ".txt", "", 1),
-			Name: strings.TrimSpace(string(body[:index])),
-			Text: strings.TrimSpace(string(body[index+3:])) + "\n\n" + InternalGeneralPrompt,
+			Key:         strings.Replace(filepath.Base(path), ".txt", "", 1),
+			Name:        strings.TrimSpace(string(body[:nl])),
+			Description: strings.TrimSpace(string(body[nl+1 : index])),
+			Text:        strings.TrimSpace(string(body[index+3:])) + "\n\n" + InternalGeneralPrompt,
 		}
 
 		prompts = append(prompts, prompt)
