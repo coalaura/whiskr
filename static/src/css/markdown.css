@@ -201,22 +201,22 @@
 	padding-left: 28px;
 }
 
-.markdown> :first-child {
+.markdown > :first-child {
 	margin-top: 0;
 }
 
-.markdown blockquote>*,
-.markdown td>*,
-.markdown th>*,
-.markdown>* {
+.markdown blockquote > *,
+.markdown td > *,
+.markdown th > *,
+.markdown > * {
 	margin: 0;
 	margin-bottom: 14px;
 }
 
-.markdown blockquote>*:last-child,
-.markdown td>*:last-child,
-.markdown th>*:last-child,
-.markdown>*:last-child {
+.markdown blockquote > *:last-child,
+.markdown td > *:last-child,
+.markdown th > *:last-child,
+.markdown > *:last-child {
 	margin-bottom: 0;
 }
 

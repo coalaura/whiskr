@@ -2,8 +2,9 @@ import "../css/chat.css";
 
 import morphdom from "morphdom";
 import { unpack } from "msgpackr";
-
+import { getDataUrlAspectRatio } from "./binary.js";
 import { dropdown } from "./dropdown.js";
+import { resetGenerationState, setGenerationState } from "./favicon.js";
 import {
 	bHeight,
 	clamp,
@@ -28,8 +29,6 @@ import {
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
 import { connectDB, loadLocal, loadValue, storeLocal, storeValue } from "./storage.js";
-import { resetGenerationState, setGenerationState } from "./favicon.js";
-import { getDataUrlAspectRatio } from "./binary.js";
 
 const ChunkType = {
 	0: "start",
@@ -71,18 +70,23 @@ const $version = document.getElementById("version"),
 	$add = document.getElementById("add"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
-	$settingsOpt = document.getElementById("settings-opt"),
 	$upload = document.getElementById("upload"),
-	$export = document.getElementById("export"),
-	$import = document.getElementById("import"),
+	$export = document.getElementById("export-sidebar"),
+	$import = document.getElementById("import-sidebar"),
 	$dump = document.getElementById("dump"),
 	$clear = document.getElementById("clear"),
-	$settings = document.getElementById("settings"),
-	$settingsBack = $settings.querySelector(".background"),
+	$sidebar = document.getElementById("sidebar"),
+	$sidebarTrigger = document.getElementById("sidebar-trigger"),
+	$sidebarClose = document.getElementById("sidebar-close"),
 	$sEnabled = document.getElementById("s-enabled"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
-	$saveSettings = document.getElementById("save-settings"),
+	$personalizationSection = document.getElementById("personalization-section"),
+	$personalizationHeader = document.getElementById("personalization-header"),
+	$personalizationCollapse = document.getElementById("personalization-collapse"),
+	$personalizationBody = document.getElementById("personalization-body"),
+	$saveCurrentChat = document.getElementById("save-current-chat"),
+	$savedChatsList = document.getElementById("saved-chats-list"),
 	$authentication = document.getElementById("authentication"),
 	$authError = document.getElementById("auth-error"),
 	$username = document.getElementById("username"),
@@ -110,8 +114,15 @@ $sEnabled.checked = settings.enabled;
 $sName.value = settings.name;
 $sPrompt.value = settings.prompt;
 
-$settings.classList.toggle("disabled", !settings.enabled);
-$settingsOpt.classList.toggle("disabled", !settings.enabled);
+const personalizationCollapsed = loadLocal("personalization-collapsed", false);
+
+if (personalizationCollapsed) {
+	$personalizationBody.classList.add("collapsed");
+
+	$personalizationCollapse.classList.add("collapsed");
+}
+
+updatePersonalizationVisualState();
 
 const messages = [],
 	models = {},
@@ -158,6 +169,15 @@ function updateTitle() {
 	document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
 
 	storeValue("title", chatTitle);
+}
+
+function updatePersonalizationVisualState() {
+	const isDisabled = !settings.enabled;
+
+	$personalizationSection.classList.toggle("disabled", isDisabled);
+
+	$sName.disabled = isDisabled;
+	$sPrompt.disabled = isDisabled;
 }
 
 function distanceFromBottom() {
@@ -366,11 +386,22 @@ class Message {
 		// message role selector
 		this.#_roleSelect = make("select");
 
-		this.#_roleSelect.innerHTML = [
-			`<option value="user" ${this.#role === "user" ? "selected" : ""}>user</option>`,
-			`<option value="assistant" ${this.#role === "assistant" ? "selected" : ""}>assistant</option>`,
-			`<option value="system" ${this.#role === "system" ? "selected" : ""}>system</option>`,
-		].join("");
+		fillSelect(
+			this.#_roleSelect,
+			[
+				{ value: "user", label: "user", selected: this.#role === "user" },
+				{ value: "assistant", label: "assistant", selected: this.#role === "assistant" },
+				{ value: "system", label: "system", selected: this.#role === "system" },
+			],
+			(el, option) => {
+				el.value = option.value;
+				el.textContent = option.label;
+
+				if (option.selected) {
+					el.selected = true;
+				}
+			}
+		);
 
 		_wrapper.appendChild(this.#_roleSelect);
 
@@ -729,7 +760,7 @@ class Message {
 		const file = this.#inline[id];
 
 		if (!file) {
-			notify(`Error: invalid file "${id}"`);
+			notify(`Error: invalid file "${id}"`, "error");
 
 			return;
 		}
@@ -1931,7 +1962,7 @@ async function refreshTitle() {
 
 		console.error(err);
 
-		notify(err);
+		notify(err, "error");
 	}
 
 	titleController = null;
@@ -2050,7 +2081,7 @@ async function refreshUsage() {
 		updateTotalUsage();
 	} catch (err) {
 		if (!controller.signal.aborted) {
-			notify(`Failed to refresh usage: ${err.message}`);
+			notify(`Failed to refresh usage: ${err.message}`, "error");
 
 			usageController = null;
 		}
@@ -2065,7 +2096,7 @@ async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
 	if (!data) {
-		notify("Failed to load data.", true);
+		notify("Failed to load data.", "error", true);
 
 		return;
 	}
@@ -2189,6 +2220,9 @@ async function loadData() {
 	});
 
 	dropdown($prompt);
+
+	// render saved chats
+	renderSavedChats();
 }
 
 function clearMessages() {
@@ -2454,7 +2488,7 @@ async function uploadToMessage(self, message = false) {
 				throw new Error("File is too big (max 4MB)");
 			}
 		},
-		notify
+		msg => notify(msg, "error")
 	);
 
 	if (!files.length) {
@@ -2520,6 +2554,228 @@ async function uploadImageInline() {
 	};
 
 	input.click();
+}
+
+function getChatData(name) {
+	return {
+		title: name?.trim() || chatTitle,
+		message: $message.value,
+		attachments: attachments,
+		role: $role.value,
+		model: $model.value,
+		provider: $providerSorting.value,
+		prompt: $prompt.value,
+		temperature: $temperature.value,
+		iterations: $iterations.value,
+		image: {
+			resolution: $imageResolution.value,
+			aspect: $imageAspect.value,
+		},
+		reasoning: {
+			effort: $reasoningEffort.value,
+			tokens: $reasoningTokens.value,
+		},
+		json: jsonMode,
+		search: searchTool,
+		messages: messages.map(message => message.getData(true)).filter(Boolean),
+		savedAt: Date.now(),
+	};
+}
+
+function _openSidebar() {
+	$sidebar.classList.add("open");
+
+	document.body.classList.add("sidebar-open");
+}
+
+function closeSidebar() {
+	$sidebar.classList.remove("open");
+
+	document.body.classList.remove("sidebar-open");
+}
+
+function toggleSidebar() {
+	$sidebar.classList.toggle("open");
+
+	document.body.classList.toggle("sidebar-open");
+}
+
+function getSavedChats() {
+	return loadValue("saved-chats", []);
+}
+
+function saveChatToStorage(name) {
+	name = name?.trim();
+
+	if (!name) {
+		notify("Please enter a name for the chat", "warning");
+
+		return false;
+	}
+
+	const chatData = getChatData(name),
+		savedChats = getSavedChats(),
+		existingIndex = savedChats.findIndex(chat => chat.name === name);
+
+	if (existingIndex !== -1) {
+		if (!confirm(`A chat named "${name}" already exists. Overwrite?`)) {
+			return false;
+		}
+
+		savedChats[existingIndex] = {
+			name: name,
+			data: chatData,
+		};
+	} else {
+		savedChats.push({
+			name: name,
+			data: chatData,
+		});
+	}
+
+	storeValue("saved-chats", savedChats);
+
+	renderSavedChats();
+
+	notify(`Chat "${name}" saved`, "success");
+
+	return true;
+}
+
+function loadChatFromStorage(name) {
+	const savedChats = getSavedChats(),
+		savedChat = savedChats.find(chat => chat.name === name);
+
+	if (!savedChat) {
+		notify(`Chat "${name}" not found`, "error");
+
+		return;
+	}
+
+	const data = savedChat.data;
+
+	clearMessages();
+
+	// restore all state
+	chatTitle = data.title;
+
+	storeValue("title", data.title);
+	storeValue("message", data.message);
+	storeValue("attachments", data.attachments);
+	storeValue("role", data.role);
+	storeValue("model", data.model);
+	storeValue("prompt", data.prompt);
+	storeValue("temperature", data.temperature);
+	storeValue("iterations", data.iterations);
+	storeValue("provider", data.provider);
+	storeValue("image-resolution", data.image?.resolution);
+	storeValue("image-aspect", data.image?.aspect);
+	storeValue("reasoning-effort", data.reasoning?.effort);
+	storeValue("reasoning-tokens", data.reasoning?.tokens);
+	storeValue("json", data.json);
+	storeValue("search", data.search);
+	storeValue("messages", data.messages);
+
+	restore();
+
+	closeSidebar();
+
+	notify(`Loaded chat "${name}"`, "success");
+}
+
+function deleteChatFromStorage(name) {
+	const savedChats = getSavedChats(),
+		filtered = savedChats.filter(chat => chat.name !== name);
+
+	storeValue("saved-chats", filtered);
+
+	renderSavedChats();
+
+	notify(`Deleted chat "${name}"`, "success");
+}
+
+function renderSavedChats() {
+	const savedChats = getSavedChats();
+
+	$savedChatsList.innerHTML = "";
+
+	if (savedChats.length === 0) {
+		const empty = make("div", "empty-state");
+
+		empty.textContent = "No saved chats yet";
+
+		$savedChatsList.appendChild(empty);
+
+		return;
+	}
+
+	// sort by saved date, newest first
+	const sorted = [...savedChats].sort((a, b) => (b.data.savedAt || 0) - (a.data.savedAt || 0));
+
+	for (const chat of sorted) {
+		// main item
+		const item = make("div", "saved-chat-item");
+
+		// info wrapper
+		const info = make("div", "chat-info");
+
+		// name
+		const name = make("div", "chat-name");
+
+		name.textContent = chat.name;
+
+		info.appendChild(name);
+
+		// meta
+		const meta = make("div", "chat-date"),
+			date = chat.data.savedAt ? new Date(chat.data.savedAt).toLocaleDateString() : "Unknown date",
+			messageCount = chat.data.messages?.length || 0;
+
+		meta.textContent = `${date} - ${messageCount} messages`;
+
+		info.appendChild(meta);
+
+		// actions wrapper
+		const actions = make("div", "chat-actions");
+
+		// load chat
+		const loadBtn = make("button", "load-chat");
+
+		loadBtn.title = "Load this chat";
+
+		loadBtn.addEventListener("click", event => {
+			event.stopPropagation();
+
+			loadChatFromStorage(chat.name);
+		});
+
+		actions.appendChild(loadBtn);
+
+		// delete chat
+		const deleteBtn = make("button", "delete-chat");
+
+		deleteBtn.title = "Delete this chat";
+
+		deleteBtn.addEventListener("click", event => {
+			event.stopPropagation();
+
+			if (confirm(`Delete saved chat "${chat.name}"?`)) {
+				deleteChatFromStorage(chat.name);
+			}
+		});
+
+		actions.appendChild(deleteBtn);
+
+		// append
+		item.appendChild(info);
+		item.appendChild(actions);
+
+		item.addEventListener("click", () => {
+			loadChatFromStorage(chat.name);
+		});
+
+		$savedChatsList.appendChild(item);
+	}
 }
 
 $total.addEventListener("click", () => {
@@ -2672,21 +2928,15 @@ $iterations.addEventListener("input", () => {
 });
 
 $providerSorting.addEventListener("change", () => {
-	const provider = $providerSorting.value;
-
-	storeValue("provider", provider);
+	storeValue("provider", $providerSorting.value);
 });
 
 $imageResolution.addEventListener("change", () => {
-	const resolution = $imageResolution.value;
-
-	storeValue("image-resolution", resolution);
+	storeValue("image-resolution", $imageResolution.value);
 });
 
 $imageAspect.addEventListener("change", () => {
-	const aspectRatio = $imageAspect.value;
-
-	storeValue("image-aspect", aspectRatio);
+	storeValue("image-aspect", $imageAspect.value);
 });
 
 $reasoningEffort.addEventListener("change", () => {
@@ -2738,8 +2988,10 @@ $message.addEventListener("paste", async event => {
 	for (const item of items) {
 		if (item.type.startsWith("image/")) {
 			event.preventDefault();
-			const file = item.getAsFile();
-			const dataUrl = await readFileAsDataUrl(file);
+
+			const file = item.getAsFile(),
+				dataUrl = await readFileAsDataUrl(file);
+
 			await insertImageIntoTextarea(dataUrl, $message);
 		}
 	}
@@ -2769,34 +3021,24 @@ $clear.addEventListener("click", () => {
 	updateTitle();
 });
 
-$export.addEventListener("click", () => {
-	const data = JSON.stringify({
-		title: chatTitle,
-		message: $message.value,
-		attachments: attachments,
-		role: $role.value,
-		model: $model.value,
-		provider: $providerSorting.value,
-		prompt: $prompt.value,
-		temperature: $temperature.value,
-		iterations: $iterations.value,
-		image: {
-			resolution: $imageResolution.value,
-			aspect: $imageAspect.value,
-		},
-		reasoning: {
-			effort: $reasoningEffort.value,
-			tokens: $reasoningTokens.value,
-		},
-		json: jsonMode,
-		search: searchTool,
-		messages: messages.map(message => message.getData(true)).filter(Boolean),
-	});
+$sidebarTrigger.addEventListener("click", toggleSidebar);
+$sidebarClose.addEventListener("click", closeSidebar);
+
+$saveCurrentChat.addEventListener("click", () => {
+	const name = prompt("Enter a name for this chat:", chatTitle || "New Chat");
+
+	if (name) {
+		saveChatToStorage(name);
+	}
+});
+
+$export?.addEventListener("click", () => {
+	const data = JSON.stringify(getChatData(false));
 
 	download("chat.json", "application/json", data);
 });
 
-$import.addEventListener("click", async () => {
+$import?.addEventListener("click", async () => {
 	if (!modelList.length) {
 		return;
 	}
@@ -2807,7 +3049,7 @@ $import.addEventListener("click", async () => {
 			selected => {
 				selected.content = JSON.parse(selected.content);
 			},
-			notify
+			msg => notify(msg, "error")
 		),
 		data = file?.content;
 
@@ -2836,6 +3078,8 @@ $import.addEventListener("click", async () => {
 	]);
 
 	restore();
+
+	closeSidebar();
 });
 
 $dump.addEventListener("click", async () => {
@@ -2868,7 +3112,7 @@ $dump.addEventListener("click", async () => {
 	} catch (err) {
 		console.error(err);
 
-		notify(err);
+		notify(err, "error");
 	}
 
 	$dump.classList.remove("loading");
@@ -2910,6 +3154,7 @@ $login.addEventListener("click", async () => {
 		console.error(err);
 
 		$authError.textContent = `Error: ${err.message}`;
+
 		$authentication.classList.add("errored");
 
 		$password.value = "";
@@ -2926,25 +3171,16 @@ $password.addEventListener("input", () => {
 	$authentication.classList.remove("errored");
 });
 
-$settingsOpt.addEventListener("click", () => {
-	$settings.classList.add("open");
-});
-
 $sEnabled.addEventListener("change", () => {
 	settings.enabled = $sEnabled.checked;
 
-	$sEnabled.value = settings.enabled;
-
 	storeLocal("s-enabled", settings.enabled);
 
-	$settings.classList.toggle("disabled", !settings.enabled);
-	$settingsOpt.classList.toggle("disabled", !settings.enabled);
+	updatePersonalizationVisualState();
 });
 
 $sName.addEventListener("change", () => {
 	settings.name = $sName.value.trim();
-
-	$sName.value = settings.name;
 
 	storeLocal("s-name", settings.name);
 });
@@ -2952,17 +3188,7 @@ $sName.addEventListener("change", () => {
 $sPrompt.addEventListener("change", () => {
 	settings.prompt = $sPrompt.value.trim();
 
-	$sPrompt.value = settings.prompt;
-
 	storeLocal("s-prompt", settings.prompt);
-});
-
-$settingsBack.addEventListener("click", () => {
-	$settings.classList.remove("open");
-});
-
-$saveSettings.addEventListener("click", () => {
-	$settings.classList.remove("open");
 });
 
 $message.addEventListener("keydown", event => {
@@ -2973,6 +3199,18 @@ $message.addEventListener("keydown", event => {
 	if (event.ctrlKey && event.key === "Enter") {
 		$send.click();
 	}
+});
+
+$personalizationHeader.addEventListener("click", event => {
+	if (event.target.closest(".toggle-switch") || event.target.closest("input[type='checkbox']")) {
+		return;
+	}
+
+	const isCollapsed = $personalizationBody.classList.toggle("collapsed");
+
+	$personalizationCollapse.classList.toggle("collapsed", isCollapsed);
+
+	storeLocal("personalization-collapsed", isCollapsed);
 });
 
 addEventListener("mousemove", event => {
@@ -2998,7 +3236,10 @@ addEventListener("mouseup", () => {
 
 addEventListener("keydown", event => {
 	if (event.key === "Escape") {
-		$settings.classList.remove("open");
+		if ($sidebar.classList.contains("open")) {
+			closeSidebar();
+			return;
+		}
 	}
 
 	if (["TEXTAREA", "INPUT", "SELECT"].includes(document.activeElement?.tagName)) {

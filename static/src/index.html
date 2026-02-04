@@ -24,6 +24,71 @@
 
 		<div id="notifications"></div>
 
+		<div id="sidebar" class="collapsed">
+			<div class="sidebar-header">
+				<h3>Configuration</h3>
+
+				<button id="sidebar-close" title="Close sidebar"></button>
+			</div>
+			
+			<div class="sidebar-content">
+				<div class="sidebar-section personalization" id="personalization-section">
+					<div class="section-header" id="personalization-header">
+						<div class="section-collapse" id="personalization-collapse"></div>
+
+						<span>Personalization</span>
+
+						<label class="toggle-switch">
+							<input type="checkbox" id="s-enabled" />
+							<span class="toggle-slider"></span>
+						</label>
+					</div>
+
+					<div class="section-body" id="personalization-body">
+						<div class="form-group">
+							<label for="s-name">What should whiskr call you?</label>
+							<input type="text" id="s-name" placeholder="Your Name" />
+						</div>
+
+						<div class="form-group">
+							<label for="s-prompt">Anything whiskr should know about you?</label>
+							<textarea id="s-prompt" placeholder="Custom instructions, details..."></textarea>
+						</div>
+					</div>
+				</div>
+
+				<div class="sidebar-section saved-chats">
+					<div class="section-header">
+						<span>Saved Chats</span>
+
+						<button id="save-current-chat" title="Save current chat"></button>
+					</div>
+
+					<div class="saved-chats-content" id="saved-chats-list">
+						<div class="empty-state">No saved chats yet</div>
+					</div>
+				</div>
+
+				<div class="sidebar-section data-management">
+					<div class="section-header">
+						<span>Data Management</span>
+					</div>
+
+					<div class="data-actions">
+						<button id="import-sidebar" title="Import chat from JSON file">
+							<span>Import Chat</span>
+						</button>
+
+						<button id="export-sidebar" title="Export current chat to JSON">
+							<span>Export Chat</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<button id="sidebar-trigger" title="Toggle configuration sidebar"></button>
+
 		<div id="page">
 			<div id="title" class="hidden">
 				<button id="title-refresh"></button>
@@ -51,11 +116,8 @@
 
 					<div class="option">
 						<button id="upload" title="Add files to message"></button>
-						<button id="import" title="Import a chat from an exported JSON file"></button>
-						<button id="export" title="Export the entire chat as a JSON file"></button>
 						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
 						<button id="clear" title="Clear the entire chat"></button>
-						<button id="settings-opt" title="Show settings and personalization"></button>
 					</div>
 				</div>
 
@@ -138,30 +200,6 @@
 
 				<button id="add" title="Add message to chat"></button>
 				<button id="send" title="Add message to chat and start completion"></button>
-			</div>
-		</div>
-
-		<div id="settings" class="modal">
-			<div class="background"></div>
-			<div class="content">
-				<div class="header">
-					<span>Settings & Personalization</span>
-					<input type="checkbox" id="s-enabled" />
-				</div>
-				<div class="body">
-					<div class="form-group vertical">
-						<label for="s-name">What should whiskr call you?</label>
-						<input type="text" id="s-name" placeholder="Your Name" />
-					</div>
-
-					<div class="form-group vertical">
-						<label for="s-prompt">Anything whiskr should know about you?</label>
-						<textarea id="s-prompt" placeholder="Custom instructions, details..."></textarea>
-					</div>
-				</div>
-				<div class="buttons">
-					<button id="save-settings">Save</button>
-				</div>
 			</div>
 		</div>
 

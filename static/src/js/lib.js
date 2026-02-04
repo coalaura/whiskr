@@ -498,10 +498,8 @@ export async function detectPlatform() {
 
 const $notifications = document.getElementById("notifications");
 
-export async function notify(msg, persistent = false) {
-	console.warn(msg);
-
-	const notification = make("div", "notification", "off-screen");
+export async function notify(msg, type = "error", persistent = false) {
+	const notification = make("div", "notification", type, "off-screen");
 
 	notification.textContent = msg instanceof Error ? msg.message : msg;
 

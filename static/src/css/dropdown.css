@@ -21,8 +21,8 @@ body {
 }
 
 body.resizing * {
-	user-select: none !important;
-	cursor: grabbing !important;
+	user-select: none;
+	cursor: grabbing;
 }
 
 body.christmas #page::before {
@@ -142,7 +142,7 @@ body:not(.loading) #loading {
 }
 
 .notification.off-screen {
-	height: 0px !important;
+	height: 0px;
 	border-width: 0px;
 	left: calc(100% + 20px);
 	padding: 0px 15px;
@@ -155,8 +155,8 @@ body:not(.loading) #loading {
 	position: absolute;
 	top: 4px;
 	right: 4px;
-	width: 16px !important;
-	height: 16px !important;
+	width: 16px;
+	height: 16px;
 }
 
 #page {
@@ -175,12 +175,12 @@ body:not(.loading) #loading {
 }
 
 .hidden {
-	opacity: 0 !important;
-	pointer-events: none !important;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .none {
-	display: none !important;
+	display: none;
 }
 
 #title {
@@ -553,7 +553,7 @@ body:not(.loading) #loading {
 	overflow: hidden;
 }
 
-.message.collapsed .body>* {
+.message.collapsed .body > * {
 	opacity: 0;
 }
 
@@ -1356,7 +1356,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden)+#bottom {
+#top:not(.hidden) + #bottom {
 	right: 40px;
 }
 
@@ -1389,7 +1389,7 @@ label[for="reasoning-tokens"] {
 #dump,
 #clear,
 #settings-opt {
-	position: unset !important;
+	position: unset;
 }
 
 #scrolling {
@@ -1618,7 +1618,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
-
 	0%,
 	100% {
 		left: 0px;
@@ -1631,7 +1630,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
-
 	0%,
 	75%,
 	100% {
@@ -1694,7 +1692,6 @@ label[for="reasoning-tokens"] {
 }
 
 @media (max-width: 745px) {
-
 	.message,
 	.message.assistant {
 		width: 100%;
@@ -2079,11 +2076,12 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes drop-pulse {
-	0%, 100% { 
+	0%,
+	100% {
 		opacity: 1;
 		box-shadow: 0 0 4px var(--c-mauve);
 	}
-	50% { 
+	50% {
 		opacity: 0.6;
 		box-shadow: 0 0 8px var(--c-mauve);
 	}
