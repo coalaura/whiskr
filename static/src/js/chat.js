@@ -2566,7 +2566,7 @@ async function uploadImageInline() {
 
 function getChatData(name) {
 	return {
-		title: name?.trim() || chatTitle,
+		title: name?.trim?.() || chatTitle,
 		message: $message.value,
 		attachments: attachments,
 		role: $role.value,
