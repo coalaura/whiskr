@@ -561,11 +561,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	defer stream.Close()
 
 	var (
-		id        string
-		open      int
-		close     int
-		reasoning bool
-		tool      *ToolCall
+		id         string
+		open       int
+		close      int
+		completing bool
+		reasoning  bool
+		tool       *ToolCall
 	)
 
 	buf := GetFreeBuffer()
@@ -643,6 +644,16 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		}
 
 		if delta.Content != "" {
+			if !completing {
+				delta.Content = strings.TrimLeft(delta.Content, " \t\n\r")
+
+				if delta.Content == "" {
+					continue
+				} else {
+					completing = true
+				}
+			}
+
 			buf.WriteString(delta.Content)
 
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
