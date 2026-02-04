@@ -659,6 +659,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
 		} else if delta.Reasoning != nil {
 			if !reasoning && len(delta.ReasoningDetails) != 0 {
+				*delta.Reasoning = strings.TrimLeft(*delta.Reasoning, " \t\n\r")
+
 				reasoning = true
 
 				response.WriteChunk(NewChunk(ChunkReasoningType, delta.ReasoningDetails[0].Type))
