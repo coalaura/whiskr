@@ -732,7 +732,7 @@ body.ready #sidebar-trigger {
 }
 
 .none {
-	display: none;
+	display: none !important;
 }
 
 #title {
