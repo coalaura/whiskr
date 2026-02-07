@@ -104,17 +104,17 @@ use({
 			const title = href.title ? ` title="${escapeHtml(href.title)}"` : "",
 				alt = href.text ? ` alt="${escapeHtml(href.text)}"` : "";
 
-			return `<span class="image-wrapper"><img src="${escapeHtml(href.href)}"${alt}${title} class="image" /></span>`;
+			return `<span class="no-click image-wrapper"><img src="${escapeHtml(href.href)}"${alt}${title} class="image" /></span>`;
 		},
 
 		code: code => {
-			const header = `<div class="pre-header">${escapeHtml(code.lang)}</div>`;
+			const header = `<div class="pre-header no-click">${escapeHtml(code.lang)}</div>`;
 			const button = `<button class="pre-copy" title="Copy code contents"></button>`;
 
 			return `<pre class="l-${escapeHtml(code.lang)}">${header}${button}<code>${code.text}</code></pre>`;
 		},
 
-		link: link => `<a href="${link.href}" target="_blank">${escapeHtml(link.text || link.href)}</a>`,
+		link: link => `<a href="${link.href}" target="_blank" class="no-click">${escapeHtml(link.text || link.href)}</a>`,
 	},
 
 	hooks: {
@@ -243,10 +243,10 @@ function parseMd(markdown) {
 			if (file.name.endsWith(".svg")) {
 				const svg = fixProgressiveSvg(table[file.id].content);
 
-				return `<div class="inline-svg ${file.busy ? "busy" : ""}" data-id="${file.id}"><img class="image" src="${svg}" /><button class="download" title="Download file"></button></div>`;
+				return `<div class="no-click inline-svg ${file.busy ? "busy" : ""}" data-id="${file.id}"><img class="image" src="${svg}" /><button class="download" title="Download file"></button></div>`;
 			}
 
-			return `<div class="inline-file ${file.busy ? "busy" : ""}" data-id="${file.id}"><div class="name" title="${name}">${name}</div><div class="size"><sup>${formatBytes(file.size)}</sup></div><button class="download" title="Download file"></button></div>`;
+			return `<div class="no-click inline-file ${file.busy ? "busy" : ""}" data-id="${file.id}"><div class="name" title="${name}">${name}</div><div class="size"><sup>${formatBytes(file.size)}</sup></div><button class="download" title="Download file"></button></div>`;
 		}
 
 		return match;
