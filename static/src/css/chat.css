@@ -250,6 +250,15 @@ body:not(.loading) #loading {
 	left: 0;
 }
 
+#sidebar::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+	box-shadow: inset 5px 0px 20px 5px rgba(0, 0, 0, 0.05);
+}
+
 body.ready #sidebar {
 	transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -762,9 +771,9 @@ body.ready #sidebar-trigger {
 	gap: 6px;
 	position: absolute;
 	top: -22px;
-	left: -4px;
+	left: 5px;
 	font-style: italic;
-	padding-left: 22px;
+	padding-left: 20px;
 	transition: 150ms opacity;
 	max-width: 100%;
 }
@@ -778,8 +787,8 @@ body.ready #sidebar-trigger {
 
 #title #title-refresh {
 	background-image: url(icons/refresh.svg);
-	width: 16px;
-	height: 16px;
+	width: 15px;
+	height: 15px;
 	position: absolute;
 	top: 50%;
 	left: 0;
