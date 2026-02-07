@@ -523,3 +523,5 @@ export async function notify(msg, type = "error", persistent = false) {
 
 	notification.remove();
 }
+
+window.notify = notify;
