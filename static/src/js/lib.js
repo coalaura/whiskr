@@ -44,14 +44,68 @@ export function wait(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function escapeHtml(text) {
-	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+export function wrapJSON(txt) {
+	if (!txt || !txt.startsWith("{")) {
+		return txt;
+	}
+
+	try {
+		const data = JSON.parse(txt);
+
+		return `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+	} catch {}
+
+	return txt;
+}
+
+export function lines(text) {
+	let count = 1;
+
+	for (const ch of text) {
+		if (ch === "\n") {
+			count++;
+		}
+	}
+
+	return count;
 }
 
 const fracZerosRgx = /(?:(\.\d*?[1-9])0+|\.0+)$/;
 
 export function round(num, digits) {
 	return num.toFixed(digits).replace(fracZerosRgx, "$1") || "0";
+}
+
+const trailingZeroRgx = /\.?0+$/m;
+
+export function fixed(num, decimals = 0) {
+	return num.toFixed(decimals).replace(trailingZeroRgx, "");
+}
+
+export function formatMoney(num) {
+	if (num === 0) {
+		return "0ct";
+	}
+
+	if (num < 1) {
+		let decimals = 1;
+
+		if (num < 0.00001) {
+			decimals = 4;
+		} else if (num < 0.0001) {
+			decimals = 3;
+		} else if (num < 0.001) {
+			decimals = 2;
+		}
+
+		return `${fixed(num * 100, decimals)}ct`;
+	}
+
+	return `$${fixed(num, 2)}`;
+}
+
+export function clamp(num, min, max) {
+	return Math.min(Math.max(num, min), max);
 }
 
 export function formatMilliseconds(ms) {
@@ -190,52 +244,6 @@ export async function dataUrlFilename(dataUrl) {
 	return `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
 }
 
-const trailingZeroRgx = /\.?0+$/m;
-
-export function fixed(num, decimals = 0) {
-	return num.toFixed(decimals).replace(trailingZeroRgx, "");
-}
-
-export function formatMoney(num) {
-	if (num === 0) {
-		return "0ct";
-	}
-
-	if (num < 1) {
-		let decimals = 1;
-
-		if (num < 0.00001) {
-			decimals = 4;
-		} else if (num < 0.0001) {
-			decimals = 3;
-		} else if (num < 0.001) {
-			decimals = 2;
-		}
-
-		return `${fixed(num * 100, decimals)}ct`;
-	}
-
-	return `$${fixed(num, 2)}`;
-}
-
-export function clamp(num, min, max) {
-	return Math.min(Math.max(num, min), max);
-}
-
-export function wrapJSON(txt) {
-	if (!txt || !txt.startsWith("{")) {
-		return txt;
-	}
-
-	try {
-		const data = JSON.parse(txt);
-
-		return `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
-	} catch {}
-
-	return txt;
-}
-
 export function download(name, type, data) {
 	let blob;
 
@@ -260,24 +268,6 @@ export function download(name, type, data) {
 
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
-}
-
-export function lines(text) {
-	let count = 0,
-		index = 0;
-
-	while (index < text.length) {
-		index = text.indexOf("\n", index);
-
-		if (index === -1) {
-			break;
-		}
-
-		count++;
-		index++;
-	}
-
-	return count + 1;
 }
 
 export function previewFile(file) {
