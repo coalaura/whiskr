@@ -28,7 +28,7 @@ import {
 	wrapJSON,
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
-import { connectDB, loadLocal, loadValue, storeLocal, storeValue } from "./storage.js";
+import { connectDB, load, store } from "./storage.js";
 
 const ChunkType = {
 	0: "start",
@@ -105,32 +105,10 @@ detectPlatform().then(result => {
 });
 
 const settings = {
-	enabled: loadLocal("s-enabled", true),
-	name: loadLocal("s-name", ""),
-	prompt: loadLocal("s-prompt", ""),
+	enabled: true,
+	name: "",
+	prompt: "",
 };
-
-$sEnabled.checked = settings.enabled;
-$sName.value = settings.name;
-$sPrompt.value = settings.prompt;
-
-const personalizationCollapsed = loadLocal("personalization-collapsed", false);
-
-if (personalizationCollapsed) {
-	$personalizationBody.classList.add("collapsed");
-
-	$personalizationCollapse.classList.add("collapsed");
-}
-
-const sidebarOpen = loadLocal("sidebar-open", false);
-
-if (sidebarOpen) {
-	$sidebar.classList.add("open");
-
-	document.body.classList.add("sidebar-open");
-}
-
-updatePersonalizationVisualState();
 
 const messages = [],
 	models = {},
@@ -176,7 +154,7 @@ function updateTitle() {
 
 	document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
 
-	storeValue("title", chatTitle);
+	store("title", chatTitle);
 }
 
 function updatePersonalizationVisualState() {
@@ -264,7 +242,7 @@ async function insertImageIntoTextarea(dataUrl, textarea) {
 	textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
 
 	if (textarea === $message) {
-		storeValue("message", textarea.value);
+		store("message", textarea.value);
 	}
 }
 
@@ -1065,7 +1043,7 @@ class Message {
 	}
 
 	#save() {
-		storeValue("messages", messages.map(message => message.getData(true)).filter(Boolean));
+		store("messages", messages.map(message => message.getData(true)).filter(Boolean));
 	}
 
 	isAssistant() {
@@ -2103,6 +2081,30 @@ async function refreshUsage() {
 async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
+	settings.enabled = load("s-enabled", true);
+	settings.name = load("s-name", "");
+	settings.prompt = load("s-prompt", "");
+
+	$sEnabled.checked = settings.enabled;
+	$sName.value = settings.name;
+	$sPrompt.value = settings.prompt;
+
+	const personalizationCollapsed = load("personalization-collapsed", false);
+
+	if (personalizationCollapsed) {
+		$personalizationBody.classList.add("collapsed");
+		$personalizationCollapse.classList.add("collapsed");
+	}
+
+	const sidebarOpen = load("sidebar-open", false);
+
+	if (sidebarOpen) {
+		$sidebar.classList.add("open");
+		document.body.classList.add("sidebar-open");
+	}
+
+	updatePersonalizationVisualState();
+
 	if (!data) {
 		notify("Failed to load data.", "error", true);
 
@@ -2113,7 +2115,7 @@ async function loadData() {
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
 
 	// usage
-	usageType = loadValue("usage-type", "monthly");
+	usageType = load("usage-type", "monthly");
 
 	updateTotalUsage();
 
@@ -2131,20 +2133,20 @@ async function loadData() {
 	}
 
 	// render models
-	const favorites = loadValue("model-favorites", []),
-		modelTab = loadValue("model-tab"),
+	const favorites = load("model-favorites", []),
+		modelTab = load("model-tab"),
 		newTime = Math.round(Date.now() / 1000) - 2 * 7 * 24 * 60 * 60;
 
 	$model.addEventListener("tab", event => {
 		const tab = event.detail;
 
-		storeValue("model-tab", tab);
+		store("model-tab", tab);
 	});
 
 	$model.addEventListener("favorite", event => {
 		const newFavorites = event.detail;
 
-		storeValue("model-favorites", newFavorites);
+		store("model-favorites", newFavorites);
 	});
 
 	fillSelect($model, data.models, (el, model) => {
@@ -2243,23 +2245,23 @@ function clearMessages() {
 }
 
 function restore() {
-	const resizedHeight = loadValue("resized");
+	const resizedHeight = load("resized");
 
 	if (resizedHeight) {
 		$chat.style.height = `${resizedHeight}px`;
 	}
 
-	$message.value = loadValue("message", "");
-	$role.value = loadValue("role", "user");
-	$model.value = loadValue("model", modelList.length ? modelList[0].id : "");
-	$prompt.value = loadValue("prompt", promptList.length ? promptList[0].key : "");
-	$temperature.value = loadValue("temperature", 0.85);
-	$iterations.value = loadValue("iterations", 3);
-	$providerSorting.value = loadValue("provider", "");
-	$imageResolution.value = loadValue("image-resolution", "1K");
-	$imageAspect.value = loadValue("image-aspect", "");
-	$reasoningEffort.value = loadValue("reasoning-effort", "medium");
-	$reasoningTokens.value = loadValue("reasoning-tokens", 1024);
+	$message.value = load("message", "");
+	$role.value = load("role", "user");
+	$model.value = load("model", modelList.length ? modelList[0].id : "");
+	$prompt.value = load("prompt", promptList.length ? promptList[0].key : "");
+	$temperature.value = load("temperature", 0.85);
+	$iterations.value = load("iterations", 3);
+	$providerSorting.value = load("provider", "");
+	$imageResolution.value = load("image-resolution", "1K");
+	$imageAspect.value = load("image-aspect", "");
+	$reasoningEffort.value = load("reasoning-effort", "medium");
+	$reasoningTokens.value = load("reasoning-tokens", 1024);
 
 	if (!modelList.find(model => model.id === $model.value && !disabledModels.includes(model.id))) {
 		$model.value = modelList.length ? modelList[0].id : "";
@@ -2267,31 +2269,31 @@ function restore() {
 
 	$model.dispatchEvent(new Event("change"));
 
-	const files = loadValue("attachments", []);
+	const files = load("attachments", []);
 
 	for (const file of files) {
 		pushAttachment(file);
 	}
 
-	if (!jsonMode && loadValue("json")) {
+	if (!jsonMode && load("json")) {
 		$json.click();
 	}
 
-	if (!searchTool && loadValue("search")) {
+	if (!searchTool && load("search")) {
 		$search.click();
 	} else {
 		$iterations.parentNode.classList.add("none");
 	}
 
-	if (!autoScrolling && loadValue("scrolling")) {
+	if (!autoScrolling && load("scrolling")) {
 		$scrolling.click();
 	}
 
-	loadValue("messages", []).forEach(message => {
+	load("messages", []).forEach(message => {
 		new Message(message);
 	});
 
-	chatTitle = loadValue("title");
+	chatTitle = load("title");
 
 	updateTitle();
 
@@ -2399,7 +2401,7 @@ function pushAttachment(file, message = false) {
 
 	attachments.push(file);
 
-	storeValue("attachments", attachments);
+	store("attachments", attachments);
 
 	$attachments.appendChild(
 		buildFileElement(file, el => {
@@ -2411,7 +2413,7 @@ function pushAttachment(file, message = false) {
 
 			attachments.splice(index, 1);
 
-			storeValue("attachments", attachments);
+			store("attachments", attachments);
 
 			el.remove();
 
@@ -2428,7 +2430,7 @@ function clearAttachments() {
 	$attachments.innerHTML = "";
 	$attachments.classList.remove("has-files");
 
-	storeValue("attachments", []);
+	store("attachments", []);
 }
 
 function pushMessage() {
@@ -2454,7 +2456,7 @@ function pushMessage() {
 	}
 
 	$message.value = "";
-	storeValue("message", "");
+	store("message", "");
 
 	const message = new Message({
 		role: $role.value,
@@ -2602,11 +2604,11 @@ function toggleSidebar() {
 
 	document.body.classList.toggle("sidebar-open");
 
-	storeLocal("sidebar-open", $sidebar.classList.contains("open"));
+	store("sidebar-open", $sidebar.classList.contains("open"));
 }
 
 function getSavedChats() {
-	return loadValue("saved-chats", []);
+	return load("saved-chats", []);
 }
 
 function saveChatToStorage(name, skipConfirm = false) {
@@ -2638,7 +2640,7 @@ function saveChatToStorage(name, skipConfirm = false) {
 		});
 	}
 
-	storeValue("saved-chats", savedChats);
+	store("saved-chats", savedChats);
 
 	renderSavedChats();
 
@@ -2664,22 +2666,22 @@ function loadChatFromStorage(name) {
 	// restore all state
 	chatTitle = data.title;
 
-	storeValue("title", data.title);
-	storeValue("message", data.message);
-	storeValue("attachments", data.attachments);
-	storeValue("role", data.role);
-	storeValue("model", data.model);
-	storeValue("prompt", data.prompt);
-	storeValue("temperature", data.temperature);
-	storeValue("iterations", data.iterations);
-	storeValue("provider", data.provider);
-	storeValue("image-resolution", data.image?.resolution);
-	storeValue("image-aspect", data.image?.aspect);
-	storeValue("reasoning-effort", data.reasoning?.effort);
-	storeValue("reasoning-tokens", data.reasoning?.tokens);
-	storeValue("json", data.json);
-	storeValue("search", data.search);
-	storeValue("messages", data.messages);
+	store("title", data.title);
+	store("message", data.message);
+	store("attachments", data.attachments);
+	store("role", data.role);
+	store("model", data.model);
+	store("prompt", data.prompt);
+	store("temperature", data.temperature);
+	store("iterations", data.iterations);
+	store("provider", data.provider);
+	store("image-resolution", data.image?.resolution);
+	store("image-aspect", data.image?.aspect);
+	store("reasoning-effort", data.reasoning?.effort);
+	store("reasoning-tokens", data.reasoning?.tokens);
+	store("json", data.json);
+	store("search", data.search);
+	store("messages", data.messages);
 
 	restore();
 
@@ -2692,7 +2694,7 @@ function deleteChatFromStorage(name) {
 	const savedChats = getSavedChats(),
 		filtered = savedChats.filter(chat => chat.name !== name);
 
-	storeValue("saved-chats", filtered);
+	store("saved-chats", filtered);
 
 	renderSavedChats();
 
@@ -2818,7 +2820,7 @@ $total.addEventListener("click", () => {
 			break;
 	}
 
-	storeValue("usage-type", usageType);
+	store("usage-type", usageType);
 
 	updateTotalUsage();
 });
@@ -2871,7 +2873,7 @@ $resizeBar.addEventListener("mousedown", event => {
 	if (event.button === 1) {
 		$chat.style.height = "";
 
-		storeValue("resized", false);
+		store("resized", false);
 
 		scroll(isAtBottom, true);
 
@@ -2889,7 +2891,7 @@ $resizeBar.addEventListener("mousedown", event => {
 });
 
 $role.addEventListener("change", () => {
-	storeValue("role", $role.value);
+	store("role", $role.value);
 });
 
 $model.addEventListener("change", () => {
@@ -2897,7 +2899,7 @@ $model.addEventListener("change", () => {
 		data = model ? models[model] : null,
 		tags = data?.tags || [];
 
-	storeValue("model", model);
+	store("model", model);
 
 	if (tags.includes("reasoning")) {
 		$reasoningEffort.parentNode.classList.remove("none");
@@ -2926,14 +2928,14 @@ $model.addEventListener("change", () => {
 });
 
 $prompt.addEventListener("change", () => {
-	storeValue("prompt", $prompt.value);
+	store("prompt", $prompt.value);
 });
 
 $temperature.addEventListener("input", () => {
 	const value = $temperature.value,
 		temperature = parseFloat(value);
 
-	storeValue("temperature", value);
+	store("temperature", value);
 
 	$temperature.classList.toggle("invalid", Number.isNaN(temperature) || temperature < 0 || temperature > 2);
 });
@@ -2942,27 +2944,27 @@ $iterations.addEventListener("input", () => {
 	const value = $iterations.value,
 		iterations = parseFloat(value);
 
-	storeValue("iterations", value);
+	store("iterations", value);
 
 	$iterations.classList.toggle("invalid", Number.isNaN(iterations) || iterations < 1 || iterations > 50);
 });
 
 $providerSorting.addEventListener("change", () => {
-	storeValue("provider", $providerSorting.value);
+	store("provider", $providerSorting.value);
 });
 
 $imageResolution.addEventListener("change", () => {
-	storeValue("image-resolution", $imageResolution.value);
+	store("image-resolution", $imageResolution.value);
 });
 
 $imageAspect.addEventListener("change", () => {
-	storeValue("image-aspect", $imageAspect.value);
+	store("image-aspect", $imageAspect.value);
 });
 
 $reasoningEffort.addEventListener("change", () => {
 	const effort = $reasoningEffort.value;
 
-	storeValue("reasoning-effort", effort);
+	store("reasoning-effort", effort);
 
 	$reasoningTokens.parentNode.classList.toggle("none", !!effort);
 });
@@ -2971,7 +2973,7 @@ $reasoningTokens.addEventListener("input", () => {
 	const value = $reasoningTokens.value,
 		tokens = parseInt(value, 10);
 
-	storeValue("reasoning-tokens", value);
+	store("reasoning-tokens", value);
 
 	$reasoningTokens.classList.toggle("invalid", Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024);
 });
@@ -2979,7 +2981,7 @@ $reasoningTokens.addEventListener("input", () => {
 $json.addEventListener("click", () => {
 	jsonMode = !jsonMode;
 
-	storeValue("json", jsonMode);
+	store("json", jsonMode);
 
 	$json.classList.toggle("on", jsonMode);
 });
@@ -2987,7 +2989,7 @@ $json.addEventListener("click", () => {
 $search.addEventListener("click", () => {
 	searchTool = !searchTool;
 
-	storeValue("search", searchTool);
+	store("search", searchTool);
 
 	$search.classList.toggle("on", searchTool);
 
@@ -2995,7 +2997,7 @@ $search.addEventListener("click", () => {
 });
 
 $message.addEventListener("input", () => {
-	storeValue("message", $message.value);
+	store("message", $message.value);
 });
 
 $message.addEventListener("paste", async event => {
@@ -3080,21 +3082,21 @@ $import?.addEventListener("click", async () => {
 	clearMessages();
 
 	await Promise.all([
-		storeValue("title", data.title),
-		storeValue("message", data.message),
-		storeValue("attachments", data.attachments),
-		storeValue("role", data.role),
-		storeValue("model", data.model),
-		storeValue("prompt", data.prompt),
-		storeValue("temperature", data.temperature),
-		storeValue("iterations", data.iterations),
-		storeValue("image-resolution", data.image?.resolution),
-		storeValue("image-aspect", data.image?.aspect),
-		storeValue("reasoning-effort", data.reasoning?.effort),
-		storeValue("reasoning-tokens", data.reasoning?.tokens),
-		storeValue("json", data.json),
-		storeValue("search", data.search),
-		storeValue("messages", data.messages),
+		store("title", data.title),
+		store("message", data.message),
+		store("attachments", data.attachments),
+		store("role", data.role),
+		store("model", data.model),
+		store("prompt", data.prompt),
+		store("temperature", data.temperature),
+		store("iterations", data.iterations),
+		store("image-resolution", data.image?.resolution),
+		store("image-aspect", data.image?.aspect),
+		store("reasoning-effort", data.reasoning?.effort),
+		store("reasoning-tokens", data.reasoning?.tokens),
+		store("json", data.json),
+		store("search", data.search),
+		store("messages", data.messages),
 	]);
 
 	restore();
@@ -3155,7 +3157,7 @@ $scrolling.addEventListener("click", () => {
 		$scrolling.classList.remove("on");
 	}
 
-	storeValue("scrolling", autoScrolling);
+	store("scrolling", autoScrolling);
 });
 
 $send.addEventListener("click", () => {
@@ -3194,7 +3196,7 @@ $password.addEventListener("input", () => {
 $sEnabled.addEventListener("change", () => {
 	settings.enabled = $sEnabled.checked;
 
-	storeLocal("s-enabled", settings.enabled);
+	store("s-enabled", settings.enabled);
 
 	updatePersonalizationVisualState();
 });
@@ -3202,13 +3204,13 @@ $sEnabled.addEventListener("change", () => {
 $sName.addEventListener("change", () => {
 	settings.name = $sName.value.trim();
 
-	storeLocal("s-name", settings.name);
+	store("s-name", settings.name);
 });
 
 $sPrompt.addEventListener("change", () => {
 	settings.prompt = $sPrompt.value.trim();
 
-	storeLocal("s-prompt", settings.prompt);
+	store("s-prompt", settings.prompt);
 });
 
 $message.addEventListener("keydown", event => {
@@ -3230,7 +3232,7 @@ $personalizationHeader.addEventListener("click", event => {
 
 	$personalizationCollapse.classList.toggle("collapsed", isCollapsed);
 
-	storeLocal("personalization-collapsed", isCollapsed);
+	store("personalization-collapsed", isCollapsed);
 });
 
 addEventListener("mousemove", event => {
@@ -3243,7 +3245,7 @@ addEventListener("mousemove", event => {
 
 	$chat.style.height = `${height}px`;
 
-	storeValue("resized", height);
+	store("resized", height);
 
 	scroll(scrollResize, true);
 });

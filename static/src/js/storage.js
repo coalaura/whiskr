@@ -1,74 +1,40 @@
+import Dexie from "dexie";
+
 const DatabaseName = "whiskr",
-	StorageName = "chat";
+	TableName = "kv";
 
 function isNull(value) {
 	return value === "" || value === null || value === undefined;
 }
 
-class Database {
+class StorageDB {
 	#database;
-
 	#scheduled = new Map();
 	#writes = new Map();
 	#cache = new Map();
 
 	async init() {
-		await this.#connect();
+		this.#database = new Dexie(DatabaseName);
+		this.#database.version(1).stores({
+			[TableName]: "&key",
+		});
+
+		await this.#database.open();
 		await this.#load();
 	}
 
-	#connect() {
-		return new Promise((resolve, reject) => {
-			const request = indexedDB.open(DatabaseName, 1);
+	async #load() {
+		const rows = await this.#database.table(TableName).toArray();
+		let total = 0;
 
-			request.onerror = () => reject(request.error);
-
-			request.onsuccess = () => {
-				this.#database = request.result;
-
-				resolve();
-			};
-
-			request.onupgradeneeded = event => {
-				const db = event.target.result;
-
-				if (db.objectStoreNames.contains(StorageName)) {
-					return;
-				}
-
-				db.createObjectStore(StorageName);
-			};
+		rows.forEach(row => {
+			if (!isNull(row.value)) {
+				this.#cache.set(row.key, row.value);
+				total++;
+			}
 		});
-	}
 
-	#load() {
-		return new Promise((resolve, reject) => {
-			const transaction = this.#database.transaction(StorageName, "readonly"),
-				store = transaction.objectStore(StorageName),
-				request = store.openCursor();
-
-			request.onerror = () => reject(request.error);
-
-			let total = 0;
-
-			request.onsuccess = event => {
-				const cursor = event.target.result;
-
-				if (cursor) {
-					if (!isNull(cursor.value)) {
-						this.#cache.set(cursor.key, cursor.value);
-
-						total++;
-					}
-
-					cursor.continue();
-				} else {
-					console.info(`Loaded ${total} items from IndexedDB`);
-
-					resolve();
-				}
-			};
-		});
+		console.info(`Loaded ${total} items from Dexie`);
 	}
 
 	async #write(key, retry) {
@@ -83,23 +49,19 @@ class Database {
 		this.#writes.set(key, true);
 
 		try {
-			const transaction = this.#database.transaction(StorageName, "readwrite"),
-				store = transaction.objectStore(StorageName);
-
 			const value = this.#cache.get(key);
 
 			if (isNull(value)) {
-				store.delete(key);
+				await this.#database.table(TableName).delete(key);
 			} else {
-				store.put(value, key);
+				await this.#database.table(TableName).put({
+					key: key,
+					value: value,
+					updatedAt: Date.now(),
+				});
 			}
-
-			await new Promise((resolve, reject) => {
-				transaction.oncomplete = () => resolve();
-				transaction.onerror = () => reject(transaction.error);
-			});
 		} catch (error) {
-			console.error(`Failed to write to IndexedDB: ${error}`);
+			console.error(`Failed to write to Dexie: ${error}`);
 		} finally {
 			this.#writes.delete(key);
 		}
@@ -145,14 +107,18 @@ class Database {
 let db;
 
 export async function connectDB() {
-	const newDB = new Database();
+	if (db) {
+		return;
+	}
+
+	const newDB = new StorageDB();
 
 	await newDB.init();
 
 	db = newDB;
 }
 
-export function storeValue(key, value = false) {
+export function store(key, value = false) {
 	if (!db) {
 		return;
 	}
@@ -160,32 +126,10 @@ export function storeValue(key, value = false) {
 	db.store(key, value);
 }
 
-export function loadValue(key, fallback = false) {
+export function load(key, fallback = false) {
 	if (!db) {
 		return fallback;
 	}
 
 	return db.load(key, fallback);
-}
-
-export function storeLocal(key, value = false) {
-	if (isNull(value)) {
-		localStorage.removeItem(key);
-	} else {
-		localStorage.setItem(key, JSON.stringify(value));
-	}
-}
-
-export function loadLocal(key, fallback = false) {
-	try {
-		const value = JSON.parse(localStorage.getItem(key));
-
-		if (isNull(value)) {
-			throw new Error("no value");
-		}
-
-		return value;
-	} catch {}
-
-	return fallback;
 }

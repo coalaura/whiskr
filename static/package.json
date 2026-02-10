@@ -13,6 +13,7 @@
     "@rspack/core": "^1.7.2"
   },
   "dependencies": {
+    "dexie": "^4.0.8",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.27",
     "marked": "^17.0.1",
