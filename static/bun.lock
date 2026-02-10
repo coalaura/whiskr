@@ -6,6 +6,7 @@
       "name": "static",
       "dependencies": {
         "dexie": "^4.0.8",
+        "dexie-observable": "^4.0.1-beta.13",
         "highlight.js": "^11.11.1",
         "katex": "^0.16.27",
         "marked": "^17.0.1",
@@ -91,6 +92,8 @@
     "detect-libc": ["detect-libc@2.1.2", "", {}, "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="],
 
     "dexie": ["dexie@4.3.0", "", {}, "sha512-5EeoQpJvMKHe6zWt/FSIIuRa3CWlZeIl6zKXt+Lz7BU6RoRRLgX9dZEynRfXrkLcldKYCBiz7xekTEylnie1Ug=="],
+
+    "dexie-observable": ["dexie-observable@4.0.1-beta.13", "", { "peerDependencies": { "dexie": "^3.0.2 || ^4.0.1-alpha.5" } }, "sha512-axmgPk7yjoPwj+0DdQIE5s1MBXi+6XcIFIjBKdQAmSGpsLQSth/LHvMOQ3q3Wj6pwIE5hqIxg2GL75sVqQbhEw=="],
 
     "highlight.js": ["highlight.js@11.11.1", "", {}, "sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w=="],
 

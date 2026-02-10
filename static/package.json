@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "dexie": "^4.0.8",
+    "dexie-observable": "^4.0.1-beta.13",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.27",
     "marked": "^17.0.1",

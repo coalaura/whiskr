@@ -28,7 +28,7 @@ import {
 	wrapJSON,
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
-import { connectDB, load, store } from "./storage.js";
+import { connectDB, load, onChange, refresh, store } from "./storage.js";
 
 const ChunkType = {
 	0: "start",
@@ -164,6 +164,32 @@ function updatePersonalizationVisualState() {
 
 	$sName.disabled = isDisabled;
 	$sPrompt.disabled = isDisabled;
+}
+
+async function syncSavedChats() {
+	await refresh(["saved-chats"]);
+
+	renderSavedChats();
+}
+
+let syncReady = false;
+
+function setupCrossTabSync() {
+	if (syncReady) {
+		return;
+	}
+
+	syncReady = true;
+
+	onChange(change => {
+		if (!change || change.isLocal || !change.key) {
+			return;
+		}
+
+		if (change.key === "saved-chats") {
+			schedule(syncSavedChats);
+		}
+	});
 }
 
 function distanceFromBottom() {
@@ -2080,6 +2106,8 @@ async function refreshUsage() {
 
 async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
+
+	setupCrossTabSync();
 
 	settings.enabled = load("s-enabled", true);
 	settings.name = load("s-name", "");

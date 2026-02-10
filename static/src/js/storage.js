@@ -1,4 +1,5 @@
 import Dexie from "dexie";
+import "dexie-observable";
 
 const DatabaseName = "whiskr",
 	TableName = "kv";
@@ -12,6 +13,9 @@ class StorageDB {
 	#scheduled = new Map();
 	#writes = new Map();
 	#cache = new Map();
+	#listeners = new Set();
+	#localSource = null;
+	#lastWrite = new Map();
 
 	async init() {
 		this.#database = new Dexie(DatabaseName);
@@ -20,7 +24,54 @@ class StorageDB {
 		});
 
 		await this.#database.open();
+
+		this.#localSource = this.#resolveLocalSource();
+
+		this.#database.on("changes", changes => this.#handleChanges(changes));
+
 		await this.#load();
+	}
+
+	#resolveLocalSource() {
+		return this.#database?._localSyncNode?.id || this.#database?._localSyncNode || this.#database?._localSyncNodeId || this.#database?._localSyncNodeID || null;
+	}
+
+	#emitChange(change) {
+		for (const listener of this.#listeners) {
+			listener(change);
+		}
+	}
+
+	#handleChanges(changes) {
+		this.#localSource ||= this.#resolveLocalSource();
+
+		for (const change of changes) {
+			if (change.table !== TableName) {
+				continue;
+			}
+
+			const key = change.key,
+				value = change.obj?.value ?? null,
+				updatedAt = change.obj?.updatedAt ?? null;
+
+			let isLocal = this.#localSource && change.source === this.#localSource;
+
+			if (!isLocal && key && this.#lastWrite.has(key)) {
+				const age = Date.now() - this.#lastWrite.get(key);
+
+				if (age < 1500) {
+					isLocal = true;
+				}
+			}
+
+			this.#emitChange({
+				key: key,
+				value: value,
+				updatedAt: updatedAt,
+				type: change.type,
+				isLocal: !!isLocal,
+			});
+		}
 	}
 
 	async #load() {
@@ -92,7 +143,40 @@ class StorageDB {
 			this.#cache.set(key, value);
 		}
 
+		this.#lastWrite.set(key, Date.now());
+
 		await this.#schedule(key);
+	}
+
+	async refresh(keys = []) {
+		if (!keys.length) {
+			return new Map();
+		}
+
+		const table = this.#database.table(TableName),
+			results = new Map();
+
+		for (const key of keys) {
+			const row = await table.get(key);
+
+			if (row && !isNull(row.value)) {
+				this.#cache.set(key, row.value);
+
+				results.set(key, row.value);
+			} else {
+				this.#cache.delete(key);
+
+				results.set(key, null);
+			}
+		}
+
+		return results;
+	}
+
+	onChange(listener) {
+		this.#listeners.add(listener);
+
+		return () => this.#listeners.delete(listener);
 	}
 
 	load(key, fallback = false) {
@@ -132,4 +216,20 @@ export function load(key, fallback = false) {
 	}
 
 	return db.load(key, fallback);
+}
+
+export function onChange(listener) {
+	if (!db) {
+		return () => {};
+	}
+
+	return db.onChange(listener);
+}
+
+export async function refresh(keys = []) {
+	if (!db) {
+		return new Map();
+	}
+
+	return db.refresh(keys);
 }

@@ -231,6 +231,7 @@ body:not(.loading) #loading {
 	transform: scale(0.9);
 }
 
+
 #sidebar {
 	position: absolute;
 	flex: 0 0 auto;
