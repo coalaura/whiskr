@@ -619,7 +619,7 @@ class Message {
 		_body.appendChild(this.#_text);
 
 		this.#_text.addEventListener("click", event => {
-			if (event.ctrlKey && !event.target.closest(".no-click")) {
+			if (event.ctrlKey && !event.target.closest(".no-click") && !this.#state) {
 				event.preventDefault();
 
 				if (!this.#editing) {
