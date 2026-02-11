@@ -231,7 +231,6 @@ body:not(.loading) #loading {
 	transform: scale(0.9);
 }
 
-
 #sidebar {
 	position: absolute;
 	flex: 0 0 auto;
@@ -386,7 +385,9 @@ body.ready #sidebar {
 }
 
 body.ready .section-collapse {
-	transition: opacity 150ms, transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+	transition:
+		opacity 150ms,
+		transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .section-collapse.collapsed {
@@ -405,7 +406,10 @@ body.ready .section-collapse {
 }
 
 body.ready .sidebar-section.personalization .section-body {
-	transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease, padding 300ms ease;
+	transition:
+		max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
+		opacity 200ms ease,
+		padding 300ms ease;
 }
 
 .sidebar-section.personalization .section-body.collapsed {
@@ -473,7 +477,9 @@ body.ready .sidebar-section.personalization .section-body {
 	font-size: 14px;
 	color: var(--c-text);
 	font-family: inherit;
-	transition: border-color 150ms, box-shadow 150ms;
+	transition:
+		border-color 150ms,
+		box-shadow 150ms;
 }
 
 .sidebar-section input[type="text"]:hover,
@@ -532,11 +538,11 @@ body.ready .sidebar-section.personalization .section-body {
 	transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.toggle-switch input:checked+.toggle-slider {
+.toggle-switch input:checked + .toggle-slider {
 	background-color: var(--c-green);
 }
 
-.toggle-switch input:checked+.toggle-slider::before {
+.toggle-switch input:checked + .toggle-slider::before {
 	transform: translateX(22px);
 	background-color: white;
 }
@@ -713,7 +719,9 @@ body.ready .sidebar-section.personalization .section-body {
 }
 
 body.ready #sidebar-trigger {
-	transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1), background 150ms;
+	transition:
+		left 300ms cubic-bezier(0.4, 0, 0.2, 1),
+		background 150ms;
 }
 
 #sidebar-trigger::before {
@@ -736,7 +744,7 @@ body.ready #sidebar-trigger {
 	opacity: 1;
 }
 
-#sidebar.open~#sidebar-trigger {
+#sidebar.open ~ #sidebar-trigger {
 	left: 360px;
 }
 
@@ -1178,7 +1186,7 @@ body.ready #sidebar-trigger {
 	overflow: hidden;
 }
 
-.message.collapsed .body>* {
+.message.collapsed .body > * {
 	opacity: 0;
 }
 
@@ -1722,7 +1730,9 @@ input[type="checkbox"] {
 	background-color: var(--c-surface2);
 	border-radius: 6px;
 	cursor: pointer;
-	transition: background-color 150ms ease, box-shadow 150ms ease;
+	transition:
+		background-color 150ms ease,
+		box-shadow 150ms ease;
 }
 
 input[type="checkbox"]::after {
@@ -1735,7 +1745,9 @@ input[type="checkbox"]::after {
 	background-color: var(--c-text);
 	border-radius: 4px;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-	transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms ease;
+	transition:
+		transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+		background-color 150ms ease;
 }
 
 input[type="checkbox"]:checked {
@@ -1981,7 +1993,7 @@ label[for="reasoning-tokens"] {
 	transform: rotate(180deg);
 }
 
-#top:not(.hidden)+#bottom {
+#top:not(.hidden) + #bottom {
 	right: 40px;
 }
 
@@ -2218,7 +2230,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes swivel {
-
 	0%,
 	100% {
 		left: 0px;
@@ -2231,7 +2242,6 @@ label[for="reasoning-tokens"] {
 }
 
 @keyframes bounce {
-
 	0%,
 	75%,
 	100% {
@@ -2303,7 +2313,6 @@ label[for="reasoning-tokens"] {
 }
 
 @media (max-width: 745px) {
-
 	.message,
 	.message.assistant {
 		width: 100%;
@@ -2331,7 +2340,7 @@ label[for="reasoning-tokens"] {
 		width: 0;
 	}
 
-	#sidebar.open~#sidebar-trigger {
+	#sidebar.open ~ #sidebar-trigger {
 		left: 0;
 		z-index: 36;
 	}

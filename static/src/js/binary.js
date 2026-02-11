@@ -22,7 +22,7 @@ function u32LE(binary, i) {
 	return byte(binary, i) | (byte(binary, i + 1) << 8) | (byte(binary, i + 2) << 16) | (byte(binary, i + 3) << 24);
 }
 
-export function getDataUrlAspectRatio(dataUrl) {
+function parseDimensions(dataUrl) {
 	const binary = atob(dataUrl.split(",")[1]);
 
 	let width, height;
@@ -71,5 +71,20 @@ export function getDataUrlAspectRatio(dataUrl) {
 		}
 	}
 
-	return width && height ? width / height : null;
+	return width && height
+		? {
+				width: width,
+				height: height,
+			}
+		: null;
+}
+
+export function getDataUrlDimensions(dataUrl) {
+	return parseDimensions(dataUrl);
+}
+
+export function getDataUrlAspectRatio(dataUrl) {
+	const dims = parseDimensions(dataUrl);
+
+	return dims ? dims.width / dims.height : null;
 }

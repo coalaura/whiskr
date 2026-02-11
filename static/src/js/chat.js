@@ -19,9 +19,11 @@ import {
 	formatTimestamp,
 	lines,
 	make,
+	maxImageDimension,
 	notify,
 	previewFile,
 	readFileAsDataUrl,
+	resizeDataUrl,
 	schedule,
 	selectFile,
 	uid,
@@ -823,7 +825,18 @@ class Message {
 		const callback = () => {
 			img.classList.add("loaded");
 
-			infoBox.textContent = `${img.naturalWidth}×${img.naturalHeight}`;
+			const w = img.naturalWidth,
+				h = img.naturalHeight;
+
+			if (w > maxImageDimension || h > maxImageDimension) {
+				const scale = maxImageDimension / Math.max(w, h),
+					sw = Math.round(w * scale),
+					sh = Math.round(h * scale);
+
+				infoBox.textContent = `${sw}×${sh} (${w}×${h})`;
+			} else {
+				infoBox.textContent = `${w}×${h}`;
+			}
 
 			$messages.scrollTop += bHeight(img);
 		};
@@ -842,6 +855,11 @@ class Message {
 			childrenOnly: true,
 			onBeforeElUpdated: (fromEl, toEl) => {
 				return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
+			},
+			onBeforeNodeDiscarded: node => {
+				if (node.classList?.contains("image-info")) {
+					return false;
+				}
 			},
 			onNodeAdded: node => {
 				if (node.tagName === "IMG") {
@@ -890,8 +908,6 @@ class Message {
 			this.#morph(element, this.#_diff);
 
 			after?.();
-
-			getDataUrlAspectRatio;
 
 			this.#_diff.innerHTML = "";
 		});
@@ -1098,13 +1114,27 @@ class Message {
 		let text = this.#text;
 
 		if (expandImages) {
-			for (const [hash, dataUrl] of this.#inlineImages) {
-				const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
+			const resizePromises = [];
 
-				text = text.replace(regex, `![$1](${dataUrl})`);
+			for (const [hash, dataUrl] of this.#inlineImages) {
+				resizePromises.push(resizeDataUrl(dataUrl).then(resized => ({ hash: hash, dataUrl: resized })));
 			}
+
+			return Promise.all(resizePromises).then(results => {
+				for (const { hash, dataUrl: resizedUrl } of results) {
+					const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
+
+					text = text.replace(regex, `![$1](${resizedUrl})`);
+				}
+
+				return this.#buildData(text, full);
+			});
 		}
 
+		return this.#buildData(text, full);
+	}
+
+	#buildData(text, full) {
 		const data = {
 			role: this.#role,
 			text: text,
@@ -1623,7 +1653,7 @@ function abortNow() {
 	return true;
 }
 
-function buildRequest(noPush = false) {
+async function buildRequest(noPush = false) {
 	let temperature = parseFloat($temperature.value);
 
 	if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
@@ -1664,6 +1694,8 @@ function buildRequest(noPush = false) {
 			}
 		: null;
 
+	const expandedMessages = await Promise.all(messages.map(message => message.getData(false, true)));
+
 	return {
 		prompt: $prompt.value,
 		model: $model.value,
@@ -1687,11 +1719,11 @@ function buildRequest(noPush = false) {
 			platform: platform,
 			settings: opts,
 		},
-		messages: messages.map(message => message.getData(false, true)).filter(Boolean),
+		messages: expandedMessages.filter(Boolean),
 	};
 }
 
-function generate(cancel = false, noPush = false) {
+async function generate(cancel = false, noPush = false) {
 	if (abortNow() && cancel) {
 		return;
 	}
@@ -1700,7 +1732,7 @@ function generate(cancel = false, noPush = false) {
 		setFollowTail(true);
 	}
 
-	const body = buildRequest(noPush);
+	const body = await buildRequest(noPush);
 
 	const controller = new AbortController();
 
@@ -3141,7 +3173,7 @@ $dump.addEventListener("click", async () => {
 
 	$dump.classList.add("loading");
 
-	const body = buildRequest(true);
+	const body = await buildRequest(true);
 
 	try {
 		const response = await fetch("/-/dump", {

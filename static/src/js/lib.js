@@ -216,6 +216,46 @@ function convertToJpeg(dataUrl) {
 	});
 }
 
+export const maxImageDimension = 1536;
+
+export function resizeDataUrl(dataUrl) {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+
+		img.onload = () => {
+			const { width, height } = img;
+
+			if (width <= maxImageDimension && height <= maxImageDimension) {
+				resolve(dataUrl);
+
+				return;
+			}
+
+			const scale = maxImageDimension / Math.max(width, height);
+
+			const canvas = document.createElement("canvas");
+
+			canvas.width = Math.round(width * scale);
+			canvas.height = Math.round(height * scale);
+
+			const ctx = canvas.getContext("2d");
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+			ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+			resolve(canvas.toDataURL("image/jpeg", 0.9));
+		};
+
+		img.onerror = () => {
+			reject(new Error("Failed to load image for resizing"));
+		};
+
+		img.src = dataUrl;
+	});
+}
+
 export function readFileAsDataUrl(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
