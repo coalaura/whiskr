@@ -2657,6 +2657,8 @@ function closeSidebar() {
 	$sidebar.classList.remove("open");
 
 	document.body.classList.remove("sidebar-open");
+
+	store("sidebar-open", false);
 }
 
 function toggleSidebar() {
