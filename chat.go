@@ -304,8 +304,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 				last    = -1
 			)
 
-			if model.Vision && strings.Contains(message.Text, "![") {
-				content.Multi = SplitImagePairs(message.Text)
+			if strings.Contains(message.Text, "![") {
+				content.Multi = SplitImagePairs(message.Text, !model.Vision)
 
 				multi = true
 

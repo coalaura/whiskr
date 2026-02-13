@@ -46,7 +46,7 @@ func IsInsideCodeBlock(pos int, regions []CodeRegion) bool {
 	return false
 }
 
-func SplitImagePairs(text string) []openrouter.ChatMessagePart {
+func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart {
 	code := FindMarkdownCodeRegions(text)
 
 	rgx := regexp.MustCompile(`(?m)!\[[^\]]*]\((\S+?)\)`)
@@ -117,13 +117,15 @@ func SplitImagePairs(text string) []openrouter.ChatMessagePart {
 			push(index, start)
 		}
 
-		parts = append(parts, openrouter.ChatMessagePart{
-			Type: openrouter.ChatMessagePartTypeImageURL,
-			ImageURL: &openrouter.ChatMessageImageURL{
-				Detail: openrouter.ImageURLDetailAuto,
-				URL:    url,
-			},
-		})
+		if !stripImages {
+			parts = append(parts, openrouter.ChatMessagePart{
+				Type: openrouter.ChatMessagePartTypeImageURL,
+				ImageURL: &openrouter.ChatMessageImageURL{
+					Detail: openrouter.ImageURLDetailAuto,
+					URL:    url,
+				},
+			})
+		}
 
 		index = end
 	}

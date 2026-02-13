@@ -2338,19 +2338,23 @@ function restore() {
 		pushAttachment(file);
 	}
 
-	if (!allowFiles && load("allow-files")) {
+	const shouldAllowFiles = !!load("allow-files"),
+		shouldJsonMode = !!load("json"),
+		shouldSearch = !!load("search");
+
+	if (allowFiles !== shouldAllowFiles) {
 		$files.click();
 	}
 
-	if (!jsonMode && load("json")) {
+	if (jsonMode !== shouldJsonMode) {
 		$json.click();
 	}
 
-	if (!searchTool && load("search")) {
+	if (searchTool !== shouldSearch) {
 		$search.click();
-	} else {
-		$iterations.parentNode.classList.add("none");
 	}
+
+	$iterations.parentNode.classList.toggle("none", !shouldSearch);
 
 	if (!autoScrolling && load("scrolling")) {
 		$scrolling.click();
@@ -2985,6 +2989,8 @@ $model.addEventListener("change", () => {
 		$imageResolution.parentNode.classList.add("none");
 		$imageAspect.parentNode.classList.add("none");
 	}
+
+	$messages.classList.toggle("vision", tags.includes("vision"));
 
 	const hasJson = tags.includes("json"),
 		hasSearch = searchAvailable && tags.includes("tools");
