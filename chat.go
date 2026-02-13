@@ -83,6 +83,12 @@ type Request struct {
 	Messages    []Message `json:"messages"`
 }
 
+var contentFilterReasons = map[string]string{
+	// google image models
+	"IMAGE_OTHER":  "content filter",
+	"IMAGE_SAFETY": "content filter",
+}
+
 func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
 	// Some models require there to be content
 	if content == "" {
@@ -604,8 +610,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		choice := chunk.Choices[0]
 		delta := choice.Delta
 
-		if choice.FinishReason == openrouter.FinishReasonContentFilter {
-			response.WriteChunk(NewChunk(ChunkError, errors.New("stopped due to content_filter")))
+		if reason := GetBadStopReason(choice); reason != "" {
+			response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", reason)))
 
 			return nil, "", nil
 		}
@@ -688,4 +694,19 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	}
 
 	return tool, buf.String(), nil
+}
+
+func GetBadStopReason(choice openrouter.ChatCompletionStreamChoice) string {
+	if choice.FinishReason == "" {
+		return ""
+	}
+
+	switch choice.FinishReason {
+	case openrouter.FinishReasonContentFilter:
+		return "content filter"
+	case openrouter.FinishReasonLength:
+		return "length"
+	}
+
+	return contentFilterReasons[choice.NativeFinishReason]
 }

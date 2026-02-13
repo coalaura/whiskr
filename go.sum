@@ -1,5 +1,5 @@
-github.com/coalaura/go-openrouter v0.2.9-0.20260123174818-eee5cfb46484 h1:cm4nQWBMZJiSs8DOGzDahFgR+TUw7O9oceDR6lWiEG0=
-github.com/coalaura/go-openrouter v0.2.9-0.20260123174818-eee5cfb46484/go.mod h1:jZFcumFqvS25o8oEQc1/+4yeK7lHDSnwPMIJ/pKPdNc=
+github.com/coalaura/go-openrouter v0.2.9-0.20260213013936-be16efc8d31b h1:Kl3DX0EGgvaWyOjNANE1ZrzdAme04yTSaemhQ2qhz+8=
+github.com/coalaura/go-openrouter v0.2.9-0.20260213013936-be16efc8d31b/go.mod h1:jZFcumFqvS25o8oEQc1/+4yeK7lHDSnwPMIJ/pKPdNc=
 github.com/coalaura/plain v1.1.4 h1:J1YKSYDHQS/fNzbGcpxm5kiXWdY42SlPXmpLksYrYic=
 github.com/coalaura/plain v1.1.4/go.mod h1:jcMR/C9RDdl8EQOHD4d/u8DoO1AI00fLDJfdfmrCFNA=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
