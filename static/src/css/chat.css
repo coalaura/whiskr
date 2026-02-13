@@ -1846,6 +1846,7 @@ body.loading #version,
 .message .statistics .cost::before,
 .message .scroll-view,
 #role::before,
+#files,
 #json,
 #search,
 #scrolling,
@@ -2018,6 +2019,7 @@ label[for="reasoning-tokens"] {
 	background-image: url(icons/spinner.svg);
 }
 
+#files,
 #json,
 #search,
 #scrolling,
@@ -2036,6 +2038,14 @@ label[for="reasoning-tokens"] {
 
 #scrolling.not-following {
 	opacity: 0.5;
+}
+
+#files {
+	background-image: url(icons/files-off.svg);
+}
+
+#files.on {
+	background-image: url(icons/files-on.svg);
 }
 
 #json {

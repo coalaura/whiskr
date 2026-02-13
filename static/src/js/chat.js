@@ -67,6 +67,7 @@ const $version = document.getElementById("version"),
 	$prompt = document.getElementById("prompt"),
 	$temperature = document.getElementById("temperature"),
 	$iterations = document.getElementById("iterations"),
+	$files = document.getElementById("files"),
 	$json = document.getElementById("json"),
 	$search = document.getElementById("search"),
 	$add = document.getElementById("add"),
@@ -122,6 +123,7 @@ const messages = [],
 let autoScrolling = false,
 	followTail = true,
 	awaitingScroll = false,
+	allowFiles = true,
 	jsonMode = false,
 	searchTool = false,
 	chatTitle = false;
@@ -1703,6 +1705,7 @@ async function buildRequest(noPush = false) {
 		temperature: temperature,
 		iterations: iterations,
 		tools: {
+			files: allowFiles,
 			json: jsonMode,
 			search: searchTool,
 		},
@@ -2333,6 +2336,10 @@ function restore() {
 
 	for (const file of files) {
 		pushAttachment(file);
+	}
+
+	if (!allowFiles && load("allow-files")) {
+		$files.click();
 	}
 
 	if (!jsonMode && load("json")) {
@@ -2985,7 +2992,6 @@ $model.addEventListener("change", () => {
 	$json.classList.toggle("none", !hasJson);
 	$search.classList.toggle("none", !hasSearch);
 
-	$search.parentNode.classList.toggle("none", !hasJson && !hasSearch);
 	$iterations.parentNode.classList.toggle("none", !hasSearch || !searchTool);
 });
 
@@ -3040,12 +3046,24 @@ $reasoningTokens.addEventListener("input", () => {
 	$reasoningTokens.classList.toggle("invalid", Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024);
 });
 
+$files.addEventListener("click", () => {
+	allowFiles = !allowFiles;
+
+	store("allow-files", allowFiles);
+
+	$files.classList.toggle("on", allowFiles);
+
+	$files.title = `Turn ${allowFiles ? "off" : "on"} text file output`;
+});
+
 $json.addEventListener("click", () => {
 	jsonMode = !jsonMode;
 
 	store("json", jsonMode);
 
 	$json.classList.toggle("on", jsonMode);
+
+	$json.title = `Turn ${jsonMode ? "off" : "on"} structured json output`;
 });
 
 $search.addEventListener("click", () => {
@@ -3054,6 +3072,8 @@ $search.addEventListener("click", () => {
 	store("search", searchTool);
 
 	$search.classList.toggle("on", searchTool);
+
+	$search.title = `Turn ${searchTool ? "off" : "on"} search tools (search_web and fetch_contents)`;
 
 	$iterations.parentNode.classList.toggle("none", !searchTool);
 });

@@ -1,0 +1,8 @@
+To emit/output text-based files (no tools), output blocks exactly as:
+
+FILE "name"
+<<CONTENT>>
+your contents here
+<<END>>
+
+Including the CONTENT and END tags exactly. Repeat per file, no code fences, markdown or extra text.

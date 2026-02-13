@@ -39,6 +39,9 @@ var (
 	//go:embed internal/general.txt
 	InternalGeneralPrompt string
 
+	//go:embed internal/files.txt
+	InternalFilesPrompt string
+
 	//go:embed internal/title.txt
 	InternalTitlePrompt string
 

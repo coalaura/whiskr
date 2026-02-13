@@ -5,12 +5,3 @@ User's Name: {{.Settings.Name}}
 User's Custom Instructions:
 {{.Settings.Prompt}}
 {{- end}}
-
-To emit files (no tools), output blocks exactly as:
-
-FILE "name"
-<<CONTENT>>
-your contents here
-<<END>>
-
-Repeat per file, no code fences, markdown or extra text.
