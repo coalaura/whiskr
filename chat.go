@@ -178,6 +178,12 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Modalities = append(request.Modalities, openrouter.ModalityText)
 	}
 
+	if model.Audio {
+		// not yet supported by openrouter
+		// https://community.openai.com/t/how-can-i-pass-a-system-prompt-and-audio-user-input-to-get-a-text-output-back/1002483
+		// request.Modalities = append(request.Modalities, "audio")
+	}
+
 	if env.Models.ImageGeneration && model.Images {
 		request.Modalities = append(request.Modalities, openrouter.ModalityImage)
 
