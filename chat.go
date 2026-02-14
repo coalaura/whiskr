@@ -63,6 +63,7 @@ type Metadata struct {
 	Timezone string   `json:"timezone"`
 	Platform string   `json:"platform"`
 	Settings Settings `json:"settings"`
+	Time     *int64   `json:"time"`
 }
 
 type Settings struct {

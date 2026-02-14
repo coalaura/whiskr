@@ -153,13 +153,21 @@ func BuildPrompt(name string, metadata Metadata, model *Model) (string, error) {
 		metadata.Platform = "Unknown"
 	}
 
+	var now time.Time
+
+	if metadata.Time != nil {
+		now = time.Unix(*metadata.Time, 0)
+	} else {
+		now = time.Now()
+	}
+
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
 	err := tmpl.Execute(buf, PromptData{
 		Name:     model.Name,
 		Slug:     model.ID,
-		Date:     time.Now().In(tz).Format(time.RFC1123),
+		Date:     now.In(tz).Format(time.RFC1123),
 		Platform: metadata.Platform,
 		Settings: metadata.Settings,
 	})

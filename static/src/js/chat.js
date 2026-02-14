@@ -31,6 +31,7 @@ import {
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
 import { connectDB, load, onChange, refresh, store } from "./storage.js";
+import { parseDateTime } from "./date.js";
 
 const ChunkType = {
 	0: "start",
@@ -84,6 +85,7 @@ const $version = document.getElementById("version"),
 	$sEnabled = document.getElementById("s-enabled"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
+	$timeOverride = document.getElementById("time-override"),
 	$personalizationSection = document.getElementById("personalization-section"),
 	$personalizationHeader = document.getElementById("personalization-header"),
 	$personalizationCollapse = document.getElementById("personalization-collapse"),
@@ -126,7 +128,8 @@ let autoScrolling = false,
 	allowFiles = true,
 	jsonMode = false,
 	searchTool = false,
-	chatTitle = false;
+	chatTitle = false,
+	timeOverride = false;
 
 let searchAvailable = false,
 	isResizing = false,
@@ -1721,6 +1724,7 @@ async function buildRequest(noPush = false) {
 			timezone: timezone,
 			platform: platform,
 			settings: opts,
+			time: Number.isInteger(timeOverride) ? timeOverride : null,
 		},
 		messages: expandedMessages.filter(Boolean),
 	};
@@ -2151,6 +2155,10 @@ async function loadData() {
 	$sEnabled.checked = settings.enabled;
 	$sName.value = settings.name;
 	$sPrompt.value = settings.prompt;
+
+	$timeOverride.value = load("time-override", "");
+
+	$timeOverride.dispatchEvent(new Event("input"));
 
 	const personalizationCollapsed = load("personalization-collapsed", false);
 
@@ -3299,6 +3307,31 @@ $sPrompt.addEventListener("change", () => {
 	settings.prompt = $sPrompt.value.trim();
 
 	store("s-prompt", settings.prompt);
+});
+
+$timeOverride.addEventListener("input", () => {
+	const value = $timeOverride.value.trim(),
+		parent = $timeOverride.parentElement;
+
+	try {
+		timeOverride = parseDateTime(value);
+
+		$timeOverride.classList.remove("invalid");
+
+		if (Number.isInteger(timeOverride)) {
+			parent.title = new Date(timeOverride * 1000).toLocaleString();
+		} else {
+			parent.title = `Override date/time (e.g. "02/14/2026 01:45 AM", "03:42 PM", "in 2 hours", etc.)`;
+		}
+	} catch (err) {
+		timeOverride = false;
+
+		$timeOverride.classList.add("invalid");
+
+		parent.title = err.message;
+	}
+
+	store("time-override", value);
 });
 
 $message.addEventListener("keydown", event => {

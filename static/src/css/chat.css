@@ -1956,6 +1956,10 @@ input.invalid {
 	width: 30px;
 }
 
+#time-override {
+	width: 155px;
+}
+
 label[for="role"] {
 	background-image: url(icons/user.svg);
 }
@@ -1970,6 +1974,10 @@ label[for="prompt"] {
 
 label[for="temperature"] {
 	background-image: url(icons/temperature.svg);
+}
+
+label[for="time-override"] {
+	background-image: url(icons/time.svg);
 }
 
 label[for="iterations"] {
