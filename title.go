@@ -12,12 +12,19 @@ import (
 
 type TitleRequest struct {
 	Title    *string   `json:"title"`
+	Filename *string   `json:"filename"`
 	Messages []Message `json:"messages"`
 }
 
 type TitleResponse struct {
-	Title string `json:"title"`
+	Title    string `json:"title"`
+	Filename string `json:"filename"`
 }
+
+const (
+	TitleHeadCount = 3
+	TitleTailCount = 3
+)
 
 var (
 	titleReplacer = strings.NewReplacer(
@@ -44,9 +51,11 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 
 	debug("preparing request")
 
-	messages := make([]string, 0, len(raw.Messages))
+	selected := selectTitleMessages(raw.Messages, raw.Title != nil)
 
-	for _, message := range raw.Messages {
+	messages := make([]string, 0, len(selected))
+
+	for _, message := range selected {
 		switch message.Role {
 		case "system", "assistant", "user":
 			text := message.Text
@@ -148,6 +157,105 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 
 	RespondJson(w, http.StatusOK, map[string]any{
 		"title": result.Title,
+		"file":  result.Filename,
 		"cost":  cost,
 	})
+}
+
+func selectTitleMessages(msgs []Message, retitle bool) []Message {
+	total := len(msgs)
+
+	if total == 0 {
+		return msgs
+	}
+
+	// small conversations: send everything (truncated)
+	if total <= TitleHeadCount+TitleTailCount {
+		out := make([]Message, len(msgs))
+		copy(out, msgs)
+
+		for i := range out {
+			out[i].Text = truncateText(out[i].Text, 512)
+		}
+
+		return out
+	}
+
+	result := make([]Message, 0, TitleHeadCount+TitleTailCount+1)
+
+	// Head
+	for i := 0; i < TitleHeadCount; i++ {
+		msg := msgs[i]
+		msg.Text = truncateText(msg.Text, 512)
+
+		result = append(result, msg)
+	}
+
+	// summarize middle section
+	middleStart := TitleHeadCount
+	middleEnd := total - TitleTailCount
+
+	var topics []string
+
+	for i := middleStart; i < middleEnd; i++ {
+		if msgs[i].Role != "user" {
+			continue
+		}
+
+		text := strings.TrimSpace(msgs[i].Text)
+
+		if text == "" {
+			continue
+		}
+
+		summary := truncateText(text, 150)
+
+		topics = append(topics, fmt.Sprintf("- %s", summary))
+	}
+
+	if len(topics) > 0 {
+		if len(topics) > 12 {
+			kept := make([]string, 0, 12)
+
+			step := float64(len(topics)) / 12.0
+
+			for i := 0; i < 12; i++ {
+				kept = append(kept, topics[int(float64(i)*step)])
+			}
+
+			topics = kept
+		}
+
+		result = append(result, Message{
+			Role: "system",
+			Text: fmt.Sprintf(
+				"[%d messages omitted from middle of conversation. User topics discussed:]\n%s",
+				middleEnd-middleStart,
+				strings.Join(topics, "\n"),
+			),
+		})
+	} else {
+		result = append(result, Message{
+			Role: "system",
+			Text: fmt.Sprintf("[%d messages omitted from middle of conversation]", middleEnd-middleStart),
+		})
+	}
+
+	// tail
+	for i := middleEnd; i < total; i++ {
+		msg := msgs[i]
+		msg.Text = truncateText(msg.Text, 512)
+
+		result = append(result, msg)
+	}
+
+	return result
+}
+
+func truncateText(text string, maxLen int) string {
+	if len(text) <= maxLen {
+		return text
+	}
+
+	return text[:maxLen] + "..."
 }

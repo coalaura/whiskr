@@ -129,6 +129,7 @@ let autoScrolling = false,
 	jsonMode = false,
 	searchTool = false,
 	chatTitle = false,
+	chatFilename = false,
 	timeOverride = false;
 
 let searchAvailable = false,
@@ -162,6 +163,7 @@ function updateTitle() {
 	document.title = `whiskr${chatTitle ? ` - ${chatTitle}` : ""}`;
 
 	store("title", chatTitle);
+	store("file", chatFilename);
 }
 
 function updatePersonalizationVisualState() {
@@ -1523,6 +1525,7 @@ class Message {
 
 		if (messages.length === 0) {
 			chatTitle = false;
+			chatFilename = false;
 
 			updateTitle();
 		} else {
@@ -1530,6 +1533,7 @@ class Message {
 
 			if (userMessages.length === 0) {
 				chatTitle = false;
+				chatFilename = false;
 
 				updateTitle();
 			}
@@ -1975,11 +1979,13 @@ async function refreshTitle() {
 
 	const body = {
 		title: chatTitle || null,
+		filename: chatFilename || null,
 		messages: messages.map(message => message.getData()).filter(Boolean),
 	};
 
 	if (!body.messages.length) {
 		chatTitle = false;
+		chatFilename = false;
 
 		updateTitle();
 
@@ -2004,6 +2010,7 @@ async function refreshTitle() {
 		}
 
 		chatTitle = result.title;
+		chatFilename = result.file;
 
 		refreshUsage();
 	} catch (err) {
@@ -2372,6 +2379,7 @@ function restore() {
 	});
 
 	chatTitle = load("title");
+	chatFilename = load("file");
 
 	updateTitle();
 
@@ -2648,6 +2656,7 @@ async function uploadImageInline() {
 function getChatData(name) {
 	return {
 		title: name?.trim?.() || chatTitle,
+		file: chatFilename,
 		message: $message.value,
 		attachments: attachments,
 		role: $role.value,
@@ -2746,8 +2755,10 @@ function loadChatFromStorage(name) {
 
 	// restore all state
 	chatTitle = data.title;
+	chatFilename = data.file;
 
 	store("title", data.title);
+	store("file", data.file);
 	store("message", data.message);
 	store("attachments", data.attachments);
 	store("role", data.role);
@@ -3136,6 +3147,7 @@ $clear.addEventListener("click", () => {
 	clearMessages();
 
 	chatTitle = false;
+	chatFilename = false;
 
 	updateTitle();
 });
@@ -3154,7 +3166,7 @@ $saveCurrentChat.addEventListener("click", () => {
 $export?.addEventListener("click", () => {
 	const data = JSON.stringify(getChatData(false));
 
-	download("chat.json", "application/json", data);
+	download(`${chatFilename || "chat"}.json`, "application/json", data);
 });
 
 $import?.addEventListener("click", async () => {
