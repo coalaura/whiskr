@@ -3311,7 +3311,9 @@ $sPrompt.addEventListener("change", () => {
 	store("s-prompt", settings.prompt);
 });
 
-$timeOverride.addEventListener("input", () => {
+let timeTimeout;
+
+function updateTimeOverride() {
 	const value = $timeOverride.value.trim(),
 		parent = $timeOverride.parentElement;
 
@@ -3322,6 +3324,8 @@ $timeOverride.addEventListener("input", () => {
 
 		if (Number.isInteger(timeOverride)) {
 			parent.title = new Date(timeOverride * 1000).toLocaleString();
+
+			timeTimeout = setTimeout(updateTimeOverride, 1000);
 		} else {
 			parent.title = `Override date/time (e.g. "02/14/2026 01:45 AM", "03:42 PM", "in 2 hours", etc.)`;
 		}
@@ -3333,7 +3337,13 @@ $timeOverride.addEventListener("input", () => {
 		parent.title = err.message;
 	}
 
-	store("time-override", value);
+	return value;
+}
+
+$timeOverride.addEventListener("input", () => {
+	clearTimeout(timeTimeout);
+
+	store("time-override", updateTimeOverride());
 });
 
 $message.addEventListener("keydown", event => {
