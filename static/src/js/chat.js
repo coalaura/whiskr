@@ -2156,10 +2156,6 @@ async function loadData() {
 	$sName.value = settings.name;
 	$sPrompt.value = settings.prompt;
 
-	$timeOverride.value = load("time-override", "");
-
-	$timeOverride.dispatchEvent(new Event("input"));
-
 	const personalizationCollapsed = load("personalization-collapsed", false);
 
 	if (personalizationCollapsed) {
@@ -2333,6 +2329,9 @@ function restore() {
 	$imageAspect.value = load("image-aspect", "");
 	$reasoningEffort.value = load("reasoning-effort", "medium");
 	$reasoningTokens.value = load("reasoning-tokens", 1024);
+	$timeOverride.value = load("time-override", "");
+
+	$timeOverride.dispatchEvent(new Event("input"));
 
 	if (!modelList.find(model => model.id === $model.value && !disabledModels.includes(model.id))) {
 		$model.value = modelList.length ? modelList[0].id : "";
