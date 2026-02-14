@@ -2760,7 +2760,7 @@ function loadChatFromStorage(name) {
 	store("image-aspect", data.image?.aspect);
 	store("reasoning-effort", data.reasoning?.effort);
 	store("reasoning-tokens", data.reasoning?.tokens);
-	store("time-override", data.time);
+	store("time-override", data.time || "");
 	store("json", data.json);
 	store("search", data.search);
 	store("messages", data.messages);
@@ -3191,7 +3191,7 @@ $import?.addEventListener("click", async () => {
 		store("image-aspect", data.image?.aspect),
 		store("reasoning-effort", data.reasoning?.effort),
 		store("reasoning-tokens", data.reasoning?.tokens),
-		store("time-override", data.time),
+		store("time-override", data.time || ""),
 		store("json", data.json),
 		store("search", data.search),
 		store("messages", data.messages),
