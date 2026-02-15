@@ -589,6 +589,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		completing bool
 		reasoning  bool
 		tool       *ToolCall
+		finish     openrouter.FinishReason
+		native     string
 	)
 
 	buf := GetFreeBuffer()
@@ -617,10 +619,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		choice := chunk.Choices[0]
 		delta := choice.Delta
 
-		if reason := GetBadStopReason(choice); reason != "" {
-			response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", reason)))
+		if choice.FinishReason != "" {
+			finish = choice.FinishReason
+		}
 
-			return nil, "", nil
+		if choice.NativeFinishReason != "" {
+			native = choice.NativeFinishReason
 		}
 
 		calls := delta.ToolCalls
@@ -700,20 +704,41 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		}
 	}
 
+	if reason := GetBadStopReason(finish, native); reason != "" {
+		response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", reason)))
+	}
+
+	if buf.Len() == 0 && finish == "" {
+		response.WriteChunk(NewChunk(ChunkError, errors.New("no content returned")))
+	}
+
 	return tool, buf.String(), nil
 }
 
-func GetBadStopReason(choice openrouter.ChatCompletionStreamChoice) string {
-	if choice.FinishReason == "" {
+func GetBadStopReason(finish openrouter.FinishReason, native string) string {
+	if finish == "" {
 		return ""
 	}
 
-	switch choice.FinishReason {
+	switch finish {
 	case openrouter.FinishReasonContentFilter:
 		return "content filter"
 	case openrouter.FinishReasonLength:
 		return "length"
 	}
 
-	return contentFilterReasons[choice.NativeFinishReason]
+	debug("finished with: %q", finish)
+
+	if native == "" {
+		return ""
+	}
+
+	native, ok := contentFilterReasons[native]
+	if ok {
+		return native
+	}
+
+	debug("unknown native finish reason: %q", native)
+
+	return ""
 }
