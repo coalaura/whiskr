@@ -812,7 +812,7 @@ class Message {
 		return height;
 	}
 
-	#setupImage(img) {
+	#setupImage(img, iteration = 0) {
 		if (img.dataset.setup) {
 			return;
 		}
@@ -828,6 +828,14 @@ class Message {
 		const infoBox = make("div", "image-info");
 
 		container.appendChild(infoBox);
+
+		if (iteration > 0) {
+			const iterBox = make("div", "image-iteration");
+
+			iterBox.textContent = iteration;
+
+			container.appendChild(iterBox);
+		}
 
 		const callback = () => {
 			img.classList.add("loaded");
@@ -956,7 +964,7 @@ class Message {
 
 				_link.appendChild(_image);
 
-				this.#setupImage(_image);
+				this.#setupImage(_image, x + 1);
 			}
 
 			this.#_message.classList.toggle("has-images", !!this.#images.length);

@@ -1121,6 +1121,32 @@ body.ready #sidebar-trigger {
 	display: none;
 }
 
+.image-wrapper .image-iteration {
+	background: var(--c-base);
+	color: var(--c-text);
+	font-size: 9px;
+	font-weight: 500;
+	font-family: var(--font-mono);
+	opacity: 1;
+	pointer-events: none;
+	z-index: 15;
+	border-radius: 4px;
+	padding: 4px;
+	line-height: 9px;
+	display: none;
+	position: absolute;
+	bottom: 4px;
+	right: 4px;
+}
+
+.message.busy .image-wrapper .image-info {
+	opacity: 0;
+}
+
+.message.busy .image-wrapper .image-iteration {
+	display: block;
+}
+
 .message.busy .images .i-0::before {
 	content: "";
 	position: absolute;
