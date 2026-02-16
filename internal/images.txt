@@ -1,0 +1,9 @@
+## Image References
+
+Users can include images using markdown syntax: `![description](reference)`
+
+The reference can be either:
+- A URL: `https://example.com/image.png`
+- An uploaded file hash: `a1b2c3d4.png` (8-character hex + extension)
+
+You'll see `![image](reference)` before each actual image in the message. To reference an image in your response, use the same syntax with the same reference.

@@ -54,6 +54,7 @@ type Image struct {
 }
 
 type Tools struct {
+	Images bool `json:"images"`
 	Files  bool `json:"files"`
 	JSON   bool `json:"json"`
 	Search bool `json:"search"`
@@ -282,6 +283,14 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 
 		prompt += InternalFilesPrompt
+	}
+
+	if r.Tools.Images {
+		if prompt != "" {
+			prompt += "\n\n"
+		}
+
+		prompt += InternalImagesPrompt
 	}
 
 	if prompt != "" {

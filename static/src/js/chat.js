@@ -1132,14 +1132,21 @@ class Message {
 			const resizePromises = [];
 
 			for (const [hash, dataUrl] of this.#inlineImages) {
-				resizePromises.push(resizeDataUrl(dataUrl).then(resized => ({ hash: hash, dataUrl: resized })));
+				resizePromises.push(
+					resizeDataUrl(dataUrl).then(resized => {
+						return {
+							hash: hash,
+							dataUrl: resized,
+						};
+					})
+				);
 			}
 
 			return Promise.all(resizePromises).then(results => {
-				for (const { hash, dataUrl: resizedUrl } of results) {
-					const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
+				for (const { hash, dataUrl } of results) {
+					const regex = new RegExp(`!\\[([^\\]]*)\\]\\((${hash}\\.[^)]+)\\)`, "g");
 
-					text = text.replace(regex, `![$1](${resizedUrl})`);
+					text = text.replace(regex, `![$2](${dataUrl})`);
 				}
 
 				return this.#buildData(text, full);
@@ -1426,8 +1433,30 @@ class Message {
 	addText(text) {
 		this.#text += text;
 
+		if (this.#role === "assistant") {
+			const imageRegex = /!\[([^\]]*)\]\(([a-f0-9]{8})\.[^)]+\)/g;
+
+			let match;
+
+			while ((match = imageRegex.exec(this.#text)) !== null) {
+				const hash = match[2];
+
+				for (const msg of messages) {
+					if (msg.isUser() && msg.#inlineImages.has(hash)) {
+						this.#inlineImages.set(hash, msg.#inlineImages.get(hash));
+
+						break;
+					}
+				}
+			}
+		}
+
 		this.#render("text");
 		this.#save();
+	}
+
+	hasImageTags() {
+		return this.#text.includes("![");
 	}
 
 	isEmpty() {
@@ -1704,6 +1733,8 @@ async function buildRequest(noPush = false) {
 		pushMessage();
 	}
 
+	const hasImageTags = messages.some(message => message.isUser() && message.hasImageTags());
+
 	const opts = settings.enabled
 		? {
 				name: settings.name,
@@ -1720,6 +1751,7 @@ async function buildRequest(noPush = false) {
 		temperature: temperature,
 		iterations: iterations,
 		tools: {
+			images: hasImageTags,
 			files: allowFiles,
 			json: jsonMode,
 			search: searchTool,

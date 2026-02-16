@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -49,19 +50,19 @@ func IsInsideCodeBlock(pos int, regions []CodeRegion) bool {
 func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart {
 	code := FindMarkdownCodeRegions(text)
 
-	rgx := regexp.MustCompile(`(?m)!\[[^\]]*]\((\S+?)\)`)
+	rgx := regexp.MustCompile(`(?m)!\[([^\]]*)\]\((\S+?)\)`)
 
 	var (
 		index int
 		parts []openrouter.ChatMessagePart
 	)
 
-	push := func(str, end int) {
+	push := func(str, end int, suffix string) {
 		if str > end {
 			return
 		}
 
-		rest := text[str:end]
+		rest := text[str:end] + suffix
 
 		total := len(parts)
 
@@ -71,7 +72,9 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 			return
 		}
 
-		if strings.TrimSpace(rest) == "" {
+		rest = strings.TrimSpace(rest)
+
+		if rest == "" {
 			return
 		}
 
@@ -84,7 +87,7 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 	for {
 		location := rgx.FindStringSubmatchIndex(text[index:])
 		if location == nil {
-			push(index, len(text))
+			push(index, len(text), "")
 
 			break
 		}
@@ -93,28 +96,45 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 		end := index + location[1]
 
 		if IsInsideCodeBlock(start, code) {
-			push(index, end)
+			push(index, end, "")
 
 			index = end
 
 			continue
 		}
 
-		urlStart := index + location[2]
-		urlEnd := index + location[3]
+		altStart := index + location[2]
+		altEnd := index + location[3]
 
+		urlStart := index + location[4]
+		urlEnd := index + location[5]
+
+		alt := text[altStart:altEnd]
 		url := text[urlStart:urlEnd]
 
-		if !strings.HasPrefix(url, "data:") && !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
-			push(index, end)
+		isDataUrl := strings.HasPrefix(url, "data:")
+		isHttpUrl := strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://")
+
+		if !isDataUrl && !isHttpUrl {
+			push(index, end, "")
 
 			index = end
 
 			continue
+		}
+
+		var image string
+
+		if isDataUrl {
+			image = fmt.Sprintf("![image](%s)", alt)
+		} else {
+			image = fmt.Sprintf("![image](%s)", url)
 		}
 
 		if start > index {
-			push(index, start)
+			push(index, start, image)
+		} else {
+			push(index, index, image)
 		}
 
 		if !stripImages {
