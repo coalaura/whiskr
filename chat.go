@@ -597,6 +597,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		close      int
 		completing bool
 		reasoning  bool
+		hasContent bool
 		tool       *ToolCall
 		finish     openrouter.FinishReason
 		native     string
@@ -674,6 +675,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			close += strings.Count(call.Function.Arguments, "}")
 
 			tool.Args += call.Function.Arguments
+
+			hasContent = true
 		} else if tool != nil {
 			break
 		}
@@ -692,6 +695,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			buf.WriteString(delta.Content)
 
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
+
+			hasContent = true
 		} else if delta.Reasoning != nil {
 			if !reasoning && len(delta.ReasoningDetails) != 0 {
 				*delta.Reasoning = strings.TrimLeft(*delta.Reasoning, " \t\n\r")
@@ -709,6 +714,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 				}
 
 				response.WriteChunk(NewChunk(ChunkImage, image.ImageURL.URL))
+
+				hasContent = true
 			}
 		}
 	}
@@ -717,7 +724,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", reason)))
 	}
 
-	if buf.Len() == 0 && finish == "" {
+	if buf.Len() == 0 && finish == "" && !hasContent {
 		response.WriteChunk(NewChunk(ChunkError, errors.New("no content returned")))
 	}
 
