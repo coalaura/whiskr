@@ -6,6 +6,7 @@ class Dropdown {
 	#_options;
 	#_selected;
 	#_search;
+	#_tagFilters = [];
 
 	#all = {
 		label: false,
@@ -24,6 +25,9 @@ class Dropdown {
 	#selected = false;
 	#options = [];
 	#tabs = [];
+	#availableTags = [];
+	#includeTagFilters = new Set();
+	#excludeTagFilters = new Set();
 
 	#activeTab = "all";
 	#tabScroll = {};
@@ -109,7 +113,7 @@ class Dropdown {
 		});
 
 		// dropdown
-		this.#_dropdown = make("div", "dropdown", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
+		this.#_dropdown = make("div", "dropdown", "open", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
 
 		// selected item
 		this.#_selected = make("div", "selected");
@@ -372,6 +376,9 @@ class Dropdown {
 			}
 		}
 
+		// collect unique tags
+		this.#collectTags();
+
 		// render favorites in order
 		if (this.#favoritesEnabled) {
 			for (const favId of this.#favoriteOrder) {
@@ -387,6 +394,8 @@ class Dropdown {
 
 		// live search (if enabled)
 		if (this.#search) {
+			const searchWrapper = make("div", "search-wrapper");
+
 			this.#_search = make("input", "search");
 
 			this.#_search.type = "text";
@@ -401,22 +410,89 @@ class Dropdown {
 					return;
 				}
 
-				if (this.#_search.value) {
-					this.#_search.value = "";
-
-					this.#_search.dispatchEvent(new Event("input"));
-
-					return;
-				}
+				this.#clearFilters();
 
 				this.#_dropdown.classList.remove("open");
 			});
 
-			_content.appendChild(this.#_search);
+			this.#_search.addEventListener("auxclick", event => {
+				if (event.button !== 1) {
+					return;
+				}
+
+				this.#clearFilters();
+			});
+
+			searchWrapper.appendChild(this.#_search);
+
+			// tag filter
+			if (this.#availableTags.length > 0) {
+				const _tagFilter = make("div", "tag-filter", "tags");
+
+				for (const tag of this.#availableTags) {
+					const tagBtn = make("div", "tag", tag);
+
+					tagBtn.title = `Click to show only "${tag}" - Right-click to exclude`;
+					tagBtn.dataset.tag = tag;
+
+					tagBtn.addEventListener("click", () => {
+						if (this.#includeTagFilters.has(tag)) {
+							this.#includeTagFilters.delete(tag);
+
+							tagBtn.classList.remove("active");
+						} else {
+							this.#excludeTagFilters.delete(tag);
+							this.#includeTagFilters.add(tag);
+
+							tagBtn.classList.remove("inactive");
+							tagBtn.classList.add("active");
+						}
+
+						this.#filter();
+					});
+
+					tagBtn.addEventListener("contextmenu", event => {
+						event.preventDefault();
+
+						if (this.#excludeTagFilters.has(tag)) {
+							this.#excludeTagFilters.delete(tag);
+
+							tagBtn.classList.remove("inactive");
+						} else {
+							this.#includeTagFilters.delete(tag);
+							this.#excludeTagFilters.add(tag);
+
+							tagBtn.classList.remove("active");
+							tagBtn.classList.add("inactive");
+						}
+
+						this.#filter();
+					});
+
+					this.#_tagFilters.push(tagBtn);
+
+					_tagFilter.appendChild(tagBtn);
+				}
+
+				searchWrapper.appendChild(_tagFilter);
+			}
+
+			_content.appendChild(searchWrapper);
 		}
 
 		// add to dom
 		this.#_select.after(this.#_dropdown);
+
+		// ensure width does not change on filter
+		if (this.#_search) {
+			const width = _content.getBoundingClientRect().width;
+
+			if (width > 0) {
+				_content.style.width = `${width}px`;
+			}
+		}
+
+		this.#_dropdown.classList.remove("open");
 
 		this.#render();
 	}
@@ -732,6 +808,8 @@ class Dropdown {
 			}
 		}
 
+		this.#_search?.focus();
+
 		this.#trigger("tab", tab);
 	}
 
@@ -771,15 +849,53 @@ class Dropdown {
 		this.#createFavoriteClone(option);
 	}
 
+	#collectTags() {
+		const tagSet = new Set();
+
+		for (const option of this.#options) {
+			for (const tag of option.tags) {
+				tagSet.add(tag);
+			}
+		}
+
+		this.#availableTags = Array.from(tagSet);
+
+		this.#availableTags.sort();
+	}
+
+	#clearFilters() {
+		if (!this.#_search) {
+			return;
+		}
+
+		this.#_search.value = "";
+
+		for (const tagBtn of this.#_tagFilters) {
+			tagBtn.classList.remove("active");
+			tagBtn.classList.remove("inactive");
+		}
+
+		this.#includeTagFilters.clear();
+		this.#excludeTagFilters.clear();
+
+		this.#filter();
+	}
+
 	#filter() {
 		if (!this.#_search) {
 			return;
 		}
 
-		const query = searchable(this.#_search.value);
+		const query = searchable(this.#_search.value),
+			includeTags = Array.from(this.#includeTagFilters),
+			excludeTags = Array.from(this.#excludeTagFilters);
 
 		for (const option of this.#options) {
-			if (query && !option.search.includes(query)) {
+			const matchesSearch = !query || option.search.includes(query),
+				matchesIncludeTags = !includeTags.length || includeTags.every(tag => option.tags.includes(tag)),
+				matchesExcludeTags = !excludeTags.length || excludeTags.every(tag => !option.tags.includes(tag));
+
+			if (!matchesSearch || !matchesIncludeTags || !matchesExcludeTags) {
 				option.el.classList.add("filtered");
 				option.favoriteClone?.classList?.add("filtered");
 
