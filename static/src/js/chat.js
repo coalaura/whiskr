@@ -1882,7 +1882,7 @@ async function generate(cancel = false, noPush = false) {
 		const total = data?.total || 1;
 
 		message = new Message({
-			iteration: total > 1 ? `${data.iteration}/${total}` : "",
+			iteration: total > 1 ? `${data.iteration}/${total}` : "1/1",
 			role: "assistant",
 		});
 
