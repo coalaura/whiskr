@@ -211,11 +211,7 @@ func GetModelTags(model openingrouter.FrontendModel, m *Model) {
 		case "image":
 			m.Images = true
 
-			m.Tags = append(m.Tags, "image")
-		case "audio":
-			m.Audio = true
-
-			m.Tags = append(m.Tags, "audio")
+			m.Tags = append(m.Tags, "image_gen")
 		case "text":
 			m.Text = true
 		}

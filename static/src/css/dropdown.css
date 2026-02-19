@@ -333,9 +333,9 @@
 	background-image: url(icons/tags/json.svg);
 }
 
-.tags .tag.image {
+.tags .tag.image_gen {
 	--color: var(--c-rosewater);
-	background-image: url(icons/tags/image.svg);
+	background-image: url(icons/tags/image_gen.svg);
 }
 
 .tags .tag.free {

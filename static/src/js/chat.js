@@ -2338,21 +2338,17 @@ async function loadData() {
 
 		el.dataset.tags = tags.join(",");
 
-		if (tags.includes("image")) {
-			if (data.config.images) {
-				el.dataset.tabs = "images";
-			} else {
-				el.dataset.disabled = "yes";
+		if (tags.includes("image_gen") && !data.config.images) {
+			el.dataset.disabled = "yes";
 
-				disabledModels.push(model.id);
-			}
+			disabledModels.push(model.id);
 		}
 
 		models[model.id] = model;
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, favorites, data.config.images ? ["images"] : []).switchTab(modelTab);
+	dropdown($model, 6, favorites).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({
@@ -3066,7 +3062,7 @@ $model.addEventListener("change", () => {
 		$reasoningTokens.parentNode.classList.add("none");
 	}
 
-	if (tags.includes("image")) {
+	if (tags.includes("image_gen")) {
 		$imageResolution.parentNode.classList.remove("none");
 		$imageAspect.parentNode.classList.remove("none");
 	} else {

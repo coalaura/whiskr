@@ -47,6 +47,8 @@ class Dropdown {
 		this.#favoritesEnabled = Array.isArray(favorites);
 		this.#favoriteOrder = Array.isArray(favorites) ? [...favorites] : [];
 
+		const allowedTabs = this.#tabs.length ? new Set(this.#tabs) : null;
+
 		this.#_select.querySelectorAll("option").forEach(option => {
 			const classes = option.dataset.classes?.trim(),
 				tags = option.dataset.tags?.trim(),
@@ -55,14 +57,12 @@ class Dropdown {
 				isNew = !!option.dataset.new,
 				tabData = option.dataset.tabs?.trim();
 
-			const allowedTabs = this.#tabs.length ? new Set(this.#tabs) : null;
-
 			const optionTabs = tabData
 				? tabData
 						.split(",")
-						.map(t => t.trim())
+						.map(tab => tab.trim())
 						.filter(Boolean)
-						.filter(t => !allowedTabs || allowedTabs.has(t))
+						.filter(tab => !allowedTabs || allowedTabs.has(tab))
 				: [];
 
 			this.#options.push({
@@ -186,7 +186,10 @@ class Dropdown {
 		for (const tab of this.#tabs) {
 			const label = make("div", "tab-title");
 
-			label.textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+			label.textContent = tab
+				.split("_")
+				.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+				.join(" ");
 
 			_tabs.appendChild(label);
 
@@ -321,6 +324,8 @@ class Dropdown {
 			// add to custom tabs
 			for (const tab of option.tabs) {
 				const tabMeta = this.#tabData[tab];
+
+				console.log("tab", tab);
 
 				if (!tabMeta) {
 					continue;
