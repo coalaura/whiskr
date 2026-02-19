@@ -2292,7 +2292,7 @@ async function loadData() {
 			`Tags:\t\t${model.tags?.join(", ") || "-"}`,
 			`Created:\t\t${formatTimestamp(model.created)}`,
 			`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
-			model.pricing.image ? `Image:\t\t${formatMoney(model.pricing.image)} Out` : null,
+			model.pricing.image ? `Image Gen:\t${formatMoney(model.pricing.image)} Out` : null,
 			separator,
 			stripMarkdown(model.description),
 		]

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/coalaura/openingrouter"
 )
 
 type ModelPricing struct {
@@ -90,13 +92,13 @@ func LoadModels() error {
 		return err
 	}
 
-	list, err := OpenRouterListFrontendModels(context.Background())
+	list, err := openingrouter.ListFrontendModels(context.Background())
 	if err != nil {
 		return err
 	}
 
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].CreatedAt.After(list[j].CreatedAt)
+		return list[i].CreatedAt.After(list[j].CreatedAt.Time)
 	})
 
 	var (
@@ -114,20 +116,17 @@ func LoadModels() error {
 		}
 
 		var (
-			inputStr  string
-			outputStr string
+			input  float64
+			output float64
 		)
 
 		if full, ok := base[model.Slug]; ok {
-			inputStr = full.Pricing.Prompt
-			outputStr = full.Pricing.Completion
+			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
+			output, _ = strconv.ParseFloat(full.Pricing.Completion, 64)
 		} else {
-			inputStr = model.Endpoint.Pricing.Prompt
-			outputStr = model.Endpoint.Pricing.Completion
+			input = model.Endpoint.Pricing.Prompt.Float64()
+			output = model.Endpoint.Pricing.Completion.Float64()
 		}
-
-		input, _ := strconv.ParseFloat(inputStr, 64)
-		output, _ := strconv.ParseFloat(outputStr, 64)
 
 		m := &Model{
 			ID:          model.Slug,
@@ -171,7 +170,7 @@ func LoadModels() error {
 	return nil
 }
 
-func GetModelTags(model FrontendModel, m *Model) {
+func GetModelTags(model openingrouter.FrontendModel, m *Model) {
 	for _, parameter := range model.Endpoint.SupportedParameters {
 		switch parameter {
 		case "reasoning":
@@ -219,7 +218,7 @@ func GetModelTags(model FrontendModel, m *Model) {
 	sort.Strings(m.Tags)
 }
 
-func HasModelListChanged(list []FrontendModel) bool {
+func HasModelListChanged(list []openingrouter.FrontendModel) bool {
 	modelMx.RLock()
 	defer modelMx.RUnlock()
 

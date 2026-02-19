@@ -1241,6 +1241,10 @@ body.ready #sidebar-trigger {
 	border-bottom: 1px solid var(--c-surface0);
 }
 
+.message:not(.assistant) .info {
+	display: none;
+}
+
 .message .info:has(.iteration:empty):has(.time:empty) {
 	display: none;
 }
@@ -1517,6 +1521,10 @@ body.ready #sidebar-trigger {
 
 .statistics .cost::before {
 	background-image: url(icons/money.svg);
+}
+
+.message:not(.assistant) .statistics {
+	display: none;
 }
 
 .message:not(:hover) .statistics {

@@ -57,3 +57,20 @@ func OpenRouterGetGeneration(ctx context.Context, id string) (openrouter.Generat
 
 	return client.GetGeneration(ctx, id)
 }
+
+func OpenRouterListModels(ctx context.Context) (map[string]openrouter.Model, error) {
+	client := OpenRouterClient()
+
+	models, err := client.ListModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	mp := make(map[string]openrouter.Model, len(models))
+
+	for _, model := range models {
+		mp[model.ID] = model
+	}
+
+	return mp, nil
+}

@@ -3,6 +3,7 @@ module chat
 go 1.25.5
 
 require (
+	github.com/coalaura/openingrouter v0.0.0-20260219212935-204abf45d5dd
 	github.com/coalaura/plain v1.1.4
 	github.com/expr-lang/expr v1.17.7
 	github.com/go-chi/chi/v5 v5.2.3
@@ -14,6 +15,7 @@ require (
 )
 
 require (
+	github.com/coalaura/byteconv v0.0.0-20260219201828-c79809dc218c // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
