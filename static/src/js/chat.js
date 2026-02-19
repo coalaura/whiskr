@@ -295,6 +295,7 @@ class Message {
 
 	#tool;
 	#tags = [];
+	#iteration = "";
 	#time = 0;
 	#ttft = 0;
 	#statistics;
@@ -328,6 +329,7 @@ class Message {
 		this.#reasoningType = data.reasoningType || "";
 		this.#text = data.text || "";
 
+		this.#iteration = data.iteration;
 		this.#time = data.time;
 		this.#ttft = data.ttft;
 
@@ -576,10 +578,23 @@ class Message {
 
 		this.#_message.appendChild(_body);
 
+		// info section
+		const _info = make("div", "info");
+
+		_body.appendChild(_info);
+
+		// iteration
+		const _iteration = make("div", "iteration");
+
+		_iteration.title = "Iteration";
+		_iteration.textContent = this.#iteration || "";
+
+		_info.appendChild(_iteration);
+
 		// time
 		this.#_time = make("div", "time");
 
-		_body.appendChild(this.#_time);
+		_info.appendChild(this.#_time);
 
 		// loader
 		const _loader = make("div", "loader");
@@ -1201,6 +1216,10 @@ class Message {
 
 		if (this.#statistics && full) {
 			data.statistics = this.#statistics;
+		}
+
+		if (this.#iteration && full) {
+			data.iteration = this.#iteration;
 		}
 
 		if (this.#time && full) {
@@ -1854,13 +1873,16 @@ async function generate(cancel = false, noPush = false) {
 		generationID = null;
 	}
 
-	function start() {
+	function start(data) {
 		started = Date.now();
 		hasContent = false;
 
 		setGenerationState("waiting");
 
+		const total = data?.total || 1;
+
 		message = new Message({
+			iteration: total > 1 ? `${data.iteration}/${total}` : "",
 			role: "assistant",
 		});
 
@@ -1902,8 +1924,6 @@ async function generate(cancel = false, noPush = false) {
 		}
 	};
 
-	start();
-
 	stream(
 		"/-/chat",
 		{
@@ -1927,11 +1947,11 @@ async function generate(cancel = false, noPush = false) {
 
 			stopTimeout?.();
 
-			if (!message && chunk.type !== "end") {
-				start();
-			}
-
 			switch (chunk.type) {
+				case "start":
+					start(chunk.data);
+
+					break;
 				case "end":
 					finish();
 

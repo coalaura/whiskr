@@ -32,6 +32,11 @@ type Chunk struct {
 	Data any
 }
 
+type StartChunk struct {
+	Iteration int64 `msgpack:"iteration"`
+	Total     int64 `msgpack:"total"`
+}
+
 type Stream struct {
 	mx  sync.Mutex
 	wr  http.ResponseWriter
@@ -39,7 +44,7 @@ type Stream struct {
 }
 
 var pool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return &bytes.Buffer{}
 	},
 }

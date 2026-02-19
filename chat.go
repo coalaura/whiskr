@@ -297,9 +297,13 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
 
-	if model.Tools && r.Tools.Search && env.Tokens.Exa != "" && r.Iterations > 1 {
-		request.Tools = GetSearchTools()
-		request.ToolChoice = "auto"
+	if model.Tools && r.Tools.Search && env.Tokens.Exa != "" {
+		if r.Iterations > 1 {
+			request.Tools = GetSearchTools()
+			request.ToolChoice = "auto"
+		}
+	} else {
+		r.Iterations = 1
 	}
 
 	for _, message := range r.Messages {
@@ -489,7 +493,10 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
 
-		response.WriteChunk(NewChunk(ChunkStart, nil))
+		response.WriteChunk(NewChunk(ChunkStart, StartChunk{
+			Iteration: iteration + 1,
+			Total:     raw.Iterations,
+		}))
 
 		hasToolMessage := raw.AddToolPrompt(request, iteration)
 

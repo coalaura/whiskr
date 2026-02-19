@@ -72,8 +72,14 @@ export function lines(text) {
 
 const fracZerosRgx = /(?:(\.\d*?[1-9])0+|\.0+)$/;
 
-export function round(num, digits) {
-	return num.toFixed(digits).replace(fracZerosRgx, "$1") || "0";
+export function round(num, digits, forceDigit = false) {
+	let result = num.toFixed(digits);
+
+	if (!forceDigit) {
+		result = result.replace(fracZerosRgx, "$1") || "0";
+	}
+
+	return result;
 }
 
 const trailingZeroRgx = /\.?0+$/m;
@@ -114,13 +120,13 @@ export function formatMilliseconds(ms) {
 	}
 
 	if (ms < 60000) {
-		return `${round(ms / 1000, 1)}s`;
+		return `${round(ms / 1000, 1, true)}s`;
 	}
 
 	const minutes = Math.floor(ms / 60000),
 		seconds = ms - minutes * 60000;
 
-	return `${minutes}m ${round(seconds / 1000, 1)}s`;
+	return `${minutes}m ${round(seconds / 1000, 1, true)}s`;
 }
 
 export function formatTimestamp(ts) {
