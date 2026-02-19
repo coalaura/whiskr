@@ -5,7 +5,6 @@ import (
 	"slices"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -23,6 +22,7 @@ type Model struct {
 	Description string       `json:"description"`
 	Pricing     ModelPricing `json:"pricing"`
 	Tags        []string     `json:"tags,omitempty"`
+	Providers   int64        `json:"providers"`
 
 	Reasoning bool `json:"-"`
 	Vision    bool `json:"-"`
@@ -48,7 +48,7 @@ func GetModel(name string) *Model {
 }
 
 func StartModelUpdateLoop() error {
-	if err := LoadModels(true); err != nil {
+	if err := LoadModels(); err != nil {
 		return err
 	}
 
@@ -56,7 +56,7 @@ func StartModelUpdateLoop() error {
 		ticker := time.NewTicker(time.Duration(env.Settings.RefreshInterval) * time.Minute)
 
 		for range ticker.C {
-			if err := LoadModels(false); err != nil {
+			if err := LoadModels(); err != nil {
 				log.Warnln(err)
 			}
 		}
@@ -65,18 +65,17 @@ func StartModelUpdateLoop() error {
 	return nil
 }
 
-func LoadModels(initial bool) error {
+func LoadModels() error {
 	log.Println("Refreshing model list...")
 
-	list, err := OpenRouterListFrontendModels(context.Background())
+	base, err := OpenRouterListModels(context.Background())
 	if err != nil {
 		return err
 	}
 
-	if !initial && !HasModelListChanged(list) {
-		log.Println("No new models, skipping update")
-
-		return nil
+	list, err := OpenRouterListFrontendModels(context.Background())
+	if err != nil {
+		return err
 	}
 
 	sort.Slice(list, func(i, j int) bool {
@@ -93,20 +92,34 @@ func LoadModels(initial bool) error {
 			continue
 		}
 
-		name := model.Name
-
-		if index := strings.Index(name, ": "); index != -1 {
-			name = name[index+2:]
+		if model.Endpoint == nil {
+			continue
 		}
 
-		input, _ := strconv.ParseFloat(model.Endpoint.Pricing.Prompt, 64)
-		output, _ := strconv.ParseFloat(model.Endpoint.Pricing.Completion, 64)
-		image, _ := strconv.ParseFloat(model.Endpoint.Pricing.Image, 64)
+		var (
+			inputStr  string
+			outputStr string
+			imageStr  string
+		)
+
+		if full, ok := base[model.Slug]; ok {
+			inputStr = full.Pricing.Prompt
+			outputStr = full.Pricing.Completion
+			imageStr = full.Pricing.Image
+		} else {
+			inputStr = model.Endpoint.Pricing.Prompt
+			outputStr = model.Endpoint.Pricing.Completion
+			imageStr = model.Endpoint.Pricing.Image
+		}
+
+		input, _ := strconv.ParseFloat(inputStr, 64)
+		output, _ := strconv.ParseFloat(outputStr, 64)
+		image, _ := strconv.ParseFloat(imageStr, 64)
 
 		m := &Model{
 			ID:          model.Slug,
 			Created:     model.CreatedAt.Unix(),
-			Name:        name,
+			Name:        model.ShortName,
 			Description: model.Description,
 
 			Pricing: ModelPricing{

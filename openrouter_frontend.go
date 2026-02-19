@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/revrost/go-openrouter"
 )
 
 type FrontendModelsResponse struct {
@@ -14,14 +16,16 @@ type FrontendModelsResponse struct {
 type FrontendModel struct {
 	Slug             string    `json:"slug"`
 	Name             string    `json:"name"`
+	ShortName        string    `json:"short_name"`
 	Description      string    `json:"description"`
 	CreatedAt        time.Time `json:"created_at"`
 	InputModalities  []string  `json:"input_modalities"`
 	OutputModalities []string  `json:"output_modalities"`
-	Endpoint         Endpoint  `json:"endpoint"`
+	Endpoint         *Endpoint `json:"endpoint"`
 }
 
 type Endpoint struct {
+	ID                  string   `json:"id"`
 	IsFree              bool     `json:"is_free"`
 	SupportedParameters []string `json:"supported_parameters"`
 	Pricing             Pricing  `json:"pricing"`
@@ -54,4 +58,21 @@ func OpenRouterListFrontendModels(ctx context.Context) ([]FrontendModel, error) 
 	}
 
 	return result.Data, nil
+}
+
+func OpenRouterListModels(ctx context.Context) (map[string]openrouter.Model, error) {
+	client := OpenRouterClient()
+
+	models, err := client.ListModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	mp := make(map[string]openrouter.Model, len(models))
+
+	for _, model := range models {
+		mp[model.ID] = model
+	}
+
+	return mp, nil
 }

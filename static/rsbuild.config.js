@@ -9,14 +9,6 @@ export default defineConfig({
 			index: "./src/js/chat.js",
 		},
 	},
-	dev: {
-		client: {
-			port: 3000,
-		},
-	},
-	server: {
-		port: 3000,
-	},
 	output: {
 		distPath: {
 			root: "dist",
