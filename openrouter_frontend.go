@@ -19,6 +19,7 @@ type FrontendModel struct {
 	ShortName        string    `json:"short_name"`
 	Description      string    `json:"description"`
 	CreatedAt        time.Time `json:"created_at"`
+	Author           string    `json:"author"`
 	InputModalities  []string  `json:"input_modalities"`
 	OutputModalities []string  `json:"output_modalities"`
 	Endpoint         *Endpoint `json:"endpoint"`
@@ -32,9 +33,9 @@ type Endpoint struct {
 }
 
 type Pricing struct {
-	Prompt     string `json:"prompt"`
-	Completion string `json:"completion"`
-	Image      string `json:"image,omitempty"`
+	Prompt      string `json:"prompt"`
+	Completion  string `json:"completion"`
+	ImageOutput string `json:"image_output,omitempty"`
 }
 
 func OpenRouterListFrontendModels(ctx context.Context) ([]FrontendModel, error) {

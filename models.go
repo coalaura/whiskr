@@ -32,6 +32,24 @@ type Model struct {
 	Text      bool `json:"-"`
 }
 
+// Since there is no reliable image output pricing data :(
+// These are for high quality, 1024x1024 output images
+var ImageModelPricing = map[string]float64{
+	"sourceful/riverflow-v2-pro":              0.15,  // https://openrouter.ai/sourceful/riverflow-v2-pro
+	"sourceful/riverflow-v2-fast":             0.02,  // https://openrouter.ai/sourceful/riverflow-v2-fast
+	"black-forest-labs/flux.2-klein-4b":       0.014, // https://openrouter.ai/black-forest-labs/flux.2-klein-4b
+	"black-forest-labs/flux.2-max":            0.03,  // https://openrouter.ai/black-forest-labs/flux.2-max
+	"sourceful/riverflow-v2-max-preview":      0.075, // https://openrouter.ai/sourceful/riverflow-v2-max-preview
+	"sourceful/riverflow-v2-standard-preview": 0.035, // https://openrouter.ai/sourceful/riverflow-v2-standard-preview
+	"sourceful/riverflow-v2-fast-preview":     0.03,  // https://openrouter.ai/sourceful/riverflow-v2-fast-preview
+	"black-forest-labs/flux.2-flex":           0.06,  // https://openrouter.ai/black-forest-labs/flux.2-flex
+	"black-forest-labs/flux.2-pro":            0.015, // https://openrouter.ai/black-forest-labs/flux.2-pro
+	"google/gemini-3-pro-image-preview":       0.134, // https://ai.google.dev/gemini-api/docs/pricing#gemini-3-pro-image-preview
+	"openai/gpt-5-image-mini":                 0.167, // https://developers.openai.com/api/docs/pricing/#image-generation
+	"openai/gpt-5-image":                      0.036, // https://developers.openai.com/api/docs/pricing/#image-generation
+	"google/gemini-2.5-flash-image":           0.039, // https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-flash-image
+}
+
 var (
 	modelMx sync.RWMutex
 
@@ -98,22 +116,18 @@ func LoadModels() error {
 		var (
 			inputStr  string
 			outputStr string
-			imageStr  string
 		)
 
 		if full, ok := base[model.Slug]; ok {
 			inputStr = full.Pricing.Prompt
 			outputStr = full.Pricing.Completion
-			imageStr = full.Pricing.Image
 		} else {
 			inputStr = model.Endpoint.Pricing.Prompt
 			outputStr = model.Endpoint.Pricing.Completion
-			imageStr = model.Endpoint.Pricing.Image
 		}
 
 		input, _ := strconv.ParseFloat(inputStr, 64)
 		output, _ := strconv.ParseFloat(outputStr, 64)
-		image, _ := strconv.ParseFloat(imageStr, 64)
 
 		m := &Model{
 			ID:          model.Slug,
@@ -124,7 +138,7 @@ func LoadModels() error {
 			Pricing: ModelPricing{
 				Input:  input * 1000000,
 				Output: output * 1000000,
-				Image:  image,
+				Image:  ImageModelPricing[model.Slug],
 			},
 		}
 
