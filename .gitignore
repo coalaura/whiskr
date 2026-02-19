@@ -3,3 +3,4 @@ config.yml
 chat.exe
 chat
 vocabulary.tiktoken
+providers

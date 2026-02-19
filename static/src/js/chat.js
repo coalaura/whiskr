@@ -2310,6 +2310,10 @@ async function loadData() {
 			el.dataset.favorite = "yes";
 		}
 
+		if (model.provider) {
+			el.dataset.icon = model.provider;
+		}
+
 		const maxPrice = Math.max(model.pricing.input, model.pricing.output);
 
 		if (maxPrice >= 40) {
@@ -2348,7 +2352,7 @@ async function loadData() {
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, favorites, data.config.images ? ["images"] : [], ["image"]).switchTab(modelTab);
+	dropdown($model, 6, favorites, data.config.images ? ["images"] : []).switchTab(modelTab);
 
 	// render prompts
 	data.prompts.unshift({

@@ -24,6 +24,7 @@ type Model struct {
 	Description string       `json:"description"`
 	Pricing     ModelPricing `json:"pricing"`
 	Tags        []string     `json:"tags,omitempty"`
+	Provider    string       `json:"provider,omitempty"`
 
 	Reasoning bool `json:"-"`
 	Vision    bool `json:"-"`
@@ -116,9 +117,17 @@ func LoadModels() error {
 		}
 
 		var (
+			provider string
+
 			input  float64
 			output float64
 		)
+
+		info := model.Endpoint.ProviderInfo
+
+		if info != nil && info.Icon != nil {
+			provider = LoadProviderIcon(info.Slug, info.Icon.URL)
+		}
 
 		if full, ok := base[model.Slug]; ok {
 			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
@@ -133,6 +142,7 @@ func LoadModels() error {
 			Created:     model.CreatedAt.Unix(),
 			Name:        model.ShortName,
 			Description: model.Description,
+			Provider:    provider,
 
 			Pricing: ModelPricing{
 				Input:  input * 1000000,

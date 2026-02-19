@@ -24,7 +24,6 @@ class Dropdown {
 	#selected = false;
 	#options = [];
 	#tabs = [];
-	#leftTags = new Set();
 
 	#activeTab = "all";
 	#tabScroll = {};
@@ -38,13 +37,12 @@ class Dropdown {
 		container: false,
 	};
 
-	constructor(el, maxTags = false, favorites = false, tabs = [], leftTags = []) {
+	constructor(el, maxTags = false, favorites = false, tabs = []) {
 		this.#_select = el;
 
 		this.#maxTags = maxTags;
 		this.#search = "searchable" in el.dataset;
 		this.#tabs = Array.isArray(tabs) ? tabs : [];
-		this.#leftTags = new Set(Array.isArray(leftTags) ? leftTags : []);
 
 		this.#favoritesEnabled = Array.isArray(favorites);
 		this.#favoriteOrder = Array.isArray(favorites) ? [...favorites] : [];
@@ -73,6 +71,7 @@ class Dropdown {
 
 				title: option.title || "",
 				classes: classes ? classes.split(",") : [],
+				icon: option.dataset.icon,
 				tags: tags ? tags.split(",") : [],
 				favorite: isFavorite,
 				disabled: isDisabled,
@@ -267,27 +266,13 @@ class Dropdown {
 
 			_opt.appendChild(_label);
 
-			// left tags (optional)
-			const leftTags = option.tags.filter(tag => this.#leftTags.has(tag));
+			// icon (optional)
+			if (option.icon) {
+				const _icon = make("div", "icon");
 
-			if (leftTags.length) {
-				const _left = make("div", "tags", "left");
+				_icon.style.setProperty("background-image", `url(${option.icon})`);
 
-				_left.title = `${this.#maxTags ? `${leftTags.length}/${this.#maxTags}: ` : ""}${leftTags.join(", ")}`;
-
-				if (this.#maxTags && leftTags.length >= this.#maxTags) {
-					const _all = make("div", "tag", "all");
-
-					_left.appendChild(_all);
-				} else {
-					for (const tag of leftTags) {
-						const _tag = make("div", "tag", tag);
-
-						_left.appendChild(_tag);
-					}
-				}
-
-				_label.appendChild(_left);
+				_label.appendChild(_icon);
 			}
 
 			const _span = make("span");
@@ -307,19 +292,17 @@ class Dropdown {
 			}
 
 			// right tags (optional)
-			const rightTags = option.tags.filter(tag => !this.#leftTags.has(tag));
-
-			if (rightTags.length) {
+			if (option.tags.length) {
 				const _tags = make("div", "tags");
 
-				_tags.title = `${this.#maxTags ? `${rightTags.length}/${this.#maxTags}: ` : ""}${rightTags.join(", ")}`;
+				_tags.title = `${this.#maxTags ? `${option.tags.length}/${this.#maxTags}: ` : ""}${option.tags.join(", ")}`;
 
-				if (this.#maxTags && rightTags.length >= this.#maxTags) {
+				if (this.#maxTags && option.tags.length >= this.#maxTags) {
 					const _all = make("div", "tag", "all");
 
 					_tags.appendChild(_all);
 				} else {
-					for (const tag of rightTags) {
+					for (const tag of option.tags) {
 						const _tag = make("div", "tag", tag);
 
 						_tags.appendChild(_tag);
@@ -844,6 +827,6 @@ document.body.addEventListener("click", event => {
 	});
 });
 
-export function dropdown(el, maxTags = false, favorites = false, tabs = [], leftTags = []) {
-	return new Dropdown(el, maxTags, favorites, tabs, leftTags);
+export function dropdown(el, maxTags = false, favorites = false, tabs = []) {
+	return new Dropdown(el, maxTags, favorites, tabs);
 }
