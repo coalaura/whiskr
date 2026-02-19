@@ -22,7 +22,6 @@ type Model struct {
 	Description string       `json:"description"`
 	Pricing     ModelPricing `json:"pricing"`
 	Tags        []string     `json:"tags,omitempty"`
-	Providers   int64        `json:"providers"`
 
 	Reasoning bool `json:"-"`
 	Vision    bool `json:"-"`
