@@ -5,12 +5,17 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
 
-const TikTokenSource = "https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken"
+const (
+	TikTokenSource = "https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken"
+	TikTokenPath   = "vocabulary.tiktoken"
+)
 
 type TreeNode struct {
 	TokenID  int
@@ -43,9 +48,14 @@ func (n *TreeNode) Insert(token []byte, id int) {
 }
 
 func LoadTokenizer(url string) (*Tokenizer, error) {
+	err := PreloadVocabulary(url, TikTokenPath)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Println("Loading tokenizer...")
 
-	vocabulary, err := LoadVocabulary(url)
+	vocabulary, err := LoadVocabulary(TikTokenPath)
 	if err != nil {
 		return nil, err
 	}
@@ -106,21 +116,50 @@ func (t *Tokenizer) Encode(text string) []int {
 	return tokens
 }
 
-func LoadVocabulary(url string) (map[string]int, error) {
+func PreloadVocabulary(url, path string) error {
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	}
+
+	log.Println("Downloading tokenizer...")
+
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
 	}
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadVocabulary(path string) (map[string]int, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
 
 	vocab := make(map[string]int)
 
-	scanner := bufio.NewScanner(resp.Body)
+	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 		parts := strings.SplitN(scanner.Text(), " ", 2)

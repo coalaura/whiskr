@@ -2,3 +2,4 @@ config.yml
 /*.json
 chat.exe
 chat
+vocabulary.tiktoken
