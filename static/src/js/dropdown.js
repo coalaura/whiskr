@@ -329,8 +329,6 @@ class Dropdown {
 			for (const tab of option.tabs) {
 				const tabMeta = this.#tabData[tab];
 
-				console.log("tab", tab);
-
 				if (!tabMeta) {
 					continue;
 				}
