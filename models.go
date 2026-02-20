@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"slices"
 	"sort"
 	"strconv"
@@ -107,16 +105,12 @@ func LoadModels() error {
 	var (
 		newList = make([]*Model, 0, len(list))
 		newMap  = make(map[string]*Model, len(list))
-
-		_debugAuthors = make(map[string]bool)
 	)
 
 	for _, model := range list {
 		if slices.Contains(model.OutputModalities, "embeddings") {
 			continue
 		}
-
-		_debugAuthors[model.Author] = true
 
 		if model.Endpoint == nil {
 			continue
@@ -164,12 +158,6 @@ func LoadModels() error {
 
 		newList = append(newList, m)
 		newMap[m.ID] = m
-	}
-
-	for author := range _debugAuthors {
-		if _, err := os.Stat(fmt.Sprintf("static/public/labs/%s.png", author)); os.IsNotExist(err) {
-			log.Println(author)
-		}
 	}
 
 	log.Printf("Loaded %d models\n", len(newList))
