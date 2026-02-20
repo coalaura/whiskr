@@ -2310,8 +2310,8 @@ async function loadData() {
 			el.dataset.favorite = "yes";
 		}
 
-		if (model.provider) {
-			el.dataset.icon = model.provider;
+		if (model.author) {
+			el.dataset.icon = `/labs/${model.author}.png`;
 		}
 
 		const maxPrice = Math.max(model.pricing.input, model.pricing.output);

@@ -64,7 +64,6 @@ func main() {
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 		gr.Post("/-/preview", HandlePreview)
-		gr.Get("/-/provider/{icon}", HandleProviderIcon)
 	})
 
 	addr := env.Addr()

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"slices"
 	"sort"
 	"strconv"
@@ -24,7 +26,7 @@ type Model struct {
 	Description string       `json:"description"`
 	Pricing     ModelPricing `json:"pricing"`
 	Tags        []string     `json:"tags,omitempty"`
-	Provider    string       `json:"provider,omitempty"`
+	Author      string       `json:"author,omitempty"`
 
 	Reasoning bool `json:"-"`
 	Vision    bool `json:"-"`
@@ -105,6 +107,8 @@ func LoadModels() error {
 	var (
 		newList = make([]*Model, 0, len(list))
 		newMap  = make(map[string]*Model, len(list))
+
+		_debugAuthors = make(map[string]bool)
 	)
 
 	for _, model := range list {
@@ -112,22 +116,16 @@ func LoadModels() error {
 			continue
 		}
 
+		_debugAuthors[model.Author] = true
+
 		if model.Endpoint == nil {
 			continue
 		}
 
 		var (
-			provider string
-
 			input  float64
 			output float64
 		)
-
-		info := model.Endpoint.ProviderInfo
-
-		if info != nil && info.Icon != nil {
-			provider = LoadProviderIcon(info.Slug, info.Icon.URL)
-		}
 
 		if full, ok := base[model.Slug]; ok {
 			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
@@ -142,7 +140,7 @@ func LoadModels() error {
 			Created:     model.CreatedAt.Unix(),
 			Name:        model.ShortName,
 			Description: model.Description,
-			Provider:    provider,
+			Author:      model.Author,
 
 			Pricing: ModelPricing{
 				Input:  input * 1000000,
@@ -166,6 +164,12 @@ func LoadModels() error {
 
 		newList = append(newList, m)
 		newMap[m.ID] = m
+	}
+
+	for author := range _debugAuthors {
+		if _, err := os.Stat(fmt.Sprintf("static/public/labs/%s.png", author)); os.IsNotExist(err) {
+			log.Println(author)
+		}
 	}
 
 	log.Printf("Loaded %d models\n", len(newList))
