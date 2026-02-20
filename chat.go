@@ -85,11 +85,29 @@ type ChatRequest struct {
 	Messages    []ChatMessage `json:"messages"`
 }
 
-var nativeFinishReasons = map[string]string{
-	// google image models
-	"IMAGE_OTHER":  "content filter",
-	"IMAGE_SAFETY": "content filter",
-}
+var (
+	nativeFinishReasons = map[string]string{
+		// Google / Gemini Models
+		"STOP": "",
+
+		"FINISH_REASON_UNSPECIFIED": "unknown reason",
+		"MAX_TOKENS":                "token limit reached",
+		"OTHER":                     "unknown reason",
+		"SAFETY":                    "safety filter",
+		"BLOCKLIST":                 "blocklist trigger",
+		"PROHIBITED_CONTENT":        "prohibited content",
+		"SPII":                      "sensitive info (PII) filter",
+		"RECITATION":                "copyright/recitation filter",
+		"MODEL_ARMOR":               "security filter (Model Armor)",
+		"IMAGE_SAFETY":              "image safety filter",
+		"IMAGE_PROHIBITED_CONTENT":  "prohibited image content",
+		"IMAGE_RECITATION":          "image recitation filter",
+		"IMAGE_OTHER":               "unknown image error",
+		"NO_IMAGE":                  "failed to generate image",
+		"MALFORMED_FUNCTION_CALL":   "invalid function call",
+		"UNEXPECTED_TOOL_CALL":      "unexpected tool call",
+	}
+)
 
 func (t *ChatToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
 	// Some models require there to be content
@@ -753,10 +771,10 @@ func GetBadStopReason(finish openrouter.FinishReason, native string) string {
 	}
 
 	switch finish {
+	case openrouter.FinishReasonLength:
+		return "token limit reached"
 	case openrouter.FinishReasonContentFilter:
 		return "content filter"
-	case openrouter.FinishReasonLength:
-		return "length"
 	}
 
 	debug("finished with: %q", finish)
