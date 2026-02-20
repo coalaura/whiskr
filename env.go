@@ -224,7 +224,10 @@ func (e *Environment) Store() error {
 			"$.debug": {yaml.HeadComment(" enable verbose logging and diagnostics")},
 
 			"$.tokens":         {yaml.HeadComment("")},
+			"$.server":         {yaml.HeadComment("")},
 			"$.settings":       {yaml.HeadComment("")},
+			"$.models":         {yaml.HeadComment("")},
+			"$.ui":             {yaml.HeadComment("")},
 			"$.authentication": {yaml.HeadComment("")},
 
 			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},

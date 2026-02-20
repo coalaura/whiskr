@@ -11,6 +11,10 @@ tokens:
   # github api token (optional; used by search tools)
   github: ""
 
+server:
+  # port to serve whiskr on (required; default 3443)
+  port: 3443
+
 settings:
   # normalize unicode in assistant output (optional; default: true)
   cleanup: true
