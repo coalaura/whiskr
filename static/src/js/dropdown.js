@@ -847,6 +847,36 @@ class Dropdown {
 		this.#createFavoriteClone(option);
 	}
 
+	setFavorites(order) {
+		this.#favoriteOrder = Array.isArray(order) ? [...order] : [];
+
+		this.#favorites.container.innerHTML = "";
+
+		for (const option of this.#options) {
+			option.favorite = false;
+
+			option.el.classList.remove("favorite");
+
+			option.favoriteClone = null;
+
+			for (const tab in option.clones) {
+				option.clones[tab].classList.remove("favorite");
+			}
+		}
+
+		for (const value of this.#favoriteOrder) {
+			const option = this.#options.find(opt => opt.value === value);
+
+			if (option) {
+				option.favorite = true;
+
+				this.#createFavoriteClone(option, true);
+			}
+		}
+
+		this.#updateFavoritesCount();
+	}
+
 	#collectTags() {
 		const tagSet = new Set();
 

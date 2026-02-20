@@ -1,4 +1,5 @@
 config.yml
+settings.yml
 /*.json
 chat.db
 chat.db-shm

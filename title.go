@@ -11,9 +11,9 @@ import (
 )
 
 type TitleRequest struct {
-	Title    *string   `json:"title"`
-	Filename *string   `json:"filename"`
-	Messages []Message `json:"messages"`
+	Title    *string       `json:"title"`
+	Filename *string       `json:"filename"`
+	Messages []ChatMessage `json:"messages"`
 }
 
 type TitleResponse struct {
@@ -162,7 +162,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func selectTitleMessages(msgs []Message, retitle bool) []Message {
+func selectTitleMessages(msgs []ChatMessage, retitle bool) []ChatMessage {
 	total := len(msgs)
 
 	if total == 0 {
@@ -171,7 +171,7 @@ func selectTitleMessages(msgs []Message, retitle bool) []Message {
 
 	// small conversations: send everything (truncated)
 	if total <= TitleHeadCount+TitleTailCount {
-		out := make([]Message, len(msgs))
+		out := make([]ChatMessage, len(msgs))
 		copy(out, msgs)
 
 		for i := range out {
@@ -181,7 +181,7 @@ func selectTitleMessages(msgs []Message, retitle bool) []Message {
 		return out
 	}
 
-	result := make([]Message, 0, TitleHeadCount+TitleTailCount+1)
+	result := make([]ChatMessage, 0, TitleHeadCount+TitleTailCount+1)
 
 	// Head
 	for i := 0; i < TitleHeadCount; i++ {
@@ -226,7 +226,7 @@ func selectTitleMessages(msgs []Message, retitle bool) []Message {
 			topics = kept
 		}
 
-		result = append(result, Message{
+		result = append(result, ChatMessage{
 			Role: "system",
 			Text: fmt.Sprintf(
 				"[%d messages omitted from middle of conversation. User topics discussed:]\n%s",
@@ -235,7 +235,7 @@ func selectTitleMessages(msgs []Message, retitle bool) []Message {
 			),
 		})
 	} else {
-		result = append(result, Message{
+		result = append(result, ChatMessage{
 			Role: "system",
 			Text: fmt.Sprintf("[%d messages omitted from middle of conversation]", middleEnd-middleStart),
 		})

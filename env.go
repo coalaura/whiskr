@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/goccy/go-yaml"
 	"golang.org/x/crypto/bcrypt"
@@ -45,7 +46,6 @@ type EnvUI struct {
 }
 
 type EnvUser struct {
-	ID       string `yaml:"id"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
@@ -58,6 +58,9 @@ type EnvAuthentication struct {
 }
 
 type Environment struct {
+	dmx sync.RWMutex // data mutex
+	fmx sync.Mutex   // file mutex
+
 	Debug          bool              `yaml:"debug"`
 	Tokens         EnvTokens         `yaml:"tokens"`
 	Server         EnvServer         `yaml:"server"`
@@ -186,22 +189,7 @@ func (e *Environment) Init() error {
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
-	for i, user := range e.Authentication.Users {
-		if user.ID == "" {
-			log.Warnf("User %q has no id, generating new\n", user.Username)
-
-			id, err := CreateSecret(16)
-			if err != nil {
-				return err
-			}
-
-			user.ID = id
-
-			e.Authentication.Users[i] = user
-
-			store = true
-		}
-
+	for _, user := range e.Authentication.Users {
 		if strings.HasPrefix(user.Password, "text=") {
 			log.Warnf("User %q has plaintext password, generating hash\n", user.Username)
 
@@ -211,6 +199,8 @@ func (e *Environment) Init() error {
 			}
 
 			user.Password = string(hash)
+
+			store = true
 		}
 
 		e.Authentication.lookup[user.Username] = user
@@ -260,12 +250,18 @@ func (e *Environment) Store() error {
 		}
 	)
 
+	e.dmx.RLock()
 	err := yaml.NewEncoder(&buffer, yaml.WithComment(comments)).Encode(e)
+	e.dmx.RUnlock()
+
 	if err != nil {
 		return err
 	}
 
 	body := bytes.ReplaceAll(buffer.Bytes(), []byte("#\n"), []byte("\n"))
+
+	e.fmx.Lock()
+	defer e.fmx.Unlock()
 
 	return os.WriteFile("config.yml", body, 0644)
 }

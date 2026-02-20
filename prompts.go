@@ -19,7 +19,7 @@ type PromptData struct {
 	Slug     string
 	Date     string
 	Platform string
-	Settings Settings
+	Settings ChatSettings
 }
 
 type Prompt struct {
@@ -133,7 +133,7 @@ func LoadPrompts() ([]Prompt, error) {
 	return prompts, nil
 }
 
-func BuildPrompt(name string, metadata Metadata, model *Model) (string, error) {
+func BuildPrompt(name string, metadata ChatMetadata, model *Model) (string, error) {
 	if name == "" {
 		return "", nil
 	}

@@ -140,6 +140,8 @@ let searchAvailable = false,
 	usageType = "monthly",
 	totalUsage = {};
 
+let modelDropdown;
+
 function updateTotalUsage() {
 	$total.textContent = `${usageType[0].toUpperCase()} / ${formatMoney(totalUsage[usageType] || 0)}`;
 
@@ -2083,6 +2085,7 @@ async function login() {
 	}
 
 	refreshUsage();
+	syncSettings();
 }
 
 function showLogin() {
@@ -2181,6 +2184,45 @@ async function refreshUsage() {
 	}
 }
 
+function storeSetting(name, data) {
+	return fetch(`/-/settings/${name}`, {
+		method: "PATCH",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(data),
+	});
+}
+
+async function syncSettings() {
+	if (!modelDropdown) {
+		return;
+	}
+
+	const favorites = load("model-favorites", []);
+
+	try {
+		const response = await fetch("/-/settings");
+
+		if (!response.ok) {
+			throw new Error(response.statusText);
+		}
+
+		const remoteSettings = await response.json(),
+			remoteFavorites = remoteSettings?.favorites;
+
+		if (!remoteFavorites?.length && favorites.length > 0) {
+			await storeSetting("favorites", favorites);
+		} else if (remoteFavorites && remoteFavorites.length > 0) {
+			store("model-favorites", remoteFavorites);
+
+			modelDropdown.setFavorites(remoteFavorites);
+		}
+	} catch (err) {
+		console.error("Failed to sync settings:", err);
+	}
+}
+
 async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
@@ -2254,6 +2296,8 @@ async function loadData() {
 		const newFavorites = event.detail;
 
 		store("model-favorites", newFavorites);
+
+		storeFavorites(newFavorites);
 	});
 
 	fillSelect($model, data.models, (el, model) => {
@@ -2321,7 +2365,13 @@ async function loadData() {
 		modelList.push(model);
 	});
 
-	dropdown($model, 6, favorites).switchTab(modelTab);
+	modelDropdown = dropdown($model, 6, favorites);
+
+	modelDropdown.switchTab(modelTab);
+
+	if (data.config.auth && data.authenticated) {
+		syncSettings();
+	}
 
 	// render prompts
 	data.prompts.unshift({

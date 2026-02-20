@@ -18,7 +18,7 @@ var Version = "dev"
 
 var (
 	env      *Environment
-	database *Database
+	settings *Settings
 
 	log = plain.New(plain.WithDate(plain.RFC3339Local))
 )
@@ -31,12 +31,12 @@ func main() {
 	env, err = LoadEnv()
 	log.MustFail(err)
 
-	log.Println("Connecting to database...")
+	log.Println("Loading settings...")
 
-	database, err = ConnectToDatabase()
+	settings, err = LoadSettings()
 	log.MustFail(err)
 
-	defer database.Close()
+	defer settings.Store()
 
 	err = StartModelUpdateLoop()
 	log.MustFail(err)
@@ -70,6 +70,17 @@ func main() {
 		})
 	})
 
+	r.Get("/-/settings", func(w http.ResponseWriter, r *http.Request) {
+		user := GetAuthenticatedUser(r)
+		if user == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+
+			return
+		}
+
+		RespondJson(w, http.StatusOK, settings.Serialize(user.Username))
+	})
+
 	r.Post("/-/auth", HandleAuthentication)
 
 	r.Group(func(gr chi.Router) {
@@ -83,6 +94,8 @@ func main() {
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 		gr.Post("/-/preview", HandlePreview)
+
+		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})
 
 	addr := env.Addr()

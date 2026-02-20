@@ -14,84 +14,84 @@ import (
 	"github.com/revrost/go-openrouter"
 )
 
-type ToolReasoning struct {
+type ChatToolReasoning struct {
 	Format    string `msgpack:"format"`
 	Encrypted string `msgpack:"encrypted"`
 }
 
-type ToolCall struct {
-	ID        string         `msgpack:"id"`
-	Name      string         `msgpack:"name"`
-	Args      string         `msgpack:"args"`
-	Result    string         `msgpack:"result,omitempty"`
-	Done      bool           `msgpack:"done,omitempty"`
-	Invalid   bool           `msgpack:"invalid,omitempty"`
-	Cost      float64        `msgpack:"cost,omitempty"`
-	Reasoning *ToolReasoning `msgpack:"reasoning,omitempty"`
+type ChatToolCall struct {
+	ID        string             `msgpack:"id"`
+	Name      string             `msgpack:"name"`
+	Args      string             `msgpack:"args"`
+	Result    string             `msgpack:"result,omitempty"`
+	Done      bool               `msgpack:"done,omitempty"`
+	Invalid   bool               `msgpack:"invalid,omitempty"`
+	Cost      float64            `msgpack:"cost,omitempty"`
+	Reasoning *ChatToolReasoning `msgpack:"reasoning,omitempty"`
 }
 
-type TextFile struct {
+type ChatTextFile struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
-type Message struct {
-	Role   string     `json:"role"`
-	Text   string     `json:"text"`
-	Tool   *ToolCall  `json:"tool"`
-	Files  []TextFile `json:"files"`
-	Images []string   `json:"images"`
+type ChatMessage struct {
+	Role   string         `json:"role"`
+	Text   string         `json:"text"`
+	Tool   *ChatToolCall  `json:"tool"`
+	Files  []ChatTextFile `json:"files"`
+	Images []string       `json:"images"`
 }
 
-type Reasoning struct {
+type ChatReasoning struct {
 	Effort string `json:"effort"`
 	Tokens int    `json:"tokens"`
 }
 
-type Image struct {
+type ChatImage struct {
 	Resolution string `json:"resolution"`
 	Aspect     string `json:"aspect"`
 }
 
-type Tools struct {
+type ChatTools struct {
 	Images bool `json:"images"`
 	Files  bool `json:"files"`
 	JSON   bool `json:"json"`
 	Search bool `json:"search"`
 }
 
-type Metadata struct {
-	Timezone string   `json:"timezone"`
-	Platform string   `json:"platform"`
-	Settings Settings `json:"settings"`
-	Time     *int64   `json:"time"`
+type ChatMetadata struct {
+	Timezone string       `json:"timezone"`
+	Platform string       `json:"platform"`
+	Settings ChatSettings `json:"settings"`
+	Time     *int64       `json:"time"`
 }
 
-type Settings struct {
+type ChatSettings struct {
 	Name   string `json:"name"`
 	Prompt string `json:"prompt"`
 }
 
-type Request struct {
-	Prompt      string    `json:"prompt"`
-	Model       string    `json:"model"`
-	Provider    string    `json:"provider"`
-	Temperature float64   `json:"temperature"`
-	Iterations  int64     `json:"iterations"`
-	Tools       Tools     `json:"tools"`
-	Image       Image     `json:"image"`
-	Reasoning   Reasoning `json:"reasoning"`
-	Metadata    Metadata  `json:"metadata"`
-	Messages    []Message `json:"messages"`
+type ChatRequest struct {
+	Prompt      string        `json:"prompt"`
+	Model       string        `json:"model"`
+	Provider    string        `json:"provider"`
+	Temperature float64       `json:"temperature"`
+	Iterations  int64         `json:"iterations"`
+	Tools       ChatTools     `json:"tools"`
+	Image       ChatImage     `json:"image"`
+	Reasoning   ChatReasoning `json:"reasoning"`
+	Metadata    ChatMetadata  `json:"metadata"`
+	Messages    []ChatMessage `json:"messages"`
 }
 
-var contentFilterReasons = map[string]string{
+var nativeFinishReasons = map[string]string{
 	// google image models
 	"IMAGE_OTHER":  "content filter",
 	"IMAGE_SAFETY": "content filter",
 }
 
-func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
+func (t *ChatToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
 	// Some models require there to be content
 	if content == "" {
 		content = " "
@@ -129,7 +129,7 @@ func (t *ToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletion
 	return call
 }
 
-func (t *ToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
+func (t *ChatToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
 	return openrouter.ChatCompletionMessage{
 		Role:       openrouter.ChatMessageRoleTool,
 		ToolCallID: t.ID,
@@ -139,7 +139,7 @@ func (t *ToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
 	}
 }
 
-func (r *Request) AddToolPrompt(request *openrouter.ChatCompletionRequest, iteration int64) bool {
+func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, iteration int64) bool {
 	if len(request.Tools) == 0 {
 		return false
 	}
@@ -166,7 +166,7 @@ func (r *Request) AddToolPrompt(request *openrouter.ChatCompletionRequest, itera
 	return true
 }
 
-func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
+func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 	var request openrouter.ChatCompletionRequest
 
 	model := GetModel(r.Model)
@@ -414,8 +414,8 @@ func (r *Request) Parse() (*openrouter.ChatCompletionRequest, error) {
 	return &request, nil
 }
 
-func ParseChatRequest(r *http.Request) (*Request, *openrouter.ChatCompletionRequest, error) {
-	var raw Request
+func ParseChatRequest(r *http.Request) (*ChatRequest, *openrouter.ChatCompletionRequest, error) {
+	var raw ChatRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
 		return nil, nil, err
@@ -492,8 +492,6 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
-
-		database.IncrementModelStatistics(request.Model)
 
 		response.WriteChunk(NewChunk(ChunkStart, StartChunk{
 			Iteration: iteration + 1,
@@ -592,7 +590,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest) (*ToolCall, string, error) {
+func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest) (*ChatToolCall, string, error) {
 	stream, err := OpenRouterStartStream(ctx, *request)
 	if err != nil {
 		return nil, "", fmt.Errorf("stream.start: %v", err)
@@ -607,7 +605,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		completing bool
 		reasoning  bool
 		hasContent bool
-		tool       *ToolCall
+		tool       *ChatToolCall
 		statistics *Statistics
 		finish     openrouter.FinishReason
 		native     string
@@ -661,7 +659,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			}
 
 			if tool == nil {
-				tool = &ToolCall{}
+				tool = &ChatToolCall{}
 			}
 
 			if call.ID != "" && !strings.HasSuffix(tool.ID, call.ID) {
@@ -678,7 +676,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 						continue
 					}
 
-					tool.Reasoning = &ToolReasoning{
+					tool.Reasoning = &ChatToolReasoning{
 						Format:    details.Format,
 						Encrypted: details.Data,
 					}
@@ -767,9 +765,9 @@ func GetBadStopReason(finish openrouter.FinishReason, native string) string {
 		return ""
 	}
 
-	native, ok := contentFilterReasons[native]
+	mapped, ok := nativeFinishReasons[native]
 	if ok {
-		return native
+		return mapped
 	}
 
 	debug("unknown native finish reason: %q", native)

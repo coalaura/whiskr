@@ -121,7 +121,7 @@ func GetSearchTools() []openrouter.Tool {
 	}
 }
 
-func HandleSearchWebTool(ctx context.Context, tool *ToolCall, arguments *SearchWebArguments) error {
+func HandleSearchWebTool(ctx context.Context, tool *ChatToolCall, arguments *SearchWebArguments) error {
 	if arguments.Query == "" {
 		return errors.New("no search query")
 	}
@@ -146,7 +146,7 @@ func HandleSearchWebTool(ctx context.Context, tool *ToolCall, arguments *SearchW
 	return nil
 }
 
-func HandleFetchContentsTool(ctx context.Context, tool *ToolCall, arguments *FetchContentsArguments) error {
+func HandleFetchContentsTool(ctx context.Context, tool *ChatToolCall, arguments *FetchContentsArguments) error {
 	if len(arguments.URLs) == 0 {
 		return errors.New("no urls")
 	}
@@ -171,7 +171,7 @@ func HandleFetchContentsTool(ctx context.Context, tool *ToolCall, arguments *Fet
 	return nil
 }
 
-func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall, arguments *GitHubRepositoryArguments) error {
+func HandleGitHubRepositoryTool(ctx context.Context, tool *ChatToolCall, arguments *GitHubRepositoryArguments) error {
 	result, err := RepoOverview(ctx, arguments)
 	if err != nil {
 		tool.Result = fmt.Sprintf("error: %v", err)
@@ -184,7 +184,7 @@ func HandleGitHubRepositoryTool(ctx context.Context, tool *ToolCall, arguments *
 	return nil
 }
 
-func ParseAndUpdateArgs[T any](tool *ToolCall) (*T, error) {
+func ParseAndUpdateArgs[T any](tool *ChatToolCall) (*T, error) {
 	var arguments T
 
 	// Some models are a bit confused by numbers so we unwrap "6" -> 6

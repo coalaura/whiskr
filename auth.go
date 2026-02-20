@@ -30,9 +30,21 @@ func (u *EnvUser) Signature(secret string) []byte {
 	return mac.Sum(nil)
 }
 
-func (e *Environment) Authenticate(username, password string) *EnvUser {
+func (e *Environment) GetUser(username string) *EnvUser {
+	e.dmx.RLock()
+	defer e.dmx.RUnlock()
+
 	user, ok := e.Authentication.lookup[username]
 	if !ok {
+		return nil
+	}
+
+	return user
+}
+
+func (e *Environment) Authenticate(username, password string) *EnvUser {
+	user := e.GetUser(username)
+	if user == nil {
 		return nil
 	}
 
@@ -49,27 +61,38 @@ func (e *Environment) SignAuthToken(user *EnvUser) string {
 	return user.Username + ":" + hex.EncodeToString(signature)
 }
 
-func (e *Environment) VerifyAuthToken(token string) bool {
-	index := strings.Index(token, ":")
-	if index == -1 {
-		return false
-	}
-
-	username := token[:index]
-
-	user, ok := e.Authentication.lookup[username]
+func (e *Environment) VerifyAuthToken(token string) *EnvUser {
+	before, after, ok := strings.Cut(token, ":")
 	if !ok {
-		return false
+		return nil
 	}
 
-	signature, err := hex.DecodeString(token[index+1:])
+	user := e.GetUser(before)
+	if user == nil {
+		return nil
+	}
+
+	signature, err := hex.DecodeString(after)
 	if err != nil {
-		return false
+		return nil
 	}
 
 	expected := user.Signature(e.Tokens.Secret)
 
-	return hmac.Equal(signature, expected)
+	if !hmac.Equal(signature, expected) {
+		return nil
+	}
+
+	return user
+}
+
+func GetAuthenticatedUser(r *http.Request) *EnvUser {
+	cookie, err := r.Cookie("whiskr_token")
+	if err != nil {
+		return nil
+	}
+
+	return env.VerifyAuthToken(cookie.Value)
 }
 
 func IsAuthenticated(r *http.Request) bool {
@@ -77,12 +100,7 @@ func IsAuthenticated(r *http.Request) bool {
 		return true
 	}
 
-	cookie, err := r.Cookie("whiskr_token")
-	if err != nil {
-		return false
-	}
-
-	return env.VerifyAuthToken(cookie.Value)
+	return GetAuthenticatedUser(r) != nil
 }
 
 func Authenticate(next http.Handler) http.Handler {
