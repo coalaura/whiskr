@@ -2112,6 +2112,8 @@ async function login() {
 	if (!data?.authenticated) {
 		throw new Error(data.error || "authentication failed");
 	}
+
+	refreshUsage();
 }
 
 function showLogin() {
@@ -2264,6 +2266,8 @@ async function loadData() {
 	// show login modal
 	if (data.config.auth && !data.authenticated) {
 		$authentication.classList.add("open");
+	} else {
+		refreshUsage();
 	}
 
 	// render models
@@ -3525,8 +3529,6 @@ dropdown($providerSorting);
 dropdown($imageResolution);
 dropdown($imageAspect);
 dropdown($reasoningEffort);
-
-refreshUsage();
 
 loadData().then(() => {
 	restore();
