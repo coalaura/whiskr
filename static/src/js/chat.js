@@ -2297,7 +2297,7 @@ async function loadData() {
 
 		store("model-favorites", newFavorites);
 
-		storeFavorites(newFavorites);
+		storeSetting("favorites", newFavorites);
 	});
 
 	fillSelect($model, data.models, (el, model) => {
