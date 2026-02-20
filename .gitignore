@@ -1,5 +1,8 @@
 config.yml
 /*.json
+chat.db
+chat.db-shm
+chat.db-wal
 chat.exe
 chat
 vocabulary.tiktoken

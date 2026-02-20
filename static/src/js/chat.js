@@ -3,6 +3,7 @@ import "../css/chat.css";
 import morphdom from "morphdom";
 import { unpack } from "msgpackr";
 import { getDataUrlAspectRatio } from "./binary.js";
+import { parseDateTime } from "./date.js";
 import { dropdown } from "./dropdown.js";
 import { resetGenerationState, setGenerationState } from "./favicon.js";
 import {
@@ -12,7 +13,6 @@ import {
 	detectPlatform,
 	download,
 	fillSelect,
-	fixed,
 	formatBytes,
 	formatMilliseconds,
 	formatMoney,
@@ -31,7 +31,6 @@ import {
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
 import { connectDB, load, onChange, refresh, store } from "./storage.js";
-import { parseDateTime } from "./date.js";
 
 const ChunkType = {
 	0: "start",
@@ -42,8 +41,9 @@ const ChunkType = {
 	5: "image",
 	6: "tool",
 	7: "error",
-	8: "end",
-	9: "alive",
+	8: "usage",
+	9: "end",
+	10: "alive",
 };
 
 const $version = document.getElementById("version"),
@@ -282,8 +282,6 @@ async function insertImageIntoTextarea(dataUrl, textarea) {
 }
 
 class Message {
-	#destroyed = false;
-
 	#id;
 	#role;
 	#reasoning;
@@ -1021,14 +1019,10 @@ class Message {
 			let html = "";
 
 			if (this.#statistics) {
-				const { provider, model, ttft, time, input, output, cost } = this.#statistics;
-
-				const tps = output / (time / 1000);
+				const { provider, model, input, output, cost } = this.#statistics;
 
 				html = [
 					provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
-					`<div class="ttft">${formatMilliseconds(ttft)}</div>`,
-					`<div class="tps">${fixed(tps, 2)} t/s</div>`,
 					`<div class="tokens">
 						<div class="input">${input}</div>
 						+
@@ -1312,25 +1306,6 @@ class Message {
 		}
 	}
 
-	async loadGenerationData(generationID) {
-		if (!generationID || this.#destroyed) {
-			return;
-		}
-
-		try {
-			const response = await fetch(`/-/stats/${generationID}`),
-				data = await response.json();
-
-			if (!data || data.error) {
-				throw new Error(data?.error || response.statusText);
-			}
-
-			this.setStatistics(data);
-		} catch (err) {
-			console.error(err);
-		}
-	}
-
 	addTag(tag) {
 		if (this.#tags.includes(tag)) {
 			return;
@@ -1561,8 +1536,6 @@ class Message {
 	}
 
 	delete() {
-		this.#destroyed = true;
-
 		const index = messages.findIndex(msg => msg.#id === this.#id);
 
 		if (index === -1) {
@@ -1815,7 +1788,7 @@ async function generate(cancel = false, noPush = false) {
 		refreshTitle();
 	}
 
-	let message, generationID, stopTimeout, timeInterval, started, receivedToken, hasContent;
+	let message, stopTimeout, timeInterval, started, receivedToken, hasContent;
 
 	function startLoadingTimeout() {
 		stopTimeout?.();
@@ -1845,8 +1818,7 @@ async function generate(cancel = false, noPush = false) {
 			return;
 		}
 
-		const msg = message,
-			genID = generationID;
+		const msg = message;
 
 		clearInterval(timeInterval);
 
@@ -1855,8 +1827,6 @@ async function generate(cancel = false, noPush = false) {
 		msg.setTime(took, false);
 
 		msg.setState(false);
-
-		msg.loadGenerationData(genID);
 
 		refreshUsage();
 
@@ -1870,7 +1840,6 @@ async function generate(cancel = false, noPush = false) {
 		hasContent = false;
 
 		message = null;
-		generationID = null;
 	}
 
 	function start(data) {
@@ -1956,8 +1925,8 @@ async function generate(cancel = false, noPush = false) {
 					finish();
 
 					break;
-				case "id":
-					generationID = chunk.data;
+				case "usage":
+					message.setStatistics(chunk.data);
 
 					break;
 				case "tool":

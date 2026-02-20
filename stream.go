@@ -21,8 +21,9 @@ const (
 	ChunkImage         ChunkType = 5
 	ChunkTool          ChunkType = 6
 	ChunkError         ChunkType = 7
-	ChunkEnd           ChunkType = 8
-	ChunkAlive         ChunkType = 9
+	ChunkUsage         ChunkType = 8
+	ChunkEnd           ChunkType = 9
+	ChunkAlive         ChunkType = 10
 )
 
 type ChunkType uint8

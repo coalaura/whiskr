@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,10 +16,29 @@ import (
 
 var Version = "dev"
 
-var log = plain.New(plain.WithDate(plain.RFC3339Local))
+var (
+	env      *Environment
+	database *Database
+
+	log = plain.New(plain.WithDate(plain.RFC3339Local))
+)
 
 func main() {
-	err := StartModelUpdateLoop()
+	var err error
+
+	log.Println("Loading environment...")
+
+	env, err = LoadEnv()
+	log.MustFail(err)
+
+	log.Println("Connecting to database...")
+
+	database, err = ConnectToDatabase()
+	log.MustFail(err)
+
+	defer database.Close()
+
+	err = StartModelUpdateLoop()
 	log.MustFail(err)
 
 	tokenizer, err := LoadTokenizer(TikTokenSource)
@@ -56,7 +76,6 @@ func main() {
 		gr.Use(Authenticate)
 
 		gr.Get("/-/usage", HandleUsage)
-		gr.Get("/-/stats/{id}", HandleStats)
 		gr.Post("/-/title", HandleTitle)
 
 		gr.Post("/-/chat", HandleChat)
@@ -68,8 +87,25 @@ func main() {
 
 	addr := env.Addr()
 
-	log.Printf("Listening at http://localhost%s/\n", addr)
-	http.ListenAndServe(addr, r)
+	server := &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	go func() {
+		log.Printf("Listening at http://localhost%s/\n", addr)
+
+		err = server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Warnln(err)
+		}
+	}()
+
+	log.WaitForInterrupt()
+
+	log.Warnln("Shutting down...")
+
+	server.Close()
 }
 
 func cache(next http.Handler) http.Handler {

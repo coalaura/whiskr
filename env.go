@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/goccy/go-yaml"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type EnvTokens struct {
@@ -65,31 +67,40 @@ type Environment struct {
 	Authentication EnvAuthentication `yaml:"authentication"`
 }
 
-// defaults
-var env = Environment{
-	Server: EnvServer{
-		Port: 3443,
-	},
-	Settings: EnvSettings{
-		CleanContent:    true,
-		Timeout:         1200,
-		RefreshInterval: 30,
-	},
-	Models: EnvModels{
-		ImageGeneration: true,
-	},
-}
+func LoadEnv() (*Environment, error) {
+	// defaults
+	cfg := &Environment{
+		Server: EnvServer{
+			Port: 3443,
+		},
+		Settings: EnvSettings{
+			CleanContent:    true,
+			Timeout:         1200,
+			RefreshInterval: 30,
+		},
+		Models: EnvModels{
+			ImageGeneration: true,
+		},
+	}
 
-func init() {
 	file, err := os.OpenFile("config.yml", os.O_RDONLY, 0)
-	log.MustFail(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer file.Close()
 
-	err = yaml.NewDecoder(file).Decode(&env)
-	log.MustFail(err)
+	err = yaml.NewDecoder(file).Decode(cfg)
+	if err != nil {
+		return nil, err
+	}
 
-	log.MustFail(env.Init())
+	err = cfg.Init()
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func (e *Environment) Addr() string {
@@ -142,7 +153,7 @@ func (e *Environment) Init() error {
 
 	// check if port is valid
 	if e.Server.Port <= 0 || e.Server.Port >= 65535 {
-		return fmt.Errorf("invalid port %q", e.Server.Port)
+		return fmt.Errorf("invalid port %d", e.Server.Port)
 	}
 
 	// default title model
@@ -189,6 +200,17 @@ func (e *Environment) Init() error {
 			e.Authentication.Users[i] = user
 
 			store = true
+		}
+
+		if strings.HasPrefix(user.Password, "text=") {
+			log.Warnf("User %q has plaintext password, generating hash\n", user.Username)
+
+			hash, err := bcrypt.GenerateFromPassword([]byte(user.Password[5:]), bcrypt.DefaultCost)
+			if err != nil {
+				return err
+			}
+
+			user.Password = string(hash)
 		}
 
 		e.Authentication.lookup[user.Username] = user

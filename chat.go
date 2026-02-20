@@ -493,6 +493,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	for iteration := range raw.Iterations {
 		debug("iteration %d of %d", iteration+1, raw.Iterations)
 
+		database.IncrementModelStatistics(request.Model)
+
 		response.WriteChunk(NewChunk(ChunkStart, StartChunk{
 			Iteration: iteration + 1,
 			Total:     raw.Iterations,
@@ -606,6 +608,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		reasoning  bool
 		hasContent bool
 		tool       *ToolCall
+		statistics *Statistics
 		finish     openrouter.FinishReason
 		native     string
 	)
@@ -642,6 +645,10 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 		if choice.NativeFinishReason != "" {
 			native = choice.NativeFinishReason
+		}
+
+		if chunk.Usage != nil {
+			statistics = CreateStatistics(chunk.Model, chunk.Provider, chunk.Usage)
 		}
 
 		calls := delta.ToolCalls
@@ -733,6 +740,10 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 	if buf.Len() == 0 && finish == "" && !hasContent {
 		response.WriteChunk(NewChunk(ChunkError, errors.New("no content returned")))
+	}
+
+	if statistics != nil {
+		response.WriteChunk(NewChunk(ChunkUsage, *statistics))
 	}
 
 	return tool, buf.String(), nil
