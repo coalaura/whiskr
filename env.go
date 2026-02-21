@@ -186,6 +186,11 @@ func (e *Environment) Init() error {
 		e.Settings.RefreshInterval = 30
 	}
 
+	// make it harder to disable auth accidentally
+	if !e.Authentication.Enabled && len(e.Authentication.Users) > 0 {
+		return errors.New("authentication disabled but users defined")
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
