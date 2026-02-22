@@ -22,15 +22,25 @@ type GitHubRepo struct {
 	DefaultBranch string `json:"default_branch"`
 }
 
-type GitHubContent struct {
+type GitHubTreeItem struct {
+	Path string `json:"path"`
 	Type string `json:"type"`
-	Name string `json:"name"`
+}
+
+type GitHubTreeResponse struct {
+	Truncated bool             `json:"truncated"`
+	Tree      []GitHubTreeItem `json:"tree"`
 }
 
 type GitHubReadme struct {
 	Path     string `json:"path"`
 	Content  string `json:"content"`
 	Encoding string `json:"encoding"`
+}
+
+var IgnoreGithubPaths = []string{
+	"node_modules/", "vendor/", ".git/", "dist/", "build/",
+	"bin/", "obj/", "out/", ".idea/", ".vscode/", "__pycache__/",
 }
 
 func (r *GitHubReadme) AsText() (string, error) {
@@ -117,8 +127,8 @@ func GitHubRepositoryReadmeJson(ctx context.Context, owner, repo, branch string)
 	return &response, nil
 }
 
-func GitHubRepositoryContentsJson(ctx context.Context, owner, repo, branch string) ([]GitHubContent, error) {
-	req, err := NewGitHubRequest(ctx, fmt.Sprintf("/repos/%s/%s/contents?ref=%s", owner, repo, branch))
+func GitHubRepositoryTreeJson(ctx context.Context, owner, repo, branch string) (*GitHubTreeResponse, error) {
+	req, err := NewGitHubRequest(ctx, fmt.Sprintf("/repos/%s/%s/git/trees/%s?recursive=1", owner, repo, branch))
 	if err != nil {
 		return nil, err
 	}
@@ -130,14 +140,14 @@ func GitHubRepositoryContentsJson(ctx context.Context, owner, repo, branch strin
 
 	defer resp.Body.Close()
 
-	var response []GitHubContent
+	var response GitHubTreeResponse
 
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return nil, err
 	}
 
-	return response, nil
+	return &response, nil
 }
 
 func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (string, error) {
@@ -150,8 +160,8 @@ func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (st
 		wg sync.WaitGroup
 
 		readmeMarkdown string
-		directories    []string
 		files          []string
+		treeTruncated  bool
 	)
 
 	// fetch readme
@@ -160,12 +170,16 @@ func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (st
 		if err != nil {
 			log.Warnf("failed to get repository readme: %v\n", err)
 
+			readmeMarkdown = fmt.Sprintf("*Failed to load README: %v*", err)
+
 			return
 		}
 
 		markdown, err := readme.AsText()
 		if err != nil {
 			log.Warnf("failed to decode repository readme: %v\n", err)
+
+			readmeMarkdown = fmt.Sprintf("*Failed to load README: %v*", err)
 
 			return
 		}
@@ -175,38 +189,53 @@ func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (st
 
 	// fetch contents
 	wg.Go(func() {
-		contents, err := GitHubRepositoryContentsJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
+		tree, err := GitHubRepositoryTreeJson(ctx, arguments.Owner, arguments.Repo, repository.DefaultBranch)
 		if err != nil {
 			log.Warnf("failed to get repository contents: %v\n", err)
 
 			return
 		}
 
-		for _, content := range contents {
-			switch content.Type {
-			case "dir":
-				directories = append(directories, fmt.Sprintf(
-					"[%s](https://github.com/%s/%s/tree/%s/%s)",
-					content.Name,
-					arguments.Owner,
-					arguments.Repo,
-					repository.DefaultBranch,
-					content.Name,
-				))
-			case "file":
-				files = append(files, fmt.Sprintf(
-					"[%s](https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s)",
-					content.Name,
-					arguments.Owner,
-					arguments.Repo,
-					repository.DefaultBranch,
-					content.Name,
-				))
+		var validItems []GitHubTreeItem
+
+		for _, item := range tree.Tree {
+			if !shouldIgnoreGithubFile(item.Path) {
+				validItems = append(validItems, item)
 			}
 		}
 
-		sort.Strings(directories)
-		sort.Strings(files)
+		sort.Slice(validItems, func(i, j int) bool {
+			depthI := strings.Count(validItems[i].Path, "/")
+			depthJ := strings.Count(validItems[j].Path, "/")
+
+			if depthI == depthJ {
+				return validItems[i].Path < validItems[j].Path
+			}
+
+			return depthI < depthJ
+		})
+
+		if len(validItems) > 256 {
+			validItems = validItems[:256]
+
+			treeTruncated = true
+		} else if tree.Truncated {
+			treeTruncated = true
+		}
+
+		for _, item := range validItems {
+			if item.Type == "tree" {
+				files = append(files, fmt.Sprintf(
+					"- [D] [%s](https://github.com/%s/%s/tree/%s/%s)",
+					item.Path, arguments.Owner, arguments.Repo, repository.DefaultBranch, item.Path,
+				))
+			} else { // "blob"
+				files = append(files, fmt.Sprintf(
+					"- [F] [%s](https://raw.githubusercontent.com/%s/%s/refs/heads/%s/%s)",
+					item.Path, arguments.Owner, arguments.Repo, repository.DefaultBranch, item.Path,
+				))
+			}
+		}
 	})
 
 	// wait and combine results
@@ -221,27 +250,32 @@ func RepoOverview(ctx context.Context, arguments *GitHubRepositoryArguments) (st
 	fmt.Fprintf(buf, "- Default branch: %s\n", repository.DefaultBranch)
 	fmt.Fprintf(buf, "- Stars: %d | Forks: %d\n", repository.Stargazers, repository.Forks)
 
-	buf.WriteString("\n### Top-level files and directories\n")
+	buf.WriteString("\n### Repository Structure\n")
 
-	if len(directories) == 0 && len(files) == 0 {
+	if len(files) == 0 {
 		buf.WriteString("*No entries or insufficient permissions.*\n")
 	} else {
-		for _, directory := range directories {
-			fmt.Fprintf(buf, "- [D] %s\n", directory)
+		for _, file := range files {
+			fmt.Fprintf(buf, "%s\n", file)
 		}
 
-		for _, file := range files {
-			fmt.Fprintf(buf, "- [F] %s\n", file)
+		if treeTruncated {
+			buf.WriteString("\n*... (repository tree truncated to save context) ...*\n")
 		}
 	}
 
 	buf.WriteString("\n### README\n")
-
-	if readmeMarkdown == "" {
-		buf.WriteString("*No README found or could not load.*\n")
-	} else {
-		buf.WriteString(readmeMarkdown)
-	}
+	buf.WriteString(readmeMarkdown)
 
 	return buf.String(), nil
+}
+
+func shouldIgnoreGithubFile(path string) bool {
+	for _, ignore := range IgnoreGithubPaths {
+		if strings.HasPrefix(path, ignore) || strings.Contains(path, "/"+ignore) {
+			return true
+		}
+	}
+
+	return false
 }

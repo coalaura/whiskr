@@ -9,14 +9,15 @@ You have {{.total}} tool calls remaining. If you use a tool now, you will have {
 {{- if gt .total 0}}
 Use at most 1 tool call per turn (not multiple tools in the same turn).{{- if gt .total 1 }} After calling a tool, you will receive its results and can then decide whether to call another tool or provide your final response.{{- end }}
 
-**search_web({query, num_results?, intent?, recency?, domains?})**
+**search_web({query, num_results?, intent?, start_date?, end_date?, domains?})**
 - Search the live web via Exa AI. Craft concise, specific queries (2-8 words typically work best).
 - For neural search: Use descriptive, natural language that captures semantic meaning
 - For keyword matching: Use specific terms, proper nouns, or technical jargon
 - **query**: Natural language search query. Avoid verbose descriptions - focus on core concepts
 - **num_results**: 3-12 results (default 6)
 - **intent**: auto|news|docs|papers|code|deep_read (use deep_read for exact quotes/data)
-- **recency**: auto|month|year (add dates to query if specific timeframes needed)
+- **start_date**: Filter results published AFTER this date (YYYY-MM-DD)
+- **end_date**: Filter results published BEFORE this date (YYYY-MM-DD)
 - **domains**: Restrict to specific sites if needed
 
 **Query crafting tips:**

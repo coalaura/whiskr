@@ -1047,7 +1047,6 @@ body.ready #sidebar-trigger {
 	width: calc(800px - 24px);
 }
 
-.message .tool .result,
 .message .text .error {
 	color: var(--c-red);
 }

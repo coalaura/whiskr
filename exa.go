@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -69,6 +69,19 @@ func RunExaRequest(req *http.Request) (*ExaResults, error) {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		var body string
+
+		b, err := io.ReadAll(resp.Body)
+		if err == nil {
+			body = string(b)
+		} else {
+			body = err.Error()
+		}
+
+		return nil, fmt.Errorf("Exa API error (%d): %s", resp.StatusCode, body)
+	}
+
 	var result ExaResults
 
 	err = json.NewDecoder(resp.Body).Decode(&result)
@@ -88,8 +101,6 @@ func ExaRunSearch(ctx context.Context, args *SearchWebArguments) (*ExaResults, e
 		args.NumResults = 12
 	}
 
-	guidance := ExaGuidanceForIntent(args)
-
 	data := map[string]any{
 		"query":      args.Query,
 		"type":       "auto",
@@ -100,67 +111,50 @@ func ExaRunSearch(ctx context.Context, args *SearchWebArguments) (*ExaResults, e
 		data["includeDomains"] = args.Domains
 	}
 
+	if args.StartDate != "" {
+		data["startPublishedDate"] = args.StartDate + "T00:00:00.000Z"
+	}
+	if args.EndDate != "" {
+		data["endPublishedDate"] = args.EndDate + "T00:00:00.000Z"
+	}
+
 	contents := map[string]any{
-		"summary": map[string]any{
-			"query": guidance,
+		"highlights": map[string]any{
+			"numSentences":     3,
+			"highlightsPerUrl": 3,
+			"query":            args.Query,
 		},
 		"livecrawl": "preferred",
 	}
 
-	highlights := map[string]any{
-		"numSentences":     2,
-		"highlightsPerUrl": 3,
-		"query":            guidance,
-	}
-
 	switch args.Intent {
 	case "news":
-		highlights["highlightsPerUrl"] = 2
-
 		data["category"] = "news"
 		data["numResults"] = max(8, args.NumResults)
-		data["startPublishedDate"] = daysAgo(30)
-	case "docs":
-		highlights["numSentences"] = 3
-		highlights["highlightsPerUrl"] = 4
 
+		if args.StartDate == "" {
+			data["startPublishedDate"] = daysAgo(30) + "T00:00:00.000Z"
+		}
+	case "docs":
 		contents["subpages"] = 1
 		contents["subpageTarget"] = []string{"documentation", "changelog", "release notes"}
 	case "papers":
-		highlights["numSentences"] = 4
-		highlights["highlightsPerUrl"] = 4
-
 		data["category"] = "research paper"
-		data["startPublishedDate"] = daysAgo(365 * 2)
 	case "code":
-		highlights["highlightsPerUrl"] = 4
+		data["category"] = "github"
 
 		contents["subpages"] = 1
 		contents["subpageTarget"] = []string{"readme", "changelog", "code"}
 		contents["text"] = map[string]any{
-			"maxCharacters": 8000,
+			"maxCharacters": 10000,
 		}
-
-		data["category"] = "github"
 	case "deep_read":
-		highlights["numSentences"] = 3
-		highlights["highlightsPerUrl"] = 5
-
 		contents["text"] = map[string]any{
-			"maxCharacters": 12000,
+			"maxCharacters": 25000,
 		}
 	}
-
-	contents["highlights"] = highlights
 
 	data["contents"] = contents
-
-	switch args.Recency {
-	case "month":
-		data["startPublishedDate"] = daysAgo(30)
-	case "year":
-		data["startPublishedDate"] = daysAgo(365)
-	}
 
 	req, err := NewExaRequest(ctx, "/search", data)
 	if err != nil {
@@ -179,7 +173,7 @@ func ExaRunContents(ctx context.Context, args *FetchContentsArguments) (*ExaResu
 			"highlightsPerUrl": 3,
 		},
 		"text": map[string]any{
-			"maxCharacters": 8000,
+			"maxCharacters": 20000,
 		},
 		"livecrawl": "preferred",
 	}
@@ -194,33 +188,4 @@ func ExaRunContents(ctx context.Context, args *FetchContentsArguments) (*ExaResu
 
 func daysAgo(days int) string {
 	return time.Now().Add(-time.Duration(days) * 24 * time.Hour).Format(time.DateOnly)
-}
-
-func ExaGuidanceForIntent(args *SearchWebArguments) string {
-	var recency string
-
-	switch args.Recency {
-	case "month":
-		recency = " since " + daysAgo(30)
-	case "year":
-		recency = " since " + daysAgo(365)
-	}
-
-	goal := strings.TrimSpace(args.Query)
-
-	switch args.Intent {
-	case "news":
-		return "Give who/what/when/where and key numbers" + recency +
-			". Include dates and named sources; 2-4 bullets. Note disagreements. Ignore speculation."
-	case "docs":
-		return "Extract install command, minimal example, breaking changes" + recency + ", key config options with defaults, and deprecations. Prefer official docs and release notes."
-	case "papers":
-		return "Summarize problem, method, dataset, metrics (with numbers), baselines, novelty, and limitations; include year/venue."
-	case "code":
-		return "Summarize repo purpose, language, license, last release/commit" + recency + ", install steps and minimal example; note breaking changes. Prefer README/docs."
-	case "deep_read":
-		return "Answer: " + goal + ". Extract exact numbers, dates, quotes (with speaker) plus 1-2 sentences of context."
-	}
-
-	return "Focus on answering: " + goal + ". Provide dates, versions, key numbers; 3-5 concise bullets. Ignore marketing fluff."
 }
