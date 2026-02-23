@@ -2199,8 +2199,6 @@ async function syncSettings() {
 		return;
 	}
 
-	const favorites = load("model-favorites", []);
-
 	try {
 		const response = await fetch("/-/settings");
 
@@ -2211,9 +2209,7 @@ async function syncSettings() {
 		const remoteSettings = await response.json(),
 			remoteFavorites = remoteSettings?.favorites;
 
-		if (!remoteFavorites?.length && favorites.length > 0) {
-			await storeSetting("favorites", favorites);
-		} else if (remoteFavorites && remoteFavorites.length > 0) {
+		if (remoteFavorites && remoteFavorites.length > 0) {
 			store("model-favorites", remoteFavorites);
 
 			modelDropdown.setFavorites(remoteFavorites);
