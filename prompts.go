@@ -42,9 +42,6 @@ var (
 	//go:embed internal/files.txt
 	InternalFilesPrompt string
 
-	//go:embed internal/images.txt
-	InternalImagesPrompt string
-
 	//go:embed internal/title.txt
 	InternalTitlePrompt string
 

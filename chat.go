@@ -303,14 +303,6 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		prompt += InternalFilesPrompt
 	}
 
-	if r.Tools.Images {
-		if prompt != "" {
-			prompt += "\n\n"
-		}
-
-		prompt += InternalImagesPrompt
-	}
-
 	if prompt != "" {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
