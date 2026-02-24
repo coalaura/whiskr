@@ -246,7 +246,7 @@ func (e *Environment) Store() error {
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
 
-			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)")},
+			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; set to \"-\" to disable title; default: google/gemini-2.5-flash-lite)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 			"$.models.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
 			"$.models.filters":          {yaml.HeadComment(" boolean expression to filter available models (optional; fields: `price`, `slug`, `name`, `tags`, `created`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)")},

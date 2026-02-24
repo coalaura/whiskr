@@ -129,6 +129,7 @@ let autoScrolling = false,
 	jsonMode = false,
 	searchTool = false,
 	chatTitle = false,
+	chatTitleEnabled = false,
 	chatFilename = false,
 	timeOverride = false;
 
@@ -156,6 +157,10 @@ function updateTotalUsage() {
 }
 
 function updateTitle() {
+	if (!chatTitleEnabled) {
+		return;
+	}
+
 	const title = chatTitle || "New Chat";
 
 	$title.classList.toggle("hidden", !messages.length);
@@ -2006,6 +2011,10 @@ async function refreshTitle() {
 		titleController.abort();
 	}
 
+	if (!chatTitleEnabled) {
+		return;
+	}
+
 	titleController = new AbortController();
 
 	const body = {
@@ -2253,6 +2262,15 @@ async function loadData() {
 
 		return;
 	}
+
+	// title enabled
+	chatTitleEnabled = data.title;
+
+	if (!chatTitleEnabled) {
+		document.body.classList.add("no-title");
+	}
+
+	updateTitle();
 
 	// render version
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;

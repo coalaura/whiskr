@@ -63,6 +63,7 @@ func main() {
 				"search": env.Tokens.Exa != "",
 				"motion": env.UI.ReducedMotion,
 				"images": env.Models.ImageGeneration,
+				"title":  env.Models.TitleModel != "-",
 			},
 			"models":  ModelList,
 			"prompts": Prompts,

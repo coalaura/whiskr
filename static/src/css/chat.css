@@ -765,6 +765,11 @@ body.ready #sidebar-trigger {
 	transition: width 300ms;
 }
 
+body.no-title #page {
+	margin-top: 20px;
+	height: calc(100% - 20px);
+}
+
 .hidden {
 	opacity: 0;
 	pointer-events: none;
@@ -785,6 +790,10 @@ body.ready #sidebar-trigger {
 	padding-left: 20px;
 	transition: 150ms opacity;
 	max-width: 100%;
+}
+
+body.no-title #title {
+	display: none;
 }
 
 #title-text {

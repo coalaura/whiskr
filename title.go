@@ -37,6 +37,12 @@ var (
 )
 
 func HandleTitle(w http.ResponseWriter, r *http.Request) {
+	if env.Models.TitleModel == "-" {
+		w.WriteHeader(http.StatusServiceUnavailable)
+
+		return
+	}
+
 	debug("parsing title")
 
 	var raw TitleRequest
