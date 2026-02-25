@@ -1404,11 +1404,59 @@ class Message {
 				this.#_message.classList.toggle("has-files", !!this.#files.length);
 
 				this.#save();
+			}, newFile => {
+				this.updateFile(file.id, newFile);
 			})
 		);
 
 		this.#_files.classList.add("has-files");
 		this.#_message.classList.add("has-files");
+
+		this.#save();
+	}
+
+	updateFile(fileId, newFile) {
+		const index = this.#files.findIndex(attachment => attachment.id === fileId);
+
+		if (index === -1) {
+			return;
+		}
+
+		const existing = this.#files[index];
+
+		existing.name = newFile.name;
+		existing.content = newFile.content;
+
+		if ("tokens" in newFile && Number.isInteger(newFile.tokens)) {
+			existing.tokens = newFile.tokens;
+		} else {
+			delete existing.tokens;
+		}
+
+		const _file = this.#_files.children[index],
+			_name = _file.querySelector(".name"),
+			_meta = _file.querySelector(".tokens"),
+			_size = _meta.firstChild;
+
+		_name.title = `FILE ${JSON.stringify(existing.name)} LINES ${lines(existing.content)}`;
+		_name.textContent = existing.name;
+
+		_size.textContent = formatBytes(new Blob([existing.content]).size);
+
+		_meta.classList.remove("has-tokens");
+
+		while (_meta.childNodes.length > 1) {
+			_meta.removeChild(_meta.lastChild);
+		}
+
+		if ("tokens" in existing && Number.isInteger(existing.tokens)) {
+			const _tokens = make("div");
+
+			_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(existing.tokens)} tokens`;
+
+			_meta.appendChild(_tokens);
+			_meta.classList.add("has-tokens");
+		}
 
 		this.#save();
 	}
@@ -2565,7 +2613,7 @@ async function resolveTokenCount(str) {
 
 let attachments = [];
 
-function buildFileElement(file, callback) {
+function buildFileElement(file, removeCallback, replaceCallback) {
 	// file wrapper
 	const _file = make("div", "file");
 
@@ -2612,15 +2660,66 @@ function buildFileElement(file, callback) {
 
 	_file.appendChild(_meta);
 
+	// actions
+	const _actions = make("div", "actions");
+
+	// replace button (optional)
+	if (replaceCallback) {
+		const _replace = make("button", "replace");
+
+		_replace.title = "Replace attachment";
+
+		_replace.addEventListener("click", async () => {
+			const files = await selectFile(
+				"text/*",
+				false,
+				fl => {
+					if (!fl.name) {
+						fl.name = "unknown.txt";
+					} else if (fl.name.length > 512) {
+						throw new Error("File name too long (max 512 characters)");
+					}
+
+					if (!fl.content) {
+						throw new Error("File is empty");
+					}
+
+					if (fl.content.includes("\0")) {
+						throw new Error("File is not a text file");
+					}
+
+					if (fl.content.length > 4 * 1024 * 1024) {
+						throw new Error("File is too big (max 4MB)");
+					}
+				},
+				msg => notify(msg, "error")
+			);
+
+			if (!files) {
+				return;
+			}
+
+			const newFile = Array.isArray(files) ? files[0] : files;
+
+			newFile.tokens = await resolveTokenCount(newFile.content);
+
+			replaceCallback(newFile);
+		});
+
+		_actions.appendChild(_replace);
+	}
+
 	// remove button
 	const _remove = make("button", "remove");
 
 	_remove.title = "Remove attachment";
 
-	_file.appendChild(_remove);
+	_actions.appendChild(_remove);
+
+	_file.appendChild(_actions);
 
 	_remove.addEventListener("click", () => {
-		callback(_file);
+		removeCallback(_file);
 	});
 
 	return _file;

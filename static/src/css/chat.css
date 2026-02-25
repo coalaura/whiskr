@@ -1738,18 +1738,28 @@ body.no-title #title {
 	opacity: 1;
 }
 
-.files .file button.remove {
+.files .file button.remove,
+.files .file button.replace {
 	content: "";
 	position: absolute;
-	background-image: url(icons/remove.svg);
-	top: 0;
-	right: 0;
+	background-image: url(icons/remove-big.svg);
+	top: 2px;
+	right: 2px;
 	opacity: 0;
 	transition: 150ms;
+	width: 12px;
+	height: 12px;
+}
+
+.files .file button.replace {
+	background-image: url(icons/replace.svg);
+	right: 14px;
 }
 
 .message.editing .files .file button.remove,
-.files .file:hover button.remove {
+.message.editing .files .file button.replace,
+.files .file:hover button.remove,
+.files .file:hover button.replace {
 	opacity: 1;
 }
 
@@ -1927,6 +1937,7 @@ body.loading #version,
 #bottom,
 .files .file::before,
 .files .file .remove,
+.files .file .replace,
 .markdown .inline-file::before,
 .markdown button.download,
 .message .role::before,
