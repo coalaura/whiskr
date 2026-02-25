@@ -1287,7 +1287,7 @@ body.no-title #title {
 	color: var(--c-yellow);
 }
 
-.message .time .time-real {
+.message .time:has(.ttft-real) .time-real {
 	color: var(--c-green);
 }
 

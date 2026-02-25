@@ -115,6 +115,8 @@ export function clamp(num, min, max) {
 }
 
 export function formatMilliseconds(ms) {
+	ms = Math.round(ms);
+
 	if (ms < 1000) {
 		return `${ms}ms`;
 	}
