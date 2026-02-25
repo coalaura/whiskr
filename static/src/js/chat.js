@@ -3413,9 +3413,10 @@ $saveCurrentChat.addEventListener("click", () => {
 });
 
 $export?.addEventListener("click", () => {
-	const data = JSON.stringify(getChatData(false));
+	const data = JSON.stringify(getChatData(false)),
+		name = chatTitleEnabled && chatFilename ? chatFilename : "chat";
 
-	download(`${chatFilename || "chat"}.json`, "application/json", data);
+	download(`${name}.json`, "application/json", data);
 });
 
 $import?.addEventListener("click", async () => {
