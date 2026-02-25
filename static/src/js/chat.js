@@ -406,6 +406,10 @@ class Message {
 				behavior: "smooth",
 				block: "start",
 			});
+
+			updateScrollButton();
+
+			setFollowTail(false);
 		});
 
 		// message role (wrapper)
