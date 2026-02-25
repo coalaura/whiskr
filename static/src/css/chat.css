@@ -1041,7 +1041,7 @@ body.no-title #title {
 	display: none;
 }
 
-.message.editing .text {
+.message .text {
 	font-size: 15px;
 	line-height: 22px;
 }
@@ -1051,18 +1051,30 @@ body.no-title #title {
 	background: var(--c-crust);
 	min-width: 480px;
 	min-height: 100px;
-	max-width: 100%;
-	padding: 0;
-	width: calc(700px - 24px);
-	border-radius: 2px;
-}
-
-.message.editing .body {
-	background: var(--c-crust);
+	max-width: calc(100% + 24px);
+	padding: 14px 12px;
+	margin: -14px -12px;
+	width: 700px;
+	border-radius: 6px;
 }
 
 .message.assistant textarea.text {
-	width: calc(800px - 24px);
+	width: 800px;
+}
+
+.message.has-files textarea.text,
+.message.has-reasoning textarea.text {
+	margin-top: -6px;
+	padding-top: 6px;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+}
+
+.message.has-images textarea.text {
+	margin-bottom: -6px;
+	padding-bottom: 6px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
 }
 
 .message .text .error {
@@ -1271,9 +1283,19 @@ body.no-title #title {
 	gap: 4px;
 }
 
+.message .time:has(.ttfr-real) .ttft-real {
+	color: var(--c-yellow);
+}
+
+.message .time .time-real {
+	color: var(--c-green);
+}
+
+.message .time .ttfr-real::after,
 .message .time .ttft-real::after {
 	content: "/";
 	padding-left: 4px;
+	color: var(--c-subtext);
 }
 
 .tool .call,
@@ -1651,10 +1673,8 @@ body.no-title #title {
 	flex-wrap: wrap;
 }
 
-.message.editing .files {
+.message.editing .files .file {
 	background: var(--c-crust);
-	padding: 9px;
-	gap: 6px;
 }
 
 .message .files .file {
@@ -1727,6 +1747,7 @@ body.no-title #title {
 	transition: 150ms;
 }
 
+.message.editing .files .file button.remove,
 .files .file:hover button.remove {
 	opacity: 1;
 }

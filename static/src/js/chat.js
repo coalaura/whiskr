@@ -302,6 +302,7 @@ class Message {
 	#tags = [];
 	#iteration = "";
 	#time = 0;
+	#ttfr = 0;
 	#ttft = 0;
 	#statistics;
 	#error = false;
@@ -336,6 +337,7 @@ class Message {
 
 		this.#iteration = data.iteration;
 		this.#time = data.time;
+		this.#ttfr = data.ttfr;
 		this.#ttft = data.ttft;
 
 		if (data.inlineImages) {
@@ -1050,21 +1052,59 @@ class Message {
 			this.#_time.innerHTML = "";
 
 			if (this.#time) {
-				if (this.#ttft) {
-					const ttft = make("span", "ttft-real");
+				if (this.#ttfr) {
+					const _ttfr = make("span", "ttfr-real");
 
-					ttft.title = "Real time to first token";
-					ttft.textContent = `${formatMilliseconds(this.#ttft * 1000)}`;
+					const time = formatMilliseconds(this.#ttfr * 1000);
 
-					this.#_time.appendChild(ttft);
+					_ttfr.title = `Time to first reasoning token: ${time}`;
+					_ttfr.textContent = time;
+
+					this.#_time.appendChild(_ttfr);
 				}
 
-				const time = make("span");
+				if (this.#ttft) {
+					const _ttft = make("span", "ttft-real");
 
-				time.title = "Total time taken";
-				time.textContent = formatMilliseconds(this.#time * 1000);
+					let time = this.#ttft,
+						prefix = "",
+						suffix = "";
 
-				this.#_time.appendChild(time);
+					if (this.#ttfr) {
+						prefix = "+";
+						time -= this.#ttfr;
+
+						suffix = `, time spent reasoning: ${formatMilliseconds(time * 1000)}`;
+					}
+
+					_ttft.title = `Time to first completion token: ${formatMilliseconds(this.#ttft * 1000)}${suffix}`;
+					_ttft.textContent = `${prefix}${formatMilliseconds(time * 1000)}`;
+
+					this.#_time.appendChild(_ttft);
+				}
+
+				const _time = make("span", "time-real");
+
+				let time = this.#time,
+					prefix = "",
+					suffix = "";
+
+				if (this.#ttft) {
+					prefix = "+";
+					time -= this.#ttft;
+
+					suffix = `, time spent completing: ${formatMilliseconds(time * 1000)}`;
+				} else if (this.#ttfr) {
+					prefix = "+";
+					time -= this.#ttfr;
+
+					suffix = `, time spent reasoning: ${formatMilliseconds(time * 1000)}`;
+				}
+
+				_time.title = `Total time taken: ${formatMilliseconds(this.#time * 1000)}${suffix}`;
+				_time.textContent = `${prefix}${formatMilliseconds(time * 1000)}`;
+
+				this.#_time.appendChild(_time);
 			}
 		}
 
@@ -1226,6 +1266,10 @@ class Message {
 		if (this.#time && full) {
 			data.time = this.#time;
 
+			if (this.#ttfr) {
+				data.ttfr = this.#ttfr;
+			}
+
 			if (this.#ttft) {
 				data.ttft = this.#ttft;
 			}
@@ -1299,11 +1343,15 @@ class Message {
 		this.#save();
 	}
 
-	setTime(time, ttft, final = false) {
+	setTime(time, ttfr, ttft, final = false) {
 		this.#time = time;
 
 		if (ttft && !this.#ttft) {
 			this.#ttft = ttft;
+		}
+
+		if (ttfr && !this.#ttfr) {
+			this.#ttfr = ttfr;
 		}
 
 		this.#render("time");
@@ -1795,7 +1843,7 @@ async function generate(cancel = false, noPush = false) {
 		refreshTitle();
 	}
 
-	let message, stopTimeout, timeInterval, started, receivedToken, hasContent;
+	let message, stopTimeout, timeInterval, started, receivedReasoning, receivedCompletion, hasContent;
 
 	function startLoadingTimeout() {
 		stopTimeout?.();
@@ -1831,7 +1879,7 @@ async function generate(cancel = false, noPush = false) {
 
 		const took = Math.round((Date.now() - started) / 100) / 10;
 
-		msg.setTime(took, false);
+		msg.setTime(took, false, false);
 
 		msg.setState(false);
 
@@ -1843,7 +1891,8 @@ async function generate(cancel = false, noPush = false) {
 			resetGenerationState();
 		}
 
-		receivedToken = false;
+		receivedReasoning = false;
+		receivedCompletion = false;
 		hasContent = false;
 
 		message = null;
@@ -1879,7 +1928,7 @@ async function generate(cancel = false, noPush = false) {
 
 			const took = Math.round((Date.now() - started) / 100) / 10;
 
-			message.setTime(took, receivedToken ? took : false);
+			message.setTime(took, receivedReasoning ? took : false, receivedCompletion ? took : false);
 		}, 100);
 	}
 
@@ -1937,7 +1986,7 @@ async function generate(cancel = false, noPush = false) {
 
 					break;
 				case "tool":
-					receivedToken = true;
+					receivedCompletion = true;
 
 					setGenerationState("completing");
 
@@ -1954,7 +2003,7 @@ async function generate(cancel = false, noPush = false) {
 
 					break;
 				case "image":
-					receivedToken = true;
+					receivedCompletion = true;
 
 					setGenerationState("completing");
 
@@ -1964,7 +2013,7 @@ async function generate(cancel = false, noPush = false) {
 
 					break;
 				case "reason":
-					receivedToken = true;
+					receivedReasoning = true;
 
 					if (!hasContent) {
 						setGenerationState("reasoning");
@@ -1975,13 +2024,13 @@ async function generate(cancel = false, noPush = false) {
 
 					break;
 				case "reason_type":
-					receivedToken = true;
+					receivedReasoning = true;
 
 					message.setReasoningType(chunk.data);
 
 					break;
 				case "text":
-					receivedToken = true;
+					receivedCompletion = true;
 
 					setGenerationState("completing");
 
