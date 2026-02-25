@@ -1041,15 +1041,24 @@ body.no-title #title {
 	display: none;
 }
 
+.message.editing .text {
+	font-size: 15px;
+	line-height: 22px;
+}
+
 .message textarea.text {
 	display: block;
 	background: var(--c-crust);
 	min-width: 480px;
 	min-height: 100px;
 	max-width: 100%;
-	padding: 10px 12px;
+	padding: 0;
 	width: calc(700px - 24px);
 	border-radius: 2px;
+}
+
+.message.editing .body {
+	background: var(--c-crust);
 }
 
 .message.assistant textarea.text {

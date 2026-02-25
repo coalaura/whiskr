@@ -1504,7 +1504,7 @@ class Message {
 
 	updateEditHeight() {
 		this.#_edit.style.height = "";
-		this.#_edit.style.height = `${Math.max(100, this.#_edit.scrollHeight + 2)}px`;
+		this.#_edit.style.height = `${Math.max(100, this.#_edit.scrollHeight - 1)}px`;
 	}
 
 	toggleEdit() {

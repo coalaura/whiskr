@@ -1,6 +1,6 @@
 .markdown {
 	font-size: 15px;
-	line-height: 23px;
+	line-height: 22px;
 	color: var(--c-text);
 	overflow: visible;
 	word-wrap: break-word;
@@ -62,9 +62,7 @@
 	color: var(--c-blue);
 	text-decoration: none;
 	font-weight: 500;
-	transition:
-		color 150ms ease,
-		text-decoration-color 150ms ease;
+	transition: color 150ms ease, text-decoration-color 150ms ease;
 }
 
 .markdown a:hover,
@@ -210,7 +208,7 @@
 .markdown th > *,
 .markdown > * {
 	margin: 0;
-	margin-bottom: 14px;
+	margin-bottom: 22px;
 }
 
 .markdown blockquote > *:last-child,
