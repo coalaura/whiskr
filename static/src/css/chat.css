@@ -1283,6 +1283,7 @@ body.no-title #title {
 	gap: 4px;
 }
 
+.message .time:has(.ttfr-real):not(:has(.ttft-real)) .time-real,
 .message .time:has(.ttfr-real) .ttft-real {
 	color: var(--c-yellow);
 }
