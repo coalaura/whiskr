@@ -46,6 +46,9 @@ var ImageModelPricing = map[string]*ImagePricing{
 	// https://openrouter.ai/black-forest-labs/flux.2-klein-4b
 	"black-forest-labs/flux.2-klein-4b": NewImagePricing(0.014, 0.015, 0.016),
 
+	// https://openrouter.ai/bytedance-seed/seedream-4.5
+	"bytedance-seed/seedream-4.5": NewImagePricing(0.04, 0.04, 0.04),
+
 	// https://openrouter.ai/black-forest-labs/flux.2-max
 	"black-forest-labs/flux.2-max": NewImagePricing(0.07, 0.1, 0.13),
 

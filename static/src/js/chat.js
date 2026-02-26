@@ -1389,24 +1389,28 @@ class Message {
 		this.#files.push(file);
 
 		this.#_files.appendChild(
-			buildFileElement(file, el => {
-				const index = this.#files.findIndex(attachment => attachment.id === file.id);
+			buildFileElement(
+				file,
+				el => {
+					const index = this.#files.findIndex(attachment => attachment.id === file.id);
 
-				if (index === -1) {
-					return;
+					if (index === -1) {
+						return;
+					}
+
+					this.#files.splice(index, 1);
+
+					el.remove();
+
+					this.#_files.classList.toggle("has-files", !!this.#files.length);
+					this.#_message.classList.toggle("has-files", !!this.#files.length);
+
+					this.#save();
+				},
+				newFile => {
+					this.updateFile(file.id, newFile);
 				}
-
-				this.#files.splice(index, 1);
-
-				el.remove();
-
-				this.#_files.classList.toggle("has-files", !!this.#files.length);
-				this.#_message.classList.toggle("has-files", !!this.#files.length);
-
-				this.#save();
-			}, newFile => {
-				this.updateFile(file.id, newFile);
-			})
+			)
 		);
 
 		this.#_files.classList.add("has-files");
@@ -2418,13 +2422,41 @@ async function loadData() {
 	fillSelect($model, data.models, (el, model) => {
 		const separator = "─".repeat(24);
 
+		let image;
+
+		if (model.pricing.image) {
+			const { k_1, k_2, k_4 } = model.pricing.image;
+
+			const resolutions = [
+				{ label: "1K", price: k_1 },
+				{ label: "2K", price: k_2 },
+				{ label: "4K", price: k_4 },
+			];
+
+			const priceGroups = new Map();
+
+			for (const { label, price } of resolutions) {
+				if (price != null) {
+					if (!priceGroups.has(price)) {
+						priceGroups.set(price, []);
+					}
+
+					priceGroups.get(price).push(label);
+				}
+			}
+
+			image = Array.from(priceGroups.entries())
+				.map(([price, labels]) => `${labels.join(", ")}: ${formatMoney(price)}`)
+				.join(" | ");
+		}
+
 		el.title = [
 			model.name,
 			separator,
 			`Tags:\t\t${model.tags?.join(", ") || "-"}`,
 			`Created:\t\t${formatTimestamp(model.created)}`,
 			`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
-			model.pricing.image ? `Image Gen:\t${formatMoney(model.pricing.image)} Out` : null,
+			image ? `Image Gen:\t${image}` : null,
 			separator,
 			stripMarkdown(model.description),
 		]
