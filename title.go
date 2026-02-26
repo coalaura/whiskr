@@ -190,7 +190,7 @@ func selectTitleMessages(msgs []ChatMessage, retitle bool) []ChatMessage {
 	result := make([]ChatMessage, 0, TitleHeadCount+TitleTailCount+1)
 
 	// Head
-	for i := 0; i < TitleHeadCount; i++ {
+	for i := range TitleHeadCount {
 		msg := msgs[i]
 		msg.Text = truncateText(msg.Text, 512)
 
@@ -225,7 +225,7 @@ func selectTitleMessages(msgs []ChatMessage, retitle bool) []ChatMessage {
 
 			step := float64(len(topics)) / 12.0
 
-			for i := 0; i < 12; i++ {
+			for i := range 12 {
 				kept = append(kept, topics[int(float64(i)*step)])
 			}
 

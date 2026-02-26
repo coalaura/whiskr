@@ -12,9 +12,9 @@ import (
 )
 
 type ModelPricing struct {
-	Input  float64 `json:"input"`
-	Output float64 `json:"output"`
-	Image  float64 `json:"image,omitzero"`
+	Input  float64       `json:"input"`
+	Output float64       `json:"output"`
+	Image  *ImagePricing `json:"image,omitempty"`
 }
 
 type Model struct {
@@ -33,24 +33,6 @@ type Model struct {
 	Images    bool `json:"-"`
 	Audio     bool `json:"-"`
 	Text      bool `json:"-"`
-}
-
-// Since there is no reliable image output pricing data :(
-// These are for high quality, 1024x1024 output images
-var ImageModelPricing = map[string]float64{
-	"sourceful/riverflow-v2-pro":              0.15,  // https://openrouter.ai/sourceful/riverflow-v2-pro
-	"sourceful/riverflow-v2-fast":             0.02,  // https://openrouter.ai/sourceful/riverflow-v2-fast
-	"black-forest-labs/flux.2-klein-4b":       0.014, // https://openrouter.ai/black-forest-labs/flux.2-klein-4b
-	"black-forest-labs/flux.2-max":            0.03,  // https://openrouter.ai/black-forest-labs/flux.2-max
-	"sourceful/riverflow-v2-max-preview":      0.075, // https://openrouter.ai/sourceful/riverflow-v2-max-preview
-	"sourceful/riverflow-v2-standard-preview": 0.035, // https://openrouter.ai/sourceful/riverflow-v2-standard-preview
-	"sourceful/riverflow-v2-fast-preview":     0.03,  // https://openrouter.ai/sourceful/riverflow-v2-fast-preview
-	"black-forest-labs/flux.2-flex":           0.06,  // https://openrouter.ai/black-forest-labs/flux.2-flex
-	"black-forest-labs/flux.2-pro":            0.015, // https://openrouter.ai/black-forest-labs/flux.2-pro
-	"google/gemini-3-pro-image-preview":       0.134, // https://ai.google.dev/gemini-api/docs/pricing#gemini-3-pro-image-preview
-	"openai/gpt-5-image-mini":                 0.167, // https://developers.openai.com/api/docs/pricing/#image-generation
-	"openai/gpt-5-image":                      0.036, // https://developers.openai.com/api/docs/pricing/#image-generation
-	"google/gemini-2.5-flash-image":           0.039, // https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-flash-image
 }
 
 var (
