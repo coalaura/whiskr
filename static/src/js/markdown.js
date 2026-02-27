@@ -135,23 +135,6 @@ function escapeHtml(text) {
 	return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function fixStreamBuffer(markdown) {
-	// fix the model forgetting to add the <<CONTENT>> line
-	return markdown.replace(/(FILE\s+"[^"]+"(?:\s+LINES\s+[\d-]+)?)/g, (match, _header, offset, fullString) => {
-		const rest = fullString.slice(offset + match.length);
-
-		if (/^\s*<<CONTENT>>/.test(rest)) {
-			return match;
-		}
-
-		if (/^\s*[\r\n]/.test(rest)) {
-			return `${match}\n<<CONTENT>>`;
-		}
-
-		return match;
-	});
-}
-
 function fixProgressiveSvg(raw) {
 	const lastTagEnd = raw.lastIndexOf(">");
 
@@ -202,27 +185,33 @@ function fixProgressiveSvg(raw) {
 }
 
 function parseMd(markdown) {
-	markdown = fixStreamBuffer(markdown);
+	const starts = (markdown.match(/<file\s+name="[^"]+"[^>]*>/gi) || []).length,
+		ends = (markdown.match(/<\/file>/gi) || []).length;
 
-	const starts = (markdown.match(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+(?:-\d+)?)?\s*\r?\n<<CONTENT>>\s*$/gm) || []).length,
-		ends = (markdown.match(/^<<END(?:ING)?>>$/gm) || []).length;
+	let isStreamingLast = false;
 
-	if (starts !== ends && starts > ends) {
-		markdown += "\n<<ENDING>>";
+	if (starts > ends) {
+		markdown += "\n</file>";
+
+		isStreamingLast = true;
 	}
 
 	const files = [],
 		table = {};
 
-	markdown = markdown.replace(/^ ?FILE\s+"([^"]+)"(?:\s+LINES\s+\d+(?:-\d+)?)?\s*\r?\n<<CONTENT>>\s*\r?\n([\s\S]*?)\r?\n<<END(ING)?>>$/gm, (_a, name, content, ending) => {
+	markdown = markdown.replace(/<file\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/file>/gi, (_match, name, rawContent) => {
 		const index = files.length,
 			id = generateID();
+
+		const content = rawContent.replace(/^\r?\n|\r?\n$/g, "").replace(/<\\\/file>/g, "</file>");
+
+		const busy = isStreamingLast && index === starts - 1;
 
 		files.push({
 			id: id,
 			name: name,
 			size: content.length,
-			busy: !!ending,
+			busy: busy,
 		});
 
 		table[id] = {
@@ -230,7 +219,8 @@ function parseMd(markdown) {
 			content: content,
 		};
 
-		return `§|FILE|${index}|§`;
+		// Pad with newlines so marked doesn't accidentally wrap it inline
+		return `\n\n§|FILE|${index}|§\n\n`;
 	});
 
 	const html = parse(markdown).replace(/(?:<p>\s*)?§\|FILE\|(\d+)\|§(?:<\/p>\s*)?/g, (match, index) => {

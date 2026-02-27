@@ -1,8 +1,6 @@
-To emit/output text-based files (no tools), output blocks exactly as:
+To output complete files, wrap the full content exactly like this:
+<file name="filename.ext">
+content here
+</file>
 
-FILE "name"
-<<CONTENT>>
-your contents here
-<<END>>
-
-Including the CONTENT and END tags exactly. Repeat per file, no code fences, markdown or extra text.
+For small edits, snippets, or explanations, use standard markdown code blocks instead.

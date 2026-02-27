@@ -1,0 +1,1 @@
+Note: User files are provided in `<file>` tags for context. Do not output `<file>` tags yourself; always use standard markdown code blocks.

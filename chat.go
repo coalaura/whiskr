@@ -301,6 +301,24 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 
 		prompt += InternalFilesPrompt
+	} else {
+		var hasFiles bool
+
+		for _, message := range r.Messages {
+			if message.Role == "user" && len(message.Files) > 0 {
+				hasFiles = true
+
+				break
+			}
+		}
+
+		if hasFiles {
+			if prompt != "" {
+				prompt += "\n\n"
+			}
+
+			prompt += InternalNoFilesPrompt
+		}
 	}
 
 	if prompt != "" {
@@ -354,13 +372,12 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 						return nil, fmt.Errorf("file %d is invalid (too big, max 4MB)", i)
 					}
 
-					lines := strings.Count(file.Content, "\n") + 1
+					clean := strings.ReplaceAll(file.Content, "</file>", "<\\/file>")
 
 					entry := fmt.Sprintf(
-						"FILE %q LINES %d\n<<CONTENT>>\n%s\n<<END>>",
+						"<file name=%q>\n%s\n</file>",
 						file.Name,
-						lines,
-						file.Content,
+						clean,
 					)
 
 					if multi {
