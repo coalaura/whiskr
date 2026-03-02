@@ -615,9 +615,11 @@ class Message {
 		_body.appendChild(_loader);
 
 		// message files
-		this.#_files = make("div", "files");
+		this.#_files = make("div", "files", "reorderable");
 
 		_body.appendChild(this.#_files);
+
+		this.#setupFileReorder();
 
 		// message reasoning (wrapper)
 		const _reasoning = make("div", "reasoning");
@@ -1388,30 +1390,34 @@ class Message {
 
 		this.#files.push(file);
 
-		this.#_files.appendChild(
-			buildFileElement(
-				file,
-				el => {
-					const index = this.#files.findIndex(attachment => attachment.id === file.id);
+		const element = buildFileElement(
+			file,
+			el => {
+				const index = this.#files.findIndex(attachment => attachment.id === file.id);
 
-					if (index === -1) {
-						return;
-					}
-
-					this.#files.splice(index, 1);
-
-					el.remove();
-
-					this.#_files.classList.toggle("has-files", !!this.#files.length);
-					this.#_message.classList.toggle("has-files", !!this.#files.length);
-
-					this.#save();
-				},
-				newFile => {
-					this.updateFile(file.id, newFile);
+				if (index === -1) {
+					return;
 				}
-			)
+
+				this.#files.splice(index, 1);
+
+				el.remove();
+
+				this.#_files.classList.toggle("has-files", !!this.#files.length);
+				this.#_message.classList.toggle("has-files", !!this.#files.length);
+
+				this.#save();
+			},
+			newFile => {
+				this.updateFile(file.id, newFile);
+			}
 		);
+
+		element.dataset.fileId = file.id;
+		element.draggable = true;
+		element.classList.add("draggable");
+
+		this.#_files.appendChild(element);
 
 		this.#_files.classList.add("has-files");
 		this.#_message.classList.add("has-files");
@@ -1461,6 +1467,115 @@ class Message {
 			_meta.appendChild(_tokens);
 			_meta.classList.add("has-tokens");
 		}
+
+		this.#save();
+	}
+
+	#setupFileReorder() {
+		this.#_files.addEventListener("dragstart", event => {
+			const target = event.target.closest(".file");
+
+			if (!target || target.closest("button")) {
+				return;
+			}
+
+			const fileId = target.dataset.fileId;
+
+			if (!fileId) {
+				return;
+			}
+
+			target.classList.add("dragging");
+
+			event.dataTransfer.effectAllowed = "move";
+
+			try {
+				event.dataTransfer.setData("text/plain", fileId);
+			} catch {}
+		});
+
+		this.#_files.addEventListener("dragover", event => {
+			const dragging = this.#_files.querySelector(".file.dragging");
+
+			if (!dragging) {
+				return;
+			}
+
+			const target = event.target.closest(".file");
+
+			if (!target) {
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "move";
+
+				this.#_files.appendChild(dragging);
+
+				return;
+			}
+
+			if (target === dragging) {
+				return;
+			}
+
+			event.preventDefault();
+			event.dataTransfer.dropEffect = "move";
+
+			const rect = target.getBoundingClientRect(),
+				before = event.clientY < rect.top + rect.height / 2;
+
+			this.#_files.insertBefore(dragging, before ? target : target.nextSibling);
+		});
+
+		this.#_files.addEventListener("drop", event => {
+			if (!this.#_files.querySelector(".file.dragging")) {
+				return;
+			}
+
+			event.preventDefault();
+
+			this.#finalizeFileReorder();
+		});
+
+		this.#_files.addEventListener("dragend", () => {
+			this.#finalizeFileReorder();
+		});
+	}
+
+	#finalizeFileReorder() {
+		const dragging = this.#_files.querySelector(".file.dragging");
+
+		if (dragging) {
+			dragging.classList.remove("dragging");
+		}
+
+		const orderedIds = Array.from(this.#_files.querySelectorAll(".file"))
+			.map(el => el.dataset.fileId)
+			.filter(Boolean);
+
+		if (!orderedIds.length) {
+			return;
+		}
+
+		const newOrder = [];
+
+		for (const fileId of orderedIds) {
+			const match = this.#files.find(file => file.id === fileId);
+
+			if (match) {
+				newOrder.push(match);
+			}
+		}
+
+		if (newOrder.length !== this.#files.length) {
+			return;
+		}
+
+		const unchanged = newOrder.every((file, index) => file === this.#files[index]);
+
+		if (unchanged) {
+			return;
+		}
+
+		this.#files = newOrder;
 
 		this.#save();
 	}
