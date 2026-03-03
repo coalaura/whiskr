@@ -57,6 +57,41 @@
 					</div>
 				</div>
 
+				<div class="sidebar-section chat-settings" id="chat-settings-section">
+					<div class="section-header" id="chat-settings-header">
+						<div class="section-collapse" id="chat-settings-collapse"></div>
+						<span>Chat Settings</span>
+					</div>
+
+					<div class="section-body" id="chat-settings-body">
+						<div class="form-group vertical">
+							<label for="provider-sorting">Provider Sorting</label>
+							<select id="provider-sorting">
+								<option value="" selected>Default sorting</option>
+								<option value="throughput">Sort by throughput (:turbo)</option>
+								<option value="latency">Sort by latency (:quick)</option>
+								<option value="price">Sort by price (:cheap)</option>
+							</select>
+						</div>
+
+						<div class="form-group vertical">
+							<label for="image-resize">Resize Uploaded Images</label>
+							<select id="image-resize">
+								<option value="0">Original Size</option>
+								<option value="1024">1K (1024x1024)</option>
+								<option value="2048">2K (2048x2048)</option>
+								<option value="4096">4K (4096x4096)</option>
+								<option value="8192" selected>8K (8192x8192)</option>
+							</select>
+						</div>
+
+						<div class="form-group vertical">
+							<label for="time-override" title="Override date/time">Time Override</label>
+							<input id="time-override" type="text" placeholder="Now" />
+						</div>
+					</div>
+				</div>
+
 				<div class="sidebar-section saved-chats">
 					<div class="section-header">
 						<span>Saved Chats</span>
@@ -130,15 +165,6 @@
 						<label for="model" title="Model"></label>
 						<select id="model" data-searchable></select>
 					</div>
-					<div class="option">
-						<label for="provider-sorting" title="Provider Sorting"></label>
-						<select id="provider-sorting">
-							<option value="" selected title="Default sorting">-</option>
-							<option value="throughput" title="Sort by throughput">:turbo</option>
-							<option value="latency" title="Sort by latency">:quick</option>
-							<option value="price" title="Sort by price">:cheap</option>
-						</select>
-					</div>
 					<div class="option none">
 						<label for="reasoning-effort" title="Reasoning Effort"></label>
 						<select id="reasoning-effort">
@@ -154,16 +180,6 @@
 					<div class="option none">
 						<label for="reasoning-tokens" title="Maximum amount of reasoning tokens"></label>
 						<input id="reasoning-tokens" type="number" min="2" max="1048576" value="1024" />
-					</div>
-					<div class="option none">
-						<label for="image-resize" title="Resize uploaded images"></label>
-						<select id="image-resize">
-							<option value="0">Original Size</option>
-							<option value="1024">1K (1024x1024)</option>
-							<option value="2048">2K (2048x2048)</option>
-							<option value="4096">4K (4096x4096)</option>
-							<option value="8192" selected>8K (8192x8192)</option>
-						</select>
 					</div>
 					<div class="option none">
 						<label for="image-resolution" title="Image Resolution"></label>
@@ -192,10 +208,6 @@
 					<div class="option">
 						<label for="temperature" title="Temperature (0 - 2)"></label>
 						<input id="temperature" type="number" min="0" max="2" step="0.05" value="0.85" />
-					</div>
-					<div class="option">
-						<label for="time-override"></label>
-						<input id="time-override" type="text" placeholder="Now" />
 					</div>
 					<div class="option group">
 						<button id="files" class="on" title="Turn off text file output"></button>

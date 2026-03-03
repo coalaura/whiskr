@@ -83,6 +83,9 @@ const $version = document.getElementById("version"),
 	$sidebar = document.getElementById("sidebar"),
 	$sidebarTrigger = document.getElementById("sidebar-trigger"),
 	$sidebarClose = document.getElementById("sidebar-close"),
+	$chatSettingsHeader = document.getElementById("chat-settings-header"),
+	$chatSettingsBody = document.getElementById("chat-settings-body"),
+	$chatSettingsCollapse = document.getElementById("chat-settings-collapse"),
 	$sEnabled = document.getElementById("s-enabled"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
@@ -287,20 +290,6 @@ async function insertImageIntoTextarea(dataUrl, textarea) {
 	if (textarea === $message) {
 		store("message", textarea.value);
 	}
-}
-
-function countImages() {
-	let total = 0;
-
-	for (const message of messages) {
-		if (!message.isUser()) {
-			continue;
-		}
-
-		total += message.countImages();
-	}
-
-	return total;
 }
 
 class Message {
@@ -928,7 +917,19 @@ class Message {
 			const w = img.naturalWidth,
 				h = img.naturalHeight;
 
-			infoBox.textContent = `${w}×${h}`;
+			const maxSize = parseInt($imageResize.value, 10);
+			let scale = 1;
+			if (maxSize > 0 && (w > maxSize || h > maxSize)) {
+				scale = maxSize / Math.max(w, h);
+			}
+
+			if (scale < 1) {
+				const rw = Math.round(w * scale);
+				const rh = Math.round(h * scale);
+				infoBox.textContent = `${rw}×${rh} (${w}×${h})`;
+			} else {
+				infoBox.textContent = `${w}×${h}`;
+			}
 
 			$messages.scrollTop += bHeight(img);
 		};
@@ -2549,6 +2550,13 @@ async function loadData() {
 		$personalizationCollapse.classList.add("collapsed");
 	}
 
+	const chatSettingsCollapsed = load("chat-settings-collapsed", false);
+
+	if (chatSettingsCollapsed) {
+		$chatSettingsBody.classList.add("collapsed");
+		$chatSettingsCollapse.classList.add("collapsed");
+	}
+
 	const sidebarOpen = load("sidebar-open", false);
 
 	if (sidebarOpen) {
@@ -3537,8 +3545,40 @@ $imageResolution.addEventListener("change", () => {
 	store("image-resolution", $imageResolution.value);
 });
 
+function updateAllImageSizes() {
+	const maxSize = parseInt($imageResize.value, 10);
+
+	document.querySelectorAll(".image-wrapper img.loaded").forEach(img => {
+		const container = img.closest(".image-wrapper"),
+			infoBox = container?.querySelector(".image-info");
+
+		if (!infoBox) {
+			return;
+		}
+
+		const w = img.naturalWidth,
+			h = img.naturalHeight;
+
+		let scale = 1;
+
+		if (maxSize > 0 && (w > maxSize || h > maxSize)) {
+			scale = maxSize / Math.max(w, h);
+		}
+
+		if (scale < 1) {
+			const rw = Math.round(w * scale),
+				rh = Math.round(h * scale);
+
+			infoBox.textContent = `${rw}×${rh} (${w}×${h})`;
+		} else {
+			infoBox.textContent = `${w}×${h}`;
+		}
+	});
+}
+
 $imageResize.addEventListener("change", () => {
 	store("image-resize", $imageResize.value);
+	updateAllImageSizes();
 });
 
 $imageAspect.addEventListener("change", () => {
@@ -3870,6 +3910,14 @@ $personalizationHeader.addEventListener("click", event => {
 	$personalizationCollapse.classList.toggle("collapsed", isCollapsed);
 
 	store("personalization-collapsed", isCollapsed);
+});
+
+$chatSettingsHeader.addEventListener("click", () => {
+	const isCollapsed = $chatSettingsBody.classList.toggle("collapsed");
+
+	$chatSettingsCollapse.classList.toggle("collapsed", isCollapsed);
+
+	store("chat-settings-collapsed", isCollapsed);
 });
 
 addEventListener("mousemove", event => {

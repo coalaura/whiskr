@@ -328,6 +328,13 @@ body.ready #sidebar {
 	margin-bottom: 16px;
 }
 
+.sidebar-section.chat-settings {
+	flex-shrink: 0;
+	border-bottom: 1px solid var(--c-surface0);
+	padding-bottom: 16px;
+	margin-bottom: 16px;
+}
+
 .sidebar-section.saved-chats {
 	flex: 1;
 	overflow: hidden;
@@ -354,18 +361,21 @@ body.ready #sidebar {
 	white-space: nowrap;
 }
 
-.sidebar-section.personalization .section-header {
+.sidebar-section.personalization .section-header,
+.sidebar-section.chat-settings .section-header {
 	cursor: pointer;
 	padding-bottom: 0;
 	transition: color 150ms;
 	user-select: none;
 }
 
-.sidebar-section.personalization .section-header:hover {
+.sidebar-section.personalization .section-header:hover,
+.sidebar-section.chat-settings .section-header:hover {
 	color: var(--c-text);
 }
 
-.sidebar-section.personalization .section-header:hover .section-collapse {
+.sidebar-section.personalization .section-header:hover .section-collapse,
+.sidebar-section.chat-settings .section-header:hover .section-collapse {
 	opacity: 1;
 }
 
@@ -398,24 +408,30 @@ body.ready .section-collapse {
 	padding: 0 20px;
 }
 
-.sidebar-section.personalization .section-body {
-	overflow: hidden;
+.sidebar-section.personalization .section-body,
+.sidebar-section.chat-settings .section-body {
 	max-height: 400px;
 	opacity: 1;
 	padding-top: 12px;
+	padding-bottom: 4px;
+	margin-bottom: 0;
+	overflow: visible;
 }
 
-body.ready .sidebar-section.personalization .section-body {
+body.ready .sidebar-section.personalization .section-body,
+body.ready .sidebar-section.chat-settings .section-body {
 	transition:
 		max-height 300ms cubic-bezier(0.4, 0, 0.2, 1),
 		opacity 200ms ease,
 		padding 300ms ease;
 }
 
-.sidebar-section.personalization .section-body.collapsed {
-	max-height: 0;
-	opacity: 0;
-	padding-top: 0;
+.sidebar-section.personalization .section-body.collapsed,
+.sidebar-section.chat-settings .section-body.collapsed {
+	max-height: 0 !important;
+	opacity: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
 	pointer-events: none;
 }
 
@@ -467,8 +483,11 @@ body.ready .sidebar-section.personalization .section-body {
 }
 
 .sidebar-section input[type="text"],
-.sidebar-section textarea {
+.sidebar-section textarea,
+.sidebar-section select,
+.sidebar-section .dropdown {
 	width: 100%;
+	max-width: 100%;
 	box-sizing: border-box;
 	background: var(--c-crust);
 	border: 1px solid var(--c-surface0);
@@ -482,13 +501,25 @@ body.ready .sidebar-section.personalization .section-body {
 		box-shadow 150ms;
 }
 
+.sidebar-section .dropdown .selected {
+	height: 100%;
+}
+
+.sidebar-section select {
+	cursor: pointer;
+}
+
 .sidebar-section input[type="text"]:hover,
-.sidebar-section textarea:hover {
+.sidebar-section textarea:hover,
+.sidebar-section select:hover,
+.sidebar-section .dropdown:hover {
 	border-color: var(--c-surface1);
 }
 
 .sidebar-section input[type="text"]:focus,
-.sidebar-section textarea:focus {
+.sidebar-section textarea:focus,
+.sidebar-section select:focus,
+.sidebar-section .dropdown.open {
 	outline: none;
 	border-color: var(--c-lavender);
 	box-shadow: 0 0 0 3px rgba(183, 189, 248, 0.1);
@@ -2084,52 +2115,48 @@ input.invalid {
 	width: 30px;
 }
 
-#time-override {
-	width: 155px;
-}
-
-label[for="role"] {
+#chat label[for="role"] {
 	background-image: url(icons/user.svg);
 }
 
-label[for="model"] {
+#chat label[for="model"] {
 	background-image: url(icons/model.svg);
 }
 
-label[for="prompt"] {
+#chat label[for="prompt"] {
 	background-image: url(icons/prompt.svg);
 }
 
-label[for="temperature"] {
+#chat label[for="temperature"] {
 	background-image: url(icons/temperature.svg);
 }
 
-label[for="time-override"] {
+#chat label[for="time-override"] {
 	background-image: url(icons/time.svg);
 }
 
-label[for="iterations"] {
+#chat label[for="iterations"] {
 	background-image: url(icons/iterations.svg);
 }
 
-label[for="provider-sorting"] {
+#chat label[for="provider-sorting"] {
 	background-image: url(icons/provider.svg);
 }
 
-label[for="image-resolution"],
-label[for="image-resize"] {
+#chat label[for="image-resolution"],
+#chat label[for="image-resize"] {
 	background-image: url(icons/resolution.svg);
 }
 
-label[for="image-aspect"] {
+#chat label[for="image-aspect"] {
 	background-image: url(icons/aspect.svg);
 }
 
-label[for="reasoning-effort"] {
+#chat label[for="reasoning-effort"] {
 	background-image: url(icons/reasoning.svg);
 }
 
-label[for="reasoning-tokens"] {
+#chat label[for="reasoning-tokens"] {
 	background-image: url(icons/amount.svg);
 }
 
