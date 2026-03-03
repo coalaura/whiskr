@@ -113,7 +113,7 @@ class Dropdown {
 		});
 
 		// dropdown
-		this.#_dropdown = make("div", "dropdown", "open", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 7 ? "full-height" : "");
+		this.#_dropdown = make("div", "dropdown", "open", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 8 ? "full-height" : "");
 
 		// selected item
 		this.#_selected = make("div", "selected");
