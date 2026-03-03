@@ -156,6 +156,16 @@
 						<input id="reasoning-tokens" type="number" min="2" max="1048576" value="1024" />
 					</div>
 					<div class="option none">
+						<label for="image-resize" title="Resize uploaded images"></label>
+						<select id="image-resize">
+							<option value="0">Original Size</option>
+							<option value="1024">1K (1024x1024)</option>
+							<option value="2048">2K (2048x2048)</option>
+							<option value="4096">4K (4096x4096)</option>
+							<option value="8192" selected>8K (8192x8192)</option>
+						</select>
+					</div>
+					<div class="option none">
 						<label for="image-resolution" title="Image Resolution"></label>
 						<select id="image-resolution">
 							<option value="1K" selected>1K</option>

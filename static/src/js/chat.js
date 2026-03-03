@@ -62,6 +62,7 @@ const $version = document.getElementById("version"),
 	$model = document.getElementById("model"),
 	$providerSorting = document.getElementById("provider-sorting"),
 	$imageResolution = document.getElementById("image-resolution"),
+	$imageResize = document.getElementById("image-resize"),
 	$imageAspect = document.getElementById("image-aspect"),
 	$reasoningEffort = document.getElementById("reasoning-effort"),
 	$reasoningTokens = document.getElementById("reasoning-tokens"),
@@ -1248,7 +1249,7 @@ class Message {
 
 		if (expandImages) {
 			const resizePromises = [],
-				maxSize = countImages() > 1 ? 1536 : 8192;
+				maxSize = parseInt($imageResize.value, 10);
 
 			for (const [hash, dataUrl] of this.#inlineImages) {
 				resizePromises.push(
@@ -2055,6 +2056,7 @@ async function buildRequest(noPush = false) {
 		},
 		image: {
 			resolution: $imageResolution.value,
+			resize: $imageResize.value,
 			aspect: $imageAspect.value,
 		},
 		reasoning: {
@@ -2757,6 +2759,7 @@ function restore() {
 	$iterations.value = load("iterations", 3);
 	$providerSorting.value = load("provider", "");
 	$imageResolution.value = load("image-resolution", "1K");
+	$imageResize.value = load("image-resize", "8192");
 	$imageAspect.value = load("image-aspect", "");
 	$reasoningEffort.value = load("reasoning-effort", "medium");
 	$reasoningTokens.value = load("reasoning-tokens", 1024);
@@ -3142,6 +3145,7 @@ function getChatData(name) {
 		iterations: $iterations.value,
 		image: {
 			resolution: $imageResolution.value,
+			resize: $imageResize.value,
 			aspect: $imageAspect.value,
 		},
 		reasoning: {
@@ -3243,6 +3247,7 @@ function loadChatFromStorage(name) {
 	store("iterations", data.iterations);
 	store("provider", data.provider);
 	store("image-resolution", data.image?.resolution);
+	store("image-resize", data.image?.resize);
 	store("image-aspect", data.image?.aspect);
 	store("reasoning-effort", data.reasoning?.effort);
 	store("reasoning-tokens", data.reasoning?.tokens);
@@ -3485,6 +3490,12 @@ $model.addEventListener("change", () => {
 		$imageAspect.parentNode.classList.add("none");
 	}
 
+	if (tags.includes("vision")) {
+		$imageResize.parentNode.classList.remove("none");
+	} else {
+		$imageResize.parentNode.classList.add("none");
+	}
+
 	$messages.classList.toggle("vision", tags.includes("vision"));
 
 	const hasJson = tags.includes("json"),
@@ -3524,6 +3535,10 @@ $providerSorting.addEventListener("change", () => {
 
 $imageResolution.addEventListener("change", () => {
 	store("image-resolution", $imageResolution.value);
+});
+
+$imageResize.addEventListener("change", () => {
+	store("image-resize", $imageResize.value);
 });
 
 $imageAspect.addEventListener("change", () => {
@@ -3676,6 +3691,7 @@ $import?.addEventListener("click", async () => {
 		store("temperature", data.temperature),
 		store("iterations", data.iterations),
 		store("image-resolution", data.image?.resolution),
+		store("image-resize", data.image?.resize),
 		store("image-aspect", data.image?.aspect),
 		store("reasoning-effort", data.reasoning?.effort),
 		store("reasoning-tokens", data.reasoning?.tokens),
@@ -3939,6 +3955,7 @@ document.body.classList.toggle("christmas", new Date().getMonth() === 11);
 dropdown($role);
 dropdown($providerSorting);
 dropdown($imageResolution);
+dropdown($imageResize);
 dropdown($imageAspect);
 dropdown($reasoningEffort);
 

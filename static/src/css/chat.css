@@ -2116,7 +2116,8 @@ label[for="provider-sorting"] {
 	background-image: url(icons/provider.svg);
 }
 
-label[for="image-resolution"] {
+label[for="image-resolution"],
+label[for="image-resize"] {
 	background-image: url(icons/resolution.svg);
 }
 

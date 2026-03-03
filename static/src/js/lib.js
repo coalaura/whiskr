@@ -230,20 +230,22 @@ export function convertToJpeg(dataUrl, asBlob = false) {
 	});
 }
 
-export function resizeDataUrl(dataUrl, maxSize = 1536) {
+export function resizeDataUrl(dataUrl, maxSize = 0) {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 
 		img.onload = () => {
 			const { width, height } = img;
 
-			if (maxSize === 0 || (width <= maxSize && height <= maxSize)) {
+			let scale = 1;
+
+			if (maxSize > 0 && (width > maxSize || height > maxSize)) {
+				scale = maxSize / Math.max(width, height);
+			} else if (dataUrl.startsWith("data:image/jpeg;")) {
 				resolve(dataUrl);
 
 				return;
 			}
-
-			const scale = maxSize / Math.max(width, height);
 
 			const canvas = document.createElement("canvas");
 
