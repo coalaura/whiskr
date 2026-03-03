@@ -1426,9 +1426,20 @@ body.no-title #title {
 }
 
 #chat #upload,
-.message .attach,
 .message .collapse {
 	position: relative;
+	margin-right: 14px;
+}
+
+.message .attach {
+	position: relative;
+}
+
+.message .options .file-controls {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 	margin-right: 14px;
 }
 
@@ -1447,8 +1458,8 @@ body.no-title #title {
 }
 
 #upload::after,
-.message .attach::after,
-.message .collapse::after {
+.message .collapse::after,
+.message .options .file-controls::after {
 	position: absolute;
 	top: 4px;
 	right: -14px;
@@ -1456,7 +1467,10 @@ body.no-title #title {
 
 .message.errored .options .copy,
 .message.errored .options .edit,
+.message:not(.editing) .options .file-controls,
 .message:not(.editing) .options .attach,
+.message:not(.editing) .options .clear-files,
+.message:not(.has-files) .options .clear-files,
 .message.editing .options .collapse,
 .message.waiting .options,
 .message.reasoning .options,
@@ -1925,8 +1939,8 @@ input[type="checkbox"]:focus-visible {
 }
 
 #upload::after,
-.message .options .attach::after,
-.message .options .collapse::after {
+.message .options .collapse::after,
+.message .options .file-controls::after {
 	content: "";
 	display: block;
 	width: 2px;
@@ -1957,6 +1971,7 @@ body.loading #version,
 .message .copy,
 .message .edit,
 .message .retry,
+.message .clear-files,
 .message .delete,
 .message .attach,
 .message .attach::before,
@@ -2041,6 +2056,10 @@ input.invalid {
 
 .message .delete {
 	background-image: url(icons/delete.svg);
+}
+
+.message .clear-files {
+	background-image: url(icons/trash.svg);
 }
 
 #chat .option label {

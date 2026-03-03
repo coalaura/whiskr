@@ -493,18 +493,36 @@ class Message {
 			this.#save();
 		});
 
+		// file options
+		const _fileControls = make("div", "file-controls");
+
+		_opts.appendChild(_fileControls);
+
 		// attach option
+		let _attach = false;
+
 		if (this.#role === "user") {
-			const _attach = make("button", "attach");
+			_attach = make("button", "attach");
 
 			_attach.title = "Add files to this message";
 
-			_opts.appendChild(_attach);
+			_fileControls.appendChild(_attach);
 
 			_attach.addEventListener("click", () => {
 				uploadToMessage(_attach, this);
 			});
 		}
+
+		// clear files option
+		const _optClearFiles = make("button", "clear-files");
+
+		_optClearFiles.title = "Remove all files from this message";
+
+		_fileControls.appendChild(_optClearFiles);
+
+		_optClearFiles.addEventListener("click", () => {
+			this.clearFiles();
+		});
 
 		// copy option
 		const _optCopy = make("button", "copy");
@@ -875,7 +893,6 @@ class Message {
 
 				this.#inlineImagesBlobs.set(key, url);
 			} catch {}
-
 		}
 	}
 
@@ -1357,13 +1374,15 @@ class Message {
 			attachBtn.classList.toggle("none", role !== "user");
 		} else if (role === "user") {
 			const _opts = this.#_message.querySelector(".options"),
-				_optCopy = this.#_message.querySelector(".options .copy");
+				_fileControls = this.#_message.querySelector(".options .file-controls"),
+				_optClearFiles = this.#_message.querySelector(".options .clear-files");
 
-			if (_opts && _optCopy) {
+			if (_opts && _fileControls) {
 				const _attach = make("button", "attach");
 
 				_attach.title = "Add files to this message";
-				_opts.insertBefore(_attach, _optCopy);
+
+				_fileControls.insertBefore(_attach, _optClearFiles || null);
 
 				_attach.addEventListener("click", () => {
 					uploadToMessage(_attach, this);
@@ -1461,6 +1480,24 @@ class Message {
 
 		this.#_files.classList.add("has-files");
 		this.#_message.classList.add("has-files");
+
+		this.#save();
+	}
+
+	clearFiles(skipConfirm = false) {
+		if (!this.#files.length) {
+			return;
+		}
+
+		if (!skipConfirm && !confirm(`Remove all ${this.#files.length} file${this.#files.length === 1 ? "" : "s"} from this message?`)) {
+			return;
+		}
+
+		this.#files = [];
+		this.#_files.innerHTML = "";
+
+		this.#_files.classList.remove("has-files");
+		this.#_message.classList.remove("has-files");
 
 		this.#save();
 	}
