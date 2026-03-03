@@ -438,6 +438,10 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 	}
 
+	request.Stream = true
+
+	request.Usage = &openrouter.IncludeUsage{Include: true}
+
 	return &request, nil
 }
 
@@ -452,8 +456,6 @@ func ParseChatRequest(r *http.Request) (*ChatRequest, *openrouter.ChatCompletion
 	if err != nil {
 		return nil, nil, err
 	}
-
-	request.Stream = true
 
 	return &raw, request, nil
 }
@@ -657,6 +659,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			response.WriteChunk(NewChunk(ChunkID, id))
 		}
 
+		if chunk.Usage != nil {
+			debug("usage chunk: model=%q provider=%q prompt=%d completion=%d cost=%f", chunk.Model, chunk.Provider, chunk.Usage.PromptTokens, chunk.Usage.CompletionTokens, chunk.Usage.Cost)
+
+			statistics = CreateStatistics(chunk.Model, chunk.Provider, chunk.Usage)
+		}
+
 		if len(chunk.Choices) == 0 {
 			continue
 		}
@@ -670,10 +678,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 		if choice.NativeFinishReason != "" {
 			native = choice.NativeFinishReason
-		}
-
-		if chunk.Usage != nil {
-			statistics = CreateStatistics(chunk.Model, chunk.Provider, chunk.Usage)
 		}
 
 		calls := delta.ToolCalls
