@@ -9,6 +9,7 @@ import { resetGenerationState, setGenerationState } from "./favicon.js";
 import {
 	bHeight,
 	clamp,
+	convertToJpeg,
 	dataUrlFilename,
 	detectPlatform,
 	download,
@@ -19,7 +20,6 @@ import {
 	formatTimestamp,
 	lines,
 	make,
-	maxImageDimension,
 	notify,
 	previewFile,
 	readFileAsDataUrl,
@@ -288,6 +288,20 @@ async function insertImageIntoTextarea(dataUrl, textarea) {
 	}
 }
 
+function countImages() {
+	let total = 0;
+
+	for (const message of messages) {
+		if (!message.isUser()) {
+			continue;
+		}
+
+		total += message.countImages();
+	}
+
+	return total;
+}
+
 class Message {
 	#id;
 	#role;
@@ -297,6 +311,7 @@ class Message {
 	#images = [];
 	#files = [];
 	#inlineImages = new Map();
+	#inlineImagesBlobs = new Map();
 
 	#tool;
 	#tags = [];
@@ -840,6 +855,30 @@ class Message {
 		return height;
 	}
 
+	async #prepareInlineImages() {
+		for (const [key, url] of this.#inlineImagesBlobs.entries()) {
+			if (!this.#inlineImages.has(key)) {
+				URL.revokeObjectURL(url);
+
+				this.#inlineImagesBlobs.delete(key);
+			}
+		}
+
+		for (const [key, dataUrl] of this.#inlineImages.entries()) {
+			if (this.#inlineImagesBlobs.has(key)) {
+				continue;
+			}
+
+			try {
+				const blob = await convertToJpeg(dataUrl, true),
+					url = URL.createObjectURL(blob);
+
+				this.#inlineImagesBlobs.set(key, url);
+			} catch {}
+
+		}
+	}
+
 	#setupImage(img, iteration = 0) {
 		if (img.dataset.setup) {
 			return;
@@ -871,15 +910,7 @@ class Message {
 			const w = img.naturalWidth,
 				h = img.naturalHeight;
 
-			if (w > maxImageDimension || h > maxImageDimension) {
-				const scale = maxImageDimension / Math.max(w, h),
-					sw = Math.round(w * scale),
-					sh = Math.round(h * scale);
-
-				infoBox.textContent = `${sw}×${sh} (${w}×${h})`;
-			} else {
-				infoBox.textContent = `${w}×${h}`;
-			}
+			infoBox.textContent = `${w}×${h}`;
 
 			$messages.scrollTop += bHeight(img);
 		};
@@ -956,7 +987,7 @@ class Message {
 		});
 	}
 
-	#render(only = false, noScroll = false) {
+	async #render(only = false, noScroll = false) {
 		if (!only || only === "tags") {
 			const tags = this.#tags.map(tag => `<div class="tag-${tag}" title="${tag}"></div>`);
 
@@ -1141,10 +1172,14 @@ class Message {
 		if (!only || only === "text") {
 			let text = this.#text;
 
+			await this.#prepareInlineImages();
+
 			// Replace image placeholders with actual data URLs for display
-			for (const [hash, dataUrl] of this.#inlineImages) {
-				const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g");
-				text = text.replace(regex, `![$1](${dataUrl})`);
+			for (const hash of this.#inlineImages.keys()) {
+				const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${hash}\\.[^)]+\\)`, "g"),
+					url = this.#inlineImagesBlobs.get(hash) || "#";
+
+				text = text.replace(regex, `![$1](${url})`);
 			}
 
 			if (text && this.#tags.includes("json")) {
@@ -1187,15 +1222,20 @@ class Message {
 		this.#_message.classList.toggle("marked", state);
 	}
 
+	countImages() {
+		return (this.#text.match(/!\[([^\]]*)\]\(/g) || []).length;
+	}
+
 	getData(full = false, expandImages = false) {
 		let text = this.#text;
 
 		if (expandImages) {
-			const resizePromises = [];
+			const resizePromises = [],
+				maxSize = countImages() > 1 ? 1536 : 8192;
 
 			for (const [hash, dataUrl] of this.#inlineImages) {
 				resizePromises.push(
-					resizeDataUrl(dataUrl).then(resized => {
+					resizeDataUrl(dataUrl, maxSize).then(resized => {
 						return {
 							hash: hash,
 							dataUrl: resized,
@@ -1630,6 +1670,8 @@ class Message {
 
 	addInlineImage(hash, dataUrl) {
 		this.#inlineImages.set(hash, dataUrl);
+
+		this.#prepareInlineImages();
 	}
 
 	getEditTextarea() {

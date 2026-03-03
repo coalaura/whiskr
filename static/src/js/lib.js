@@ -194,7 +194,7 @@ async function sha256Hex(bytes) {
 	return hex;
 }
 
-function convertToJpeg(dataUrl) {
+export function convertToJpeg(dataUrl, asBlob = false) {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 
@@ -211,6 +211,12 @@ function convertToJpeg(dataUrl) {
 
 			ctx.drawImage(img, 0, 0);
 
+			if (asBlob) {
+				canvas.toBlob(resolve, "image/jpeg", 0.9);
+
+				return;
+			}
+
 			const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
 			resolve(jpegDataUrl);
@@ -224,22 +230,20 @@ function convertToJpeg(dataUrl) {
 	});
 }
 
-export const maxImageDimension = 1536;
-
-export function resizeDataUrl(dataUrl) {
+export function resizeDataUrl(dataUrl, maxSize = 1536) {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
 
 		img.onload = () => {
 			const { width, height } = img;
 
-			if (width <= maxImageDimension && height <= maxImageDimension) {
+			if (maxSize === 0 || (width <= maxSize && height <= maxSize)) {
 				resolve(dataUrl);
 
 				return;
 			}
 
-			const scale = maxImageDimension / Math.max(width, height);
+			const scale = maxSize / Math.max(width, height);
 
 			const canvas = document.createElement("canvas");
 
