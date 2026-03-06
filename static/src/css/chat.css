@@ -53,6 +53,7 @@ body.christmas #page::before {
 }
 
 #total,
+#chat-tokens,
 #version {
 	position: absolute;
 	font-size: 12px;
@@ -61,6 +62,13 @@ body.christmas #page::before {
 	right: 4px;
 	color: var(--c-subtext);
 	transition: left 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#chat-tokens {
+	right: unset;
+	left: 50%;
+	transform: translateX(-50%);
+	user-select: none;
 }
 
 #total {
@@ -72,6 +80,10 @@ body.christmas #page::before {
 
 body.sidebar-open #total {
 	left: 364px;
+}
+
+body.sidebar-open #chat-tokens {
+	left: calc(50% + 180px);
 }
 
 #total.loading {

@@ -26,6 +26,7 @@ type Prompt struct {
 	Key         string `json:"key"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Tokens      int    `json:"tokens"`
 
 	Text string `json:"-"`
 }

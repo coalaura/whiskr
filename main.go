@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httputil"
@@ -44,6 +45,20 @@ func main() {
 	tokenizer, err := LoadTokenizer(TikTokenSource)
 	log.MustFail(err)
 
+	log.Println("Calculating overhead...")
+
+	for i, p := range Prompts {
+		Prompts[i].Tokens = tokenizer.CountTokens(p.Text)
+	}
+
+	searchToolsJson, _ := json.Marshal(GetSearchTools())
+
+	overhead := map[string]any{
+		"files":    tokenizer.CountTokens(InternalFilesPrompt),
+		"no_files": tokenizer.CountTokens(InternalNoFilesPrompt),
+		"search":   tokenizer.CountTokens(string(searchToolsJson)),
+	}
+
 	log.Println("Preparing router...")
 	r := chi.NewRouter()
 
@@ -65,9 +80,10 @@ func main() {
 				"images": env.Models.ImageGeneration,
 				"title":  env.Models.TitleModel != "-",
 			},
-			"models":  ModelList,
-			"prompts": Prompts,
-			"version": Version,
+			"overhead": overhead,
+			"models":   ModelList,
+			"prompts":  Prompts,
+			"version":  Version,
 		})
 	})
 

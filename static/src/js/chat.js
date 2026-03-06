@@ -2,7 +2,7 @@ import "../css/chat.css";
 
 import morphdom from "morphdom";
 import { unpack } from "msgpackr";
-import { getDataUrlAspectRatio } from "./binary.js";
+import { getDataUrlAspectRatio, getDataUrlDimensions } from "./binary.js";
 import { parseDateTime } from "./date.js";
 import { dropdown } from "./dropdown.js";
 import { resetGenerationState, setGenerationState } from "./favicon.js";
@@ -48,6 +48,7 @@ const ChunkType = {
 
 const $version = document.getElementById("version"),
 	$total = document.getElementById("total"),
+	$chatTokens = document.getElementById("chat-tokens"),
 	$title = document.getElementById("title"),
 	$titleRefresh = document.getElementById("title-refresh"),
 	$titleText = document.getElementById("title-text"),
@@ -144,7 +145,8 @@ let searchAvailable = false,
 	isUploading = false,
 	isDumping = false,
 	usageType = "monthly",
-	totalUsage = {};
+	totalUsage = {},
+	promptOverheads = {};
 
 let modelDropdown;
 
@@ -159,6 +161,119 @@ function updateTotalUsage() {
 	};
 
 	$total.title = titles[usageType] || "Usage";
+}
+
+function estimateImageTokens(width, height) {
+	if (width < 512 && height < 512) {
+		return 85;
+	}
+
+	const maxSize = parseInt($imageResize.value, 10);
+
+	if (maxSize > 0 && (width > maxSize || height > maxSize)) {
+		const scale = maxSize / Math.max(width, height);
+
+		width = Math.floor(width * scale);
+		height = Math.floor(height * scale);
+	}
+
+	const estimatedTokens = Math.ceil((width * height) / 850);
+
+	return Math.min(estimatedTokens, 2500);
+}
+
+function estimateDataUrlTokens(dataUrl) {
+	const dims = getDataUrlDimensions(dataUrl);
+
+	if (dims) {
+		return estimateImageTokens(dims.width, dims.height);
+	}
+
+	return 85;
+}
+
+async function updateChatTokens() {
+	if (!$chatTokens) {
+		return;
+	}
+
+	let total = 0;
+
+	for (const msg of messages) {
+		total += msg.getTokens() || 0;
+	}
+
+	const pendingText = $message.value.trim();
+
+	if (pendingText.length > 0) {
+		total += (await resolveTokenCount(pendingText)) || 0;
+	}
+
+	for (const file of attachments) {
+		if (file.tokens) {
+			total += file.tokens;
+		}
+	}
+
+	const imageRegex = /!\[.*?\]\(([a-f0-9]{8})\.[^)]+\)/g;
+
+	let match;
+
+	const usedImages = new Set();
+
+	while ((match = imageRegex.exec(pendingText)) !== null) {
+		usedImages.add(match[1]);
+	}
+
+	for (const hash of usedImages) {
+		const dataUrl = pendingImages.get(hash);
+
+		if (dataUrl) {
+			total += estimateDataUrlTokens(dataUrl);
+		} else {
+			total += 85;
+		}
+	}
+
+	if (pendingText.length > 0 || attachments.length > 0 || usedImages.size > 0) {
+		total += 5;
+	}
+
+	const selectedPrompt = promptList.find(p => p.key === $prompt.value);
+
+	if (selectedPrompt?.tokens) {
+		total += selectedPrompt.tokens;
+	}
+
+	if (allowFiles) {
+		total += promptOverheads?.files || 45;
+	} else if (attachments.length > 0 || pendingText.length > 0 || messages.some(msg => (msg.isUser() && msg.getData().files?.length > 0) || msg.getData().text?.length > 0)) {
+		total += promptOverheads?.no_files || 40;
+	}
+
+	if (searchTool) {
+		total += promptOverheads?.search || 300;
+	}
+
+	if (jsonMode) {
+		total += 10;
+	}
+
+	if (messages.length > 0 || pendingText.length > 0 || attachments.length > 0 || usedImages.size > 0) {
+		total += 5;
+	}
+
+	const modelData = models[$model.value];
+
+	let costStr = "?";
+
+	if (modelData && modelData.pricing && modelData.pricing.input !== undefined) {
+		const costEstimate = (total / 1000000) * modelData.pricing.input;
+
+		costStr = formatMoney(costEstimate);
+	}
+
+	$chatTokens.textContent = `~${new Intl.NumberFormat("en-US").format(total)}t (~${costStr})`;
 }
 
 function updateTitle() {
@@ -341,6 +456,10 @@ class Message {
 	#_tool;
 	#_statistics;
 	#_roleSelect;
+	#tokens = 0;
+	#textTokens = 0;
+	#toolTokens = 0;
+	#reasoningTokens = 0;
 
 	constructor(data) {
 		this.#id = uid();
@@ -397,9 +516,33 @@ class Message {
 			this.setError(data.error);
 		}
 
-		messages.push(this);
+		if (data.tokens) {
+			this.#tokens = data.tokens;
 
-		this.#save();
+			if (data.textTokens !== undefined) {
+				this.#textTokens = data.textTokens;
+			} else {
+				this.#textTokens = data.tokens - this.getImageTokens();
+			}
+
+			if (data.toolTokens !== undefined) {
+				this.#toolTokens = data.toolTokens;
+			}
+
+			if (data.reasoningTokens !== undefined) {
+				this.#reasoningTokens = data.reasoningTokens;
+			}
+
+			messages.push(this);
+
+			updateChatTokens();
+		} else {
+			messages.push(this);
+
+			this.calculateTokens();
+		}
+
+		this.save();
 	}
 
 	#build(collapsed) {
@@ -489,7 +632,7 @@ class Message {
 
 			setFollowTail(distanceFromBottom() <= nearBottom);
 
-			this.#save();
+			this.save();
 		});
 
 		// file options
@@ -1224,8 +1367,95 @@ class Message {
 		updateScrollButton();
 	}
 
-	#save() {
+	save() {
 		store("messages", messages.map(message => message.getData(true)).filter(Boolean));
+	}
+
+	async calculateTokens() {
+		let total = 0;
+
+		if (this.#text) {
+			const textTokens = await resolveTokenCount(this.#text);
+
+			this.#textTokens = textTokens || 0;
+
+			total += this.#textTokens;
+		} else {
+			this.#textTokens = 0;
+		}
+
+		if (this.#reasoning) {
+			const reasoningTokens = await resolveTokenCount(this.#reasoning);
+
+			this.#reasoningTokens = reasoningTokens || 0;
+
+			total += this.#reasoningTokens;
+		} else {
+			this.#reasoningTokens = 0;
+		}
+
+		for (const file of this.#files) {
+			if (!file.tokens) {
+				file.tokens = (await resolveTokenCount(file.content)) || 0;
+			}
+
+			total += file.tokens;
+		}
+
+		if (this.#tool) {
+			const toolJson = JSON.stringify(this.#tool),
+				toolTokens = await resolveTokenCount(toolJson);
+
+			this.#toolTokens = toolTokens || 0;
+
+			total += this.#toolTokens;
+		} else {
+			this.#toolTokens = 0;
+		}
+
+		total += this.getImageTokens();
+
+		total += 5;
+
+		this.#tokens = total;
+
+		updateChatTokens();
+
+		this.save();
+
+		return total;
+	}
+
+	getImageTokens() {
+		let total = 0;
+
+		for (const image of this.#images) {
+			total += estimateDataUrlTokens(image);
+		}
+
+		for (const dataUrl of this.#inlineImages.values()) {
+			total += estimateDataUrlTokens(dataUrl);
+		}
+
+		return total;
+	}
+
+	getTokens() {
+		let total = (this.#textTokens || 0) + (this.#toolTokens || 0) + (this.#reasoningTokens || 0);
+
+		for (const file of this.#files) {
+			if (file.tokens) {
+				total += file.tokens;
+			}
+		}
+
+		total += this.getImageTokens();
+
+		total += 5;
+
+		this.#tokens = total;
+
+		return total;
 	}
 
 	isAssistant() {
@@ -1292,6 +1522,22 @@ class Message {
 			text: text,
 		};
 
+		if (this.#tokens && full) {
+			data.tokens = this.#tokens;
+
+			if (this.#textTokens !== undefined) {
+				data.textTokens = this.#textTokens;
+			}
+
+			if (this.#toolTokens !== undefined) {
+				data.toolTokens = this.#toolTokens;
+			}
+
+			if (this.#reasoningTokens !== undefined) {
+				data.reasoningTokens = this.#reasoningTokens;
+			}
+		}
+
 		if (this.#files.length) {
 			data.files = this.#files.map(file => ({
 				name: file.name,
@@ -1316,7 +1562,6 @@ class Message {
 			data.images = this.#images;
 		}
 
-		// Store inline images for persistence (as array of entries)
 		if (this.#inlineImages.size > 0 && full) {
 			data.inlineImages = Array.from(this.#inlineImages.entries());
 		}
@@ -1409,14 +1654,14 @@ class Message {
 			_optRetry.title = _assistant ? "Delete message and messages after this one and try again" : "Delete messages after this one and try again";
 		}
 
-		this.#save();
+		this.save();
 	}
 
 	setStatistics(statistics) {
 		this.#statistics = statistics;
 
 		this.#render("statistics");
-		this.#save();
+		this.save();
 	}
 
 	setTime(time, ttfr, ttft, final = false) {
@@ -1433,7 +1678,7 @@ class Message {
 		this.#render("time");
 
 		if (final) {
-			this.#save();
+			this.save();
 		}
 	}
 
@@ -1450,7 +1695,7 @@ class Message {
 			this.#render("text");
 		}
 
-		this.#save();
+		this.save();
 	}
 
 	addFile(file) {
@@ -1476,7 +1721,9 @@ class Message {
 				this.#_files.classList.toggle("has-files", !!this.#files.length);
 				this.#_message.classList.toggle("has-files", !!this.#files.length);
 
-				this.#save();
+				this.calculateTokens().then(() => {
+					this.save();
+				});
 			},
 			newFile => {
 				this.updateFile(file.id, newFile);
@@ -1492,7 +1739,9 @@ class Message {
 		this.#_files.classList.add("has-files");
 		this.#_message.classList.add("has-files");
 
-		this.#save();
+		this.calculateTokens().then(() => {
+			this.save();
+		});
 	}
 
 	clearFiles(skipConfirm = false) {
@@ -1510,7 +1759,9 @@ class Message {
 		this.#_files.classList.remove("has-files");
 		this.#_message.classList.remove("has-files");
 
-		this.#save();
+		this.calculateTokens().then(() => {
+			this.save();
+		});
 	}
 
 	updateFile(fileId, newFile) {
@@ -1556,7 +1807,9 @@ class Message {
 			_meta.classList.add("has-tokens");
 		}
 
-		this.#save();
+		this.calculateTokens().then(() => {
+			this.save();
+		});
 	}
 
 	#setupFileReorder() {
@@ -1665,7 +1918,7 @@ class Message {
 
 		this.#files = newOrder;
 
-		this.#save();
+		this.save();
 	}
 
 	setLoading(loading) {
@@ -1706,14 +1959,14 @@ class Message {
 		this.#tool = tool;
 
 		this.#render("tool");
-		this.#save();
+		this.save();
 	}
 
 	addImage(image) {
 		this.#images.push(image);
 
 		this.#render("images");
-		this.#save();
+		this.save();
 	}
 
 	addInlineImage(hash, dataUrl) {
@@ -1730,14 +1983,14 @@ class Message {
 		this.#reasoning += chunk;
 
 		this.#render("reasoning");
-		this.#save();
+		this.save();
 	}
 
 	setReasoningType(type) {
 		this.#reasoningType = type;
 
 		this.#render("reasoning");
-		this.#save();
+		this.save();
 	}
 
 	addText(text) {
@@ -1762,7 +2015,7 @@ class Message {
 		}
 
 		this.#render("text");
-		this.#save();
+		this.save();
 	}
 
 	hasImageTags() {
@@ -1800,7 +2053,7 @@ class Message {
 
 		this.#_text.appendChild(_err);
 
-		this.#save();
+		this.save();
 	}
 
 	stopEdit() {
@@ -1830,6 +2083,18 @@ class Message {
 		} else {
 			const newText = this.#_edit.value;
 
+			if (this.#text === newText) {
+				this.setState(false);
+
+				this.#render(false, true);
+
+				setFollowTail(distanceFromBottom() <= nearBottom);
+
+				updateScrollButton();
+
+				return;
+			}
+
 			for (const [hash, _dataUrl] of this.#inlineImages) {
 				const regex = new RegExp(`\\(${hash}\\.[^)]+\\)`);
 
@@ -1843,7 +2108,10 @@ class Message {
 			this.setState(false);
 
 			this.#render(false, true);
-			this.#save();
+
+			this.calculateTokens().then(() => {
+				this.save();
+			});
 		}
 
 		setFollowTail(distanceFromBottom() <= nearBottom);
@@ -1864,7 +2132,9 @@ class Message {
 
 		setFollowTail(distanceFromBottom() <= nearBottom);
 
-		this.#save();
+		this.save();
+
+		updateChatTokens();
 
 		$messages.dispatchEvent(new Event("scroll"));
 
@@ -2146,6 +2416,8 @@ async function generate(cancel = false, noPush = false) {
 		msg.setState(false);
 
 		refreshUsage();
+
+		msg.calculateTokens();
 
 		if (error || !hasContent) {
 			setGenerationState("error");
@@ -2593,6 +2865,9 @@ async function loadData() {
 	// render version
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
 
+	// store overheads
+	promptOverheads = data.overhead || { files: 0, no_files: 0, search: 0 };
+
 	// usage
 	usageType = load("usage-type", "monthly");
 
@@ -2759,6 +3034,8 @@ function clearMessages() {
 	while (messages.length) {
 		messages[0].delete();
 	}
+
+	updateChatTokens();
 }
 
 function restore() {
@@ -3007,6 +3284,8 @@ function pushAttachment(file, message = false) {
 	);
 
 	$attachments.classList.add("has-files");
+
+	updateChatTokens();
 }
 
 function clearAttachments() {
@@ -3016,6 +3295,8 @@ function clearAttachments() {
 	$attachments.classList.remove("has-files");
 
 	store("attachments", []);
+
+	updateChatTokens();
 }
 
 function pushMessage() {
@@ -3526,6 +3807,8 @@ $model.addEventListener("change", () => {
 	$search.classList.toggle("none", !hasSearch);
 
 	$iterations.parentNode.classList.toggle("none", !hasSearch || !searchTool);
+
+	updateChatTokens();
 });
 
 $prompt.addEventListener("change", () => {
@@ -3599,7 +3882,10 @@ function updateAllImageSizes() {
 
 $imageResize.addEventListener("change", () => {
 	store("image-resize", $imageResize.value);
+
 	updateAllImageSizes();
+
+	updateChatTokens();
 });
 
 $imageAspect.addEventListener("change", () => {
@@ -3631,6 +3917,8 @@ $files.addEventListener("click", () => {
 	$files.classList.toggle("on", allowFiles);
 
 	$files.title = `Turn ${allowFiles ? "off" : "on"} text file output`;
+
+	updateChatTokens();
 });
 
 $json.addEventListener("click", () => {
@@ -3641,6 +3929,8 @@ $json.addEventListener("click", () => {
 	$json.classList.toggle("on", jsonMode);
 
 	$json.title = `Turn ${jsonMode ? "off" : "on"} structured json output`;
+
+	updateChatTokens();
 });
 
 $search.addEventListener("click", () => {
@@ -3653,10 +3943,17 @@ $search.addEventListener("click", () => {
 	$search.title = `Turn ${searchTool ? "off" : "on"} search tools (search_web and fetch_contents)`;
 
 	$iterations.parentNode.classList.toggle("none", !searchTool);
+
+	updateChatTokens();
 });
+
+let tokenUpdateTimeout;
 
 $message.addEventListener("input", () => {
 	store("message", $message.value);
+
+	clearTimeout(tokenUpdateTimeout);
+	tokenUpdateTimeout = setTimeout(updateChatTokens, 500);
 });
 
 $message.addEventListener("paste", async event => {

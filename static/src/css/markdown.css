@@ -62,7 +62,9 @@
 	color: var(--c-blue);
 	text-decoration: none;
 	font-weight: 500;
-	transition: color 150ms ease, text-decoration-color 150ms ease;
+	transition:
+		color 150ms ease,
+		text-decoration-color 150ms ease;
 }
 
 .markdown a:hover,
