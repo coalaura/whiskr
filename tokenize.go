@@ -23,10 +23,10 @@ func HandleTokenize(tokenizer *Tokenizer) http.HandlerFunc {
 			return
 		}
 
-		tokens := tokenizer.Encode(raw.String)
+		tokens := tokenizer.CountTokens(raw.String)
 
 		RespondJson(w, http.StatusOK, map[string]any{
-			"tokens": len(tokens),
+			"tokens": tokens,
 		})
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -17,34 +18,8 @@ const (
 	TikTokenPath   = "vocabulary.tiktoken"
 )
 
-type TreeNode struct {
-	TokenID  int
-	Children map[byte]*TreeNode
-}
-
 type Tokenizer struct {
-	Root *TreeNode
-}
-
-func NewTreeNode() *TreeNode {
-	return &TreeNode{
-		TokenID:  -1,
-		Children: make(map[byte]*TreeNode),
-	}
-}
-
-func (n *TreeNode) Insert(token []byte, id int) {
-	curr := n
-
-	for _, b := range token {
-		if _, ok := curr.Children[b]; !ok {
-			curr.Children[b] = NewTreeNode()
-		}
-
-		curr = curr.Children[b]
-	}
-
-	curr.TokenID = id
+	Ranks map[string]int
 }
 
 func LoadTokenizer(url string) (*Tokenizer, error) {
@@ -55,65 +30,128 @@ func LoadTokenizer(url string) (*Tokenizer, error) {
 
 	log.Println("Loading tokenizer...")
 
-	vocabulary, err := LoadVocabulary(TikTokenPath)
+	file, err := os.OpenFile(TikTokenPath, os.O_RDONLY, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	root := NewTreeNode()
+	defer file.Close()
 
-	for tokenStr, id := range vocabulary {
-		root.Insert([]byte(tokenStr), id)
+	ranks := make(map[string]int, 200000)
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Bytes()
+
+		parts := bytes.SplitN(line, []byte(" "), 2)
+		if len(parts) != 2 {
+			continue
+		}
+
+		decodedLen := base64.StdEncoding.DecodedLen(len(parts[0]))
+
+		decoded := make([]byte, decodedLen)
+
+		n, err := base64.StdEncoding.Decode(decoded, parts[0])
+		if err != nil {
+			return nil, err
+		}
+
+		id, err := strconv.Atoi(string(parts[1]))
+		if err != nil {
+			return nil, err
+		}
+
+		ranks[string(decoded[:n])] = id
 	}
 
-	return &Tokenizer{
-		Root: root,
-	}, nil
+	err = scanner.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tokenizer{Ranks: ranks}, nil
 }
 
-func (t *Tokenizer) Encode(text string) []int {
-	var (
-		index  int
-		tokens []int
-	)
-
+func (t *Tokenizer) CountTokens(text string) int {
 	input := []byte(text)
 
-	for index < len(input) {
-		bestMatchLength := 0
-		bestMatchID := -1
+	if len(input) == 0 {
+		return 0
+	}
 
-		currNode := t.Root
+	if len(input) == 1 {
+		return 1
+	}
 
-		for i := index; i < len(input); i++ {
-			b := input[i]
+	n := len(input)
 
-			childNode, exists := currNode.Children[b]
-			if !exists {
+	prev := make([]int, n)
+	next := make([]int, n)
+
+	for i := range n {
+		prev[i] = i - 1
+		next[i] = i + 1
+	}
+
+	next[n-1] = -1
+
+	length := make([]int, n)
+
+	for i := range n {
+		length[i] = 1
+	}
+
+	for {
+		bestRank := int((^uint(0)) >> 1) // MaxInt
+		bestIdx := -1
+
+		var curr int
+
+		for curr != -1 {
+			nxt := next[curr]
+			if nxt == -1 {
 				break
 			}
 
-			currNode = childNode
+			pairBytes := input[curr : curr+length[curr]+length[nxt]]
 
-			if currNode.TokenID != -1 {
-				bestMatchID = currNode.TokenID
-				bestMatchLength = (i - index) + 1
+			if rank, exists := t.Ranks[string(pairBytes)]; exists {
+				if rank < bestRank {
+					bestRank = rank
+					bestIdx = curr
+				}
 			}
+
+			curr = nxt
 		}
 
-		// should not be possible
-		if bestMatchLength == 0 {
-			bestMatchLength = 1
+		if bestIdx == -1 {
+			break
 		}
 
-		if bestMatchID != -1 {
-			tokens = append(tokens, bestMatchID)
-		}
+		nxt := next[bestIdx]
 
-		index += bestMatchLength
+		length[bestIdx] += length[nxt]
+
+		next[bestIdx] = next[nxt]
+
+		if next[nxt] != -1 {
+			prev[next[nxt]] = bestIdx
+		}
 	}
 
-	return tokens
+	var (
+		tokenCount int
+		curr       int
+	)
+
+	for curr != -1 {
+		tokenCount++
+		curr = next[curr]
+	}
+
+	return tokenCount
 }
 
 func PreloadVocabulary(url, path string) error {
