@@ -260,7 +260,7 @@ function scroll(force = false, instant = false) {
 }
 
 function applyTheme(theme) {
-	document.body.classList.remove("rose-pine");
+	document.body.classList.remove("rose-pine", "gruvbox", "tokyo-night", "nord");
 
 	if (theme && theme !== "catppuccin") {
 		document.body.classList.add(theme);

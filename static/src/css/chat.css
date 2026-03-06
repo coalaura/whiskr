@@ -1,7 +1,10 @@
-@import "./catppuccin.min.css";
+@import "./hljs.css";
 
 @import "./base.css";
 @import "./themes/rose-pine.css";
+@import "./themes/gruvbox.css";
+@import "./themes/tokio-night.css";
+@import "./themes/nord.css";
 @import "./dropdown.css";
 @import "./markdown.css";
 
@@ -497,9 +500,7 @@ body.ready .sidebar-section.chat-settings .section-body {
 	font-size: 14px;
 	color: var(--c-text);
 	font-family: inherit;
-	transition:
-		border-color 150ms,
-		box-shadow 150ms;
+	transition: border-color 150ms;
 }
 
 .sidebar-section .dropdown .selected {
@@ -522,8 +523,7 @@ body.ready .sidebar-section.chat-settings .section-body {
 .sidebar-section select:focus,
 .sidebar-section .dropdown.open {
 	outline: none;
-	border-color: var(--c-lavender);
-	box-shadow: 0 0 0 3px rgba(183, 189, 248, 0.1);
+	border-color: var(--c-overlay0);
 }
 
 .sidebar-section textarea {

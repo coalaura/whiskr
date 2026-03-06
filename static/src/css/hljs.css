@@ -1,0 +1,137 @@
+:root {
+	--hl-text: #cad3f5;
+	--hl-bg: #24273a;
+	--hl-keyword: #c6a0f6;
+	--hl-built-in: #ed8796;
+	--hl-type: #eed49f;
+	--hl-literal: #f5a97f;
+	--hl-operator: #91d7e3;
+	--hl-punctuation: #b8c0e0;
+	--hl-property: #8bd5ca;
+	--hl-regexp: #f5bde6;
+	--hl-string: #a6da95;
+	--hl-subst: #a5adcb;
+	--hl-symbol: #f0c6c6;
+	--hl-title: #8aadf4;
+	--hl-comment: #939ab7;
+	--hl-link: #7dc4e4;
+	--hl-addition: #a6da95;
+	--hl-addition-bg: rgba(166, 218, 149, 0.15);
+	--hl-deletion: #ed8796;
+	--hl-deletion-bg: rgba(237, 135, 150, 0.15);
+}
+
+code.hljs {
+	color: var(--hl-text);
+	background: var(--hl-bg);
+}
+
+code .hljs-params {
+	color: var(--hl-text);
+}
+
+code .hljs-keyword,
+code .hljs-variable,
+code .hljs-variable.language_,
+code .hljs-name,
+code .hljs-selector-attr {
+	color: var(--hl-keyword);
+}
+
+code .hljs-built_in,
+code .hljs-doctag {
+	color: var(--hl-built-in);
+}
+
+code .hljs-type,
+code .hljs-title.class_,
+code .hljs-selector-tag {
+	color: var(--hl-type);
+}
+
+code .hljs-literal,
+code .hljs-number,
+code .hljs-variable.constant_,
+code .hljs-meta {
+	color: var(--hl-literal);
+}
+
+code .hljs-operator {
+	color: var(--hl-operator);
+}
+
+code .hljs-punctuation {
+	color: var(--hl-punctuation);
+}
+
+code .hljs-property,
+code .hljs-tag,
+code .hljs-bullet,
+code .hljs-formula,
+code .hljs-selector-class,
+code .hljs-selector-pseudo {
+	color: var(--hl-property);
+}
+
+code .hljs-regexp {
+	color: var(--hl-regexp);
+}
+
+code .hljs-string,
+code .hljs-char.escape_,
+code .hljs-attribute,
+code .hljs-code {
+	color: var(--hl-string);
+}
+
+code .hljs-subst {
+	color: var(--hl-subst);
+}
+
+code .hljs-symbol,
+code .hljs-template-tag,
+code .hljs-template-variable {
+	color: var(--hl-symbol);
+}
+
+code .hljs-title,
+code .hljs-title.function_,
+code .hljs-section,
+code .hljs-attr,
+code .hljs-selector-id {
+	color: var(--hl-title);
+}
+
+code .hljs-comment {
+	color: var(--hl-comment);
+}
+
+code .hljs-emphasis {
+	color: var(--hl-built-in);
+	font-style: italic;
+}
+
+code .hljs-strong {
+	color: var(--hl-built-in);
+	font-weight: bold;
+}
+
+code .hljs-quote {
+	color: var(--hl-string);
+	font-style: italic;
+}
+
+code .hljs-link {
+	color: var(--hl-link);
+	font-style: italic;
+}
+
+code .hljs-addition {
+	color: var(--hl-addition);
+	background: var(--hl-addition-bg);
+}
+
+code .hljs-deletion {
+	color: var(--hl-deletion);
+	background: var(--hl-deletion-bg);
+}

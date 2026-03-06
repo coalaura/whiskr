@@ -44,9 +44,7 @@
 	flex-direction: column;
 	background: var(--c-surface0);
 	max-height: 250px;
-	box-shadow:
-		0 1px 2px rgba(0, 0, 0, 0.05),
-		0 1px 3px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
 	border: 1px solid var(--c-surface1);
 }
 

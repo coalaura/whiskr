@@ -1,0 +1,61 @@
+body.gruvbox {
+	--c-rosewater: #fbf1c7;
+	--c-mauve: #d3869b;
+	--c-red: #fb4934;
+	--c-maroon: #cc241d;
+	--c-yellow: #fabd2f;
+	--c-green: #b8bb26;
+	--c-sapphire: #8ec07c;
+	--c-blue: #83a598;
+	--c-lavender: #b16286;
+	--c-text: #ebdbb2;
+	--c-subtext: #a89984;
+
+	--c-overlay2: #928374;
+	--c-overlay0: #7c6f64;
+	--c-surface2: #665c54;
+	--c-surface1: #504945;
+	--c-surface0: #3c3836;
+	--c-base: #282828;
+	--c-mantle: #1d2021;
+	--c-crust: #141617;
+
+	--c-green-dark: color-mix(in oklab, var(--c-green), black 25%);
+
+	--c-overlay0-dark: color-mix(in oklab, var(--c-overlay0), black 12%);
+	--c-surface0-dark: color-mix(in oklab, var(--c-surface0), black 12%);
+	--c-base-dark: color-mix(in oklab, var(--c-base), black 12%);
+	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 12%);
+	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 12%);
+
+	--gradient-0: color-mix(in oklch, #98971a 50%, #b8bb26);
+	--gradient-1: color-mix(in oklch, #689d6a 50%, #8ec07c);
+	--gradient-2: color-mix(in oklch, #458588 50%, #83a598);
+	--gradient-3: color-mix(in oklch, #b16286 50%, #d3869b);
+	--gradient-4: color-mix(in oklch, #d79921 50%, #fabd2f);
+	--gradient-5: color-mix(in oklch, #d65d0e 50%, #fe8019);
+	--gradient-6: color-mix(in oklch, #cc241d 50%, #fb4934);
+}
+
+body.gruvbox {
+	--hl-text: #ebdbb2;
+	--hl-bg: #282828;
+	--hl-keyword: #fb4934;
+	--hl-built-in: #fe8019;
+	--hl-type: #fabd2f;
+	--hl-literal: #d3869b;
+	--hl-operator: #a89984;
+	--hl-punctuation: #a89984;
+	--hl-property: #8ec07c;
+	--hl-regexp: #b8bb26;
+	--hl-string: #b8bb26;
+	--hl-subst: #ebdbb2;
+	--hl-symbol: #d3869b;
+	--hl-title: #83a598;
+	--hl-comment: #928374;
+	--hl-link: #83a598;
+	--hl-addition: #b8bb26;
+	--hl-addition-bg: rgba(184, 187, 38, 0.15);
+	--hl-deletion: #fb4934;
+	--hl-deletion-bg: rgba(251, 73, 52, 0.15);
+}
