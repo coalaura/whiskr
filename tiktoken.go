@@ -22,6 +22,15 @@ type Tokenizer struct {
 	Ranks map[string]int
 }
 
+type mergeCandidate struct {
+	rank     int
+	idx      int
+	lenLeft  int
+	lenRight int
+}
+
+type candidateHeap []mergeCandidate
+
 func LoadTokenizer(url string) (*Tokenizer, error) {
 	err := PreloadVocabulary(url, TikTokenPath)
 	if err != nil {
@@ -75,69 +84,82 @@ func LoadTokenizer(url string) (*Tokenizer, error) {
 
 func (t *Tokenizer) CountTokens(text string) int {
 	input := []byte(text)
-
-	if len(input) == 0 {
-		return 0
-	}
-
-	if len(input) == 1 {
-		return 1
-	}
-
 	n := len(input)
+
+	if n <= 1 {
+		return n
+	}
 
 	prev := make([]int, n)
 	next := make([]int, n)
+	length := make([]int, n)
 
 	for i := range n {
 		prev[i] = i - 1
 		next[i] = i + 1
+		length[i] = 1
 	}
 
 	next[n-1] = -1
 
-	length := make([]int, n)
+	pq := make(candidateHeap, 0, n)
 
-	for i := range n {
-		length[i] = 1
+	for i := 0; i < n-1; i++ {
+		pairBytes := input[i : i+2]
+
+		if rank, exists := t.Ranks[string(pairBytes)]; exists {
+			pq.push(mergeCandidate{
+				rank:     rank,
+				idx:      i,
+				lenLeft:  1,
+				lenRight: 1,
+			})
+		}
 	}
 
-	for {
-		bestRank := int((^uint(0)) >> 1) // MaxInt
-		bestIdx := -1
+	for len(pq) > 0 {
+		best := pq.pop()
 
-		var curr int
+		curr := best.idx
+		nxt := next[curr]
 
-		for curr != -1 {
-			nxt := next[curr]
-			if nxt == -1 {
-				break
-			}
-
-			pairBytes := input[curr : curr+length[curr]+length[nxt]]
-
-			if rank, exists := t.Ranks[string(pairBytes)]; exists {
-				if rank < bestRank {
-					bestRank = rank
-					bestIdx = curr
-				}
-			}
-
-			curr = nxt
+		if length[curr] == 0 || nxt == -1 || length[curr] != best.lenLeft || length[nxt] != best.lenRight {
+			continue
 		}
 
-		if bestIdx == -1 {
-			break
-		}
+		length[curr] += length[nxt]
+		length[nxt] = 0
 
-		nxt := next[bestIdx]
-
-		length[bestIdx] += length[nxt]
-
-		next[bestIdx] = next[nxt]
+		next[curr] = next[nxt]
 
 		if next[nxt] != -1 {
-			prev[next[nxt]] = bestIdx
+			prev[next[nxt]] = curr
+		}
+
+		prv := prev[curr]
+		if prv != -1 {
+			pairBytes := input[prv : prv+length[prv]+length[curr]]
+			if rank, exists := t.Ranks[string(pairBytes)]; exists {
+				pq.push(mergeCandidate{
+					rank:     rank,
+					idx:      prv,
+					lenLeft:  length[prv],
+					lenRight: length[curr],
+				})
+			}
+		}
+
+		newNxt := next[curr]
+		if newNxt != -1 {
+			pairBytes := input[curr : curr+length[curr]+length[newNxt]]
+			if rank, exists := t.Ranks[string(pairBytes)]; exists {
+				pq.push(mergeCandidate{
+					rank:     rank,
+					idx:      curr,
+					lenLeft:  length[curr],
+					lenRight: length[newNxt],
+				})
+			}
 		}
 	}
 
@@ -152,6 +174,64 @@ func (t *Tokenizer) CountTokens(text string) int {
 	}
 
 	return tokenCount
+}
+
+func (h *candidateHeap) push(c mergeCandidate) {
+	*h = append(*h, c)
+
+	h.up(len(*h) - 1)
+}
+
+func (h *candidateHeap) pop() mergeCandidate {
+	old := *h
+
+	n := len(old) - 1
+
+	c := old[0]
+
+	old[0] = old[n]
+	*h = old[:n]
+
+	h.down(0, n)
+
+	return c
+}
+
+func (h candidateHeap) up(j int) {
+	for {
+		i := (j - 1) / 2 // parent
+		if i == j || h[j].rank >= h[i].rank {
+			break
+		}
+
+		h[i], h[j] = h[j], h[i]
+
+		j = i
+	}
+}
+
+func (h candidateHeap) down(i0, n int) {
+	i := i0
+
+	for {
+		j1 := 2*i + 1
+		if j1 >= n || j1 < 0 {
+			break
+		}
+
+		j := j1
+		if j2 := j1 + 1; j2 < n && h[j2].rank < h[j1].rank {
+			j = j2
+		}
+
+		if h[j].rank >= h[i].rank {
+			break
+		}
+
+		h[i], h[j] = h[j], h[i]
+
+		i = j
+	}
 }
 
 func PreloadVocabulary(url, path string) error {
