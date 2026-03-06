@@ -579,6 +579,38 @@ body.ready .sidebar-section.chat-settings .section-body {
 	background-color: white;
 }
 
+.sidebar-section .dropdown .cont {
+	width: calc(100% + 2px);
+	left: -1px;
+	border-radius: 6px;
+	border: 1px solid var(--c-surface1);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+}
+
+.sidebar-section .dropdown .opt {
+	padding: 8px 12px;
+	background: var(--c-crust);
+	border-bottom: 1px solid var(--c-surface0);
+}
+
+.sidebar-section .dropdown .opt:nth-child(2n + 1) {
+	background: var(--c-mantle);
+}
+
+.sidebar-section .dropdown .opt:not(.disabled):hover {
+	background: var(--c-surface0);
+}
+
+.sidebar-section .dropdown .opt.active {
+	background: var(--c-surface0-dark);
+	padding-left: 28px;
+}
+
+.sidebar-section .dropdown .opt.active::before {
+	left: 8px;
+}
+
 .saved-chats-content {
 	flex: 1;
 	overflow-y: auto;
