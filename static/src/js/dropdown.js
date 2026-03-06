@@ -35,6 +35,8 @@ class Dropdown {
 	#favoriteOrder = [];
 	#favoritesEnabled = false;
 
+	#events = {};
+
 	#dragState = {
 		draggedOption: false,
 		dropIndicator: false,
@@ -493,6 +495,28 @@ class Dropdown {
 		this.#_dropdown.classList.remove("open");
 
 		this.#render();
+
+		for (const option of this.#options) {
+			const els = [option.el];
+
+			for (const tab in option.clones) {
+				els.push(option.clones[tab]);
+			}
+
+			if (option.favoriteClone) {
+				els.push(option.favoriteClone);
+			}
+
+			els.forEach(el => {
+				el.addEventListener("mouseenter", () => {
+					this.#trigger("option:hover", option.value);
+				});
+			});
+		}
+
+		this.#_options.addEventListener("mouseleave", () => {
+			this.#trigger("option:hover", false);
+		});
 	}
 
 	#setupFavoritesDragAndDrop() {
@@ -680,6 +704,11 @@ class Dropdown {
 			this.#makeFavorite(option);
 		});
 
+		// hover listener
+		option.favoriteClone.addEventListener("mouseenter", () => {
+			this.#trigger("option:hover", option.value);
+		});
+
 		// Insert in correct position based on order
 		const currentIndex = this.#favoriteOrder.indexOf(option.value),
 			nextFavId = this.#favoriteOrder[currentIndex + 1];
@@ -746,6 +775,12 @@ class Dropdown {
 				bubbles: true,
 			})
 		);
+
+		if (this.#events[event]) {
+			for (const cb of this.#events[event]) {
+				cb(data);
+			}
+		}
 	}
 
 	switchTab(tab = "all") {
@@ -951,6 +986,14 @@ class Dropdown {
 		this.#selected = index !== -1 ? index : false;
 
 		this.#render();
+	}
+
+	on(event, cb) {
+		if (!this.#events[event]) {
+			this.#events[event] = [];
+		}
+
+		this.#events[event].push(cb);
 	}
 }
 

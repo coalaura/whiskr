@@ -4318,8 +4318,11 @@ addEventListener("resize", () => {
 
 document.body.classList.toggle("christmas", new Date().getMonth() === 11);
 
+dropdown($uiTheme).on("option:hover", option => {
+	applyTheme(option || $uiTheme.value);
+});
+
 dropdown($role);
-dropdown($uiTheme);
 dropdown($providerSorting);
 dropdown($imageResolution);
 dropdown($imageResize);
