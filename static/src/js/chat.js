@@ -86,6 +86,7 @@ const $version = document.getElementById("version"),
 	$chatSettingsHeader = document.getElementById("chat-settings-header"),
 	$chatSettingsBody = document.getElementById("chat-settings-body"),
 	$chatSettingsCollapse = document.getElementById("chat-settings-collapse"),
+	$uiTheme = document.getElementById("ui-theme"),
 	$sEnabled = document.getElementById("s-enabled"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
@@ -256,6 +257,14 @@ function scroll(force = false, instant = false) {
 
 		awaitingScroll = false;
 	});
+}
+
+function applyTheme(theme) {
+	document.body.classList.remove("rose-pine");
+
+	if (theme && theme !== "catppuccin") {
+		document.body.classList.add(theme);
+	}
 }
 
 function mark(index) {
@@ -2759,6 +2768,10 @@ function restore() {
 		$chat.style.height = `${resizedHeight}px`;
 	}
 
+	$uiTheme.value = load("ui-theme", "catppuccin");
+
+	applyTheme($uiTheme.value);
+
 	$message.value = load("message", "");
 	$role.value = load("role", "user");
 	$model.value = load("model", modelList.length ? modelList[0].id : "");
@@ -3537,6 +3550,14 @@ $iterations.addEventListener("input", () => {
 	$iterations.classList.toggle("invalid", Number.isNaN(iterations) || iterations < 1 || iterations > 50);
 });
 
+$uiTheme.addEventListener("change", () => {
+	const theme = $uiTheme.value;
+
+	store("ui-theme", theme);
+
+	applyTheme(theme);
+});
+
 $providerSorting.addEventListener("change", () => {
 	store("provider", $providerSorting.value);
 });
@@ -4001,6 +4022,7 @@ addEventListener("resize", () => {
 document.body.classList.toggle("christmas", new Date().getMonth() === 11);
 
 dropdown($role);
+dropdown($uiTheme);
 dropdown($providerSorting);
 dropdown($imageResolution);
 dropdown($imageResize);

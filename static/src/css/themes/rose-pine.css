@@ -1,0 +1,31 @@
+body.rose-pine {
+	--c-rosewater: #ebbcba;
+	--c-mauve: #c4a7e7;
+	--c-red: #eb6f92;
+	--c-maroon: #ebbcba;
+	--c-yellow: #f6c177;
+	--c-green: #31748f;
+	--c-sapphire: #9ccfd8;
+	--c-blue: #9ccfd8;
+	--c-lavender: #c4a7e7;
+
+	--c-text: #e0def4;
+	--c-subtext: #908caa;
+
+	--c-overlay2: #908caa;
+	--c-overlay0: #6e6a86;
+	--c-surface2: #524f67;
+	--c-surface1: #403d52;
+	--c-surface0: #26233a;
+	--c-base: #1f1d2e;
+	--c-mantle: #191724;
+	--c-crust: #13111c;
+
+	--gradient-0: color-mix(in oklch, #31748f 50%, #9ccfd8);
+	--gradient-1: color-mix(in oklch, #56949f 50%, #9ccfd8);
+	--gradient-2: color-mix(in oklch, #3e8fb0 50%, #9ccfd8);
+	--gradient-3: color-mix(in oklch, #907aa9 50%, #c4a7e7);
+	--gradient-4: color-mix(in oklch, #ea9d34 50%, #f6c177);
+	--gradient-5: color-mix(in oklch, #d7827e 50%, #ebbcba);
+	--gradient-6: color-mix(in oklch, #b4637a 50%, #eb6f92);
+}

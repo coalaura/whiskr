@@ -1,6 +1,7 @@
 @import "./catppuccin.min.css";
 
 @import "./base.css";
+@import "./themes/rose-pine.css";
 @import "./dropdown.css";
 @import "./markdown.css";
 
