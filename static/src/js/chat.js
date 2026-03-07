@@ -66,7 +66,6 @@ const $version = document.getElementById("version"),
 	$imageResize = document.getElementById("image-resize"),
 	$imageAspect = document.getElementById("image-aspect"),
 	$reasoningEffort = document.getElementById("reasoning-effort"),
-	$reasoningTokens = document.getElementById("reasoning-tokens"),
 	$prompt = document.getElementById("prompt"),
 	$temperature = document.getElementById("temperature"),
 	$iterations = document.getElementById("iterations"),
@@ -148,7 +147,7 @@ let searchAvailable = false,
 	totalUsage = {},
 	promptOverheads = {};
 
-let modelDropdown;
+let modelDropdown, reasoningDropdown;
 
 function updateTotalUsage() {
 	$total.textContent = `${usageType[0].toUpperCase()} / ${formatMoney(totalUsage[usageType] || 0)}`;
@@ -2296,17 +2295,6 @@ async function buildRequest(noPush = false) {
 		$iterations.classList.remove("invalid");
 	}
 
-	const effort = $reasoningEffort.value;
-
-	let tokens = parseInt($reasoningTokens.value, 10);
-
-	if (!effort && (Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024)) {
-		tokens = 1024;
-
-		$reasoningTokens.value = tokens;
-		$reasoningTokens.classList.remove("invalid");
-	}
-
 	if (!noPush) {
 		pushMessage();
 	}
@@ -2339,10 +2327,7 @@ async function buildRequest(noPush = false) {
 			resize: $imageResize.value,
 			aspect: $imageAspect.value,
 		},
-		reasoning: {
-			effort: effort,
-			tokens: tokens || 0,
-		},
+		reasoning: $reasoningEffort.value,
 		metadata: {
 			timezone: timezone,
 			platform: platform,
@@ -2888,6 +2873,9 @@ async function loadData() {
 		refreshUsage();
 	}
 
+	// render reasoning
+	reasoningDropdown = dropdown($reasoningEffort);
+
 	// render models
 	const favorites = load("model-favorites", []),
 		modelTab = load("model-tab"),
@@ -3060,7 +3048,6 @@ function restore() {
 	$imageResize.value = load("image-resize", "8192");
 	$imageAspect.value = load("image-aspect", "");
 	$reasoningEffort.value = load("reasoning-effort", "medium");
-	$reasoningTokens.value = load("reasoning-tokens", 1024);
 	$timeOverride.value = load("time-override", "");
 
 	$timeOverride.dispatchEvent(new Event("input"));
@@ -3450,10 +3437,7 @@ function getChatData(name) {
 			resize: $imageResize.value,
 			aspect: $imageAspect.value,
 		},
-		reasoning: {
-			effort: $reasoningEffort.value,
-			tokens: $reasoningTokens.value,
-		},
+		reasoning: $reasoningEffort.value,
 		json: jsonMode,
 		search: searchTool,
 		time: $timeOverride.value,
@@ -3776,12 +3760,12 @@ $model.addEventListener("change", () => {
 
 	store("model", model);
 
-	if (tags.includes("reasoning")) {
+	if (data?.reasoning) {
 		$reasoningEffort.parentNode.classList.remove("none");
-		$reasoningTokens.parentNode.classList.toggle("none", !!$reasoningEffort.value);
+
+		reasoningDropdown.setAvailable(data.reasoning_levels);
 	} else {
 		$reasoningEffort.parentNode.classList.add("none");
-		$reasoningTokens.parentNode.classList.add("none");
 	}
 
 	if (tags.includes("image_gen")) {
@@ -3896,17 +3880,6 @@ $reasoningEffort.addEventListener("change", () => {
 	const effort = $reasoningEffort.value;
 
 	store("reasoning-effort", effort);
-
-	$reasoningTokens.parentNode.classList.toggle("none", !!effort);
-});
-
-$reasoningTokens.addEventListener("input", () => {
-	const value = $reasoningTokens.value,
-		tokens = parseInt(value, 10);
-
-	store("reasoning-tokens", value);
-
-	$reasoningTokens.classList.toggle("invalid", Number.isNaN(tokens) || tokens <= 0 || tokens > 1024 * 1024);
 });
 
 $files.addEventListener("click", () => {
@@ -4327,7 +4300,6 @@ dropdown($providerSorting);
 dropdown($imageResolution);
 dropdown($imageResize);
 dropdown($imageAspect);
-dropdown($reasoningEffort);
 
 loadData().then(() => {
 	restore();

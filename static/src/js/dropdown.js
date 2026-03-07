@@ -988,6 +988,30 @@ class Dropdown {
 		this.#render();
 	}
 
+	setAvailable(available) {
+		for (const option of this.#options) {
+			if (!available || available.includes(option.value)) {
+				option.el.classList.remove("unavailable");
+				option.favoriteClone?.classList?.remove("unavailable");
+
+				for (const tab in option.clones) {
+					option.clones[tab].classList.remove("unavailable");
+				}
+			} else {
+				option.el.classList.add("unavailable");
+				option.favoriteClone?.classList?.add("unavailable");
+
+				for (const tab in option.clones) {
+					option.clones[tab].classList.add("unavailable");
+				}
+			}
+		}
+
+		if (available && !available.includes(this.#_select.value)) {
+			this.#set(available[0]);
+		}
+	}
+
 	on(event, cb) {
 		if (!this.#events[event]) {
 			this.#events[event] = [];

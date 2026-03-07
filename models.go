@@ -26,13 +26,15 @@ type Model struct {
 	Tags        []string     `json:"tags,omitempty"`
 	Author      string       `json:"author,omitempty"`
 
-	Reasoning bool `json:"-"`
-	Vision    bool `json:"-"`
-	JSON      bool `json:"-"`
-	Tools     bool `json:"-"`
-	Images    bool `json:"-"`
-	Audio     bool `json:"-"`
-	Text      bool `json:"-"`
+	Reasoning       bool     `json:"reasoning"`
+	ReasoningLevels []string `json:"reasoning_levels,omitempty"`
+
+	Vision bool `json:"-"`
+	JSON   bool `json:"-"`
+	Tools  bool `json:"-"`
+	Images bool `json:"-"`
+	Audio  bool `json:"-"`
+	Text   bool `json:"-"`
 }
 
 var (
@@ -159,6 +161,12 @@ func GetModelTags(model openingrouter.FrontendModel, m *Model) {
 		switch parameter {
 		case "reasoning":
 			m.Reasoning = true
+
+			reasoning := model.ReasoningConfig
+
+			if reasoning != nil {
+				m.ReasoningLevels = reasoning.SupportedReasoningEfforts
+			}
 
 			m.Tags = append(m.Tags, "reasoning")
 		case "response_format":

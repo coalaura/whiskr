@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -43,11 +44,6 @@ type ChatMessage struct {
 	Images []string       `json:"images"`
 }
 
-type ChatReasoning struct {
-	Effort string `json:"effort"`
-	Tokens int    `json:"tokens"`
-}
-
 type ChatImage struct {
 	Resolution string `json:"resolution"`
 	Aspect     string `json:"aspect"`
@@ -80,7 +76,7 @@ type ChatRequest struct {
 	Iterations  int64         `json:"iterations"`
 	Tools       ChatTools     `json:"tools"`
 	Image       ChatImage     `json:"image"`
-	Reasoning   ChatReasoning `json:"reasoning"`
+	Reasoning   string        `json:"reasoning"`
 	Metadata    ChatMetadata  `json:"metadata"`
 	Messages    []ChatMessage `json:"messages"`
 }
@@ -257,15 +253,13 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 	if model.Reasoning {
 		request.Reasoning = &openrouter.ChatCompletionReasoning{}
 
-		switch r.Reasoning.Effort {
+		switch r.Reasoning {
 		case "xhigh", "high", "medium", "low", "minimal", "none":
-			request.Reasoning.Effort = &r.Reasoning.Effort
-		default:
-			if r.Reasoning.Tokens <= 0 || r.Reasoning.Tokens > 1024*1024 {
-				return nil, fmt.Errorf("invalid reasoning tokens (1-1048576): %d", r.Reasoning.Tokens)
-			}
+			request.Reasoning.Effort = &r.Reasoning
+		}
 
-			request.Reasoning.MaxTokens = &r.Reasoning.Tokens
+		if len(model.ReasoningLevels) > 0 && !slices.Contains(model.ReasoningLevels, r.Reasoning) {
+			return nil, fmt.Errorf("%q does not support effort %q", model.Name, r.Reasoning)
 		}
 	}
 
