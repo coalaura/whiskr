@@ -5,6 +5,16 @@
 @import "./themes/gruvbox.css";
 @import "./themes/tokio-night.css";
 @import "./themes/nord.css";
+@import "./themes/dracula.css";
+@import "./themes/one-dark.css";
+@import "./themes/everforest.css";
+@import "./themes/night-owl.css";
+@import "./themes/aura.css";
+@import "./themes/kanagawa.css";
+@import "./themes/poimandres.css";
+@import "./themes/andromeda.css";
+@import "./themes/vitesse.css";
+@import "./themes/synthwave-84.css";
 @import "./dropdown.css";
 @import "./markdown.css";
 

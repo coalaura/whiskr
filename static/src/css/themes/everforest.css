@@ -1,0 +1,61 @@
+body.everforest {
+	--c-rosewater: #e67e80;
+	--c-mauve: #d699b6;
+	--c-red: #e67e80;
+	--c-maroon: #e69875;
+	--c-yellow: #dbbc7f;
+	--c-green: #a7c080;
+	--c-sapphire: #83c092;
+	--c-blue: #7fbbb3;
+	--c-lavender: #d699b6;
+
+	--c-text: #d3c6aa;
+	--c-subtext: #9da9a0;
+
+	--c-overlay2: #859289;
+	--c-overlay0: #5c6a72;
+	--c-surface2: #4f5b58;
+	--c-surface1: #475258;
+	--c-surface0: #3a4247;
+	--c-base: #2d353b;
+	--c-mantle: #232a2e;
+	--c-crust: #1e2326;
+
+	--c-green-dark: color-mix(in oklab, var(--c-green), black 25%);
+	--c-overlay0-dark: color-mix(in oklab, var(--c-overlay0), black 12%);
+	--c-surface0-dark: color-mix(in oklab, var(--c-surface0), black 12%);
+	--c-base-dark: color-mix(in oklab, var(--c-base), black 12%);
+	--c-mantle-dark: color-mix(in oklab, var(--c-mantle), black 12%);
+	--c-crust-dark: color-mix(in oklab, var(--c-crust), black 12%);
+
+	--gradient-0: color-mix(in oklch, #83c092 50%, #a7c080);
+	--gradient-1: color-mix(in oklch, #7fbbb3 50%, #83c092);
+	--gradient-2: color-mix(in oklch, #d699b6 50%, #7fbbb3);
+	--gradient-3: color-mix(in oklch, #e67e80 50%, #d699b6);
+	--gradient-4: color-mix(in oklch, #dbbc7f 50%, #e69875);
+	--gradient-5: color-mix(in oklch, #e69875 50%, #e67e80);
+	--gradient-6: color-mix(in oklch, #e67e80 50%, #e67e80);
+}
+
+body.everforest {
+	--hl-text: #d3c6aa;
+	--hl-bg: #2d353b;
+	--hl-keyword: #e67e80;
+	--hl-built-in: #dbbc7f;
+	--hl-type: #dbbc7f;
+	--hl-literal: #d699b6;
+	--hl-operator: #83c092;
+	--hl-punctuation: #d3c6aa;
+	--hl-property: #7fbbb3;
+	--hl-regexp: #a7c080;
+	--hl-string: #a7c080;
+	--hl-subst: #d3c6aa;
+	--hl-symbol: #83c092;
+	--hl-title: #a7c080;
+	--hl-comment: #859289;
+	--hl-link: #7fbbb3;
+	--hl-addition: #a7c080;
+	--hl-addition-bg: rgba(167, 192, 128, 0.15);
+	--hl-deletion: #e67e80;
+	--hl-deletion-bg: rgba(230, 126, 128, 0.15);
+}
