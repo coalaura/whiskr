@@ -184,7 +184,7 @@
 	margin-top: -30px;
 	width: 30px;
 	height: 30px;
-	background-size: 20px;
+	mask-size: 20px;
 }
 
 .markdown pre:hover .pre-copy {
@@ -240,7 +240,8 @@
 
 .markdown .inline-file::before {
 	content: "";
-	background-image: url(icons/file.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/file.svg);
 	flex-shrink: 0;
 }
 
@@ -261,7 +262,8 @@
 }
 
 .markdown button.download {
-	background-image: url(icons/download.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/download.svg);
 	flex-shrink: 0;
 }
 
@@ -301,7 +303,7 @@
 	right: -1px;
 	width: 30px;
 	height: 30px;
-	background-size: 20px;
+	mask-size: 20px;
 	background-color: var(--c-surface1);
 	border: 1px solid var(--c-surface0);
 	border-bottom-left-radius: 6px;

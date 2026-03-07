@@ -185,9 +185,9 @@ body:not(.loading) #loading {
 	width: 20px;
 	height: 20px;
 	opacity: 0.9;
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 	z-index: 2;
 }
 
@@ -207,7 +207,8 @@ body:not(.loading) #loading {
 }
 
 .notification.error::before {
-	background-image: url(icons/error.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/error.svg);
 }
 
 .notification.success {
@@ -216,7 +217,8 @@ body:not(.loading) #loading {
 }
 
 .notification.success::before {
-	background-image: url(icons/check.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/check.svg);
 }
 
 .notification.warning {
@@ -225,7 +227,8 @@ body:not(.loading) #loading {
 }
 
 .notification.warning::before {
-	background-image: url(icons/warning.svg);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/warning.svg);
 }
 
 .notification.info {
@@ -234,7 +237,8 @@ body:not(.loading) #loading {
 }
 
 .notification.info::before {
-	background-image: url(icons/info.svg);
+	background-color: var(--c-blue);
+	mask-image: url(icons/info.svg);
 }
 
 .notification.off-screen {
@@ -304,17 +308,19 @@ body.ready #sidebar {
 	display: block;
 	width: 20px;
 	height: 20px;
-	background-image: url(icons/settings.svg);
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	background-color: var(--c-pink);
+	mask-image: url(icons/settings.svg);
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 	opacity: 0.9;
 }
 
 #sidebar-close {
 	width: 24px;
 	height: 24px;
-	background-image: url(icons/delete.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/delete.svg);
 	opacity: 0.7;
 	transition: opacity 150ms;
 }
@@ -402,10 +408,11 @@ body.ready #sidebar {
 .section-collapse {
 	width: 18px;
 	height: 18px;
-	background-image: url(icons/chevron.svg);
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	background-color: var(--c-text);
+	mask-image: url(icons/chevron.svg);
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 	opacity: 0.6;
 	flex-shrink: 0;
 }
@@ -690,9 +697,9 @@ body.ready .sidebar-section.chat-settings .section-body {
 .saved-chat-item button {
 	width: 24px;
 	height: 24px;
-	background-position: center;
-	background-size: 16px;
-	background-repeat: no-repeat;
+	mask-position: center;
+	mask-size: 16px;
+	mask-repeat: no-repeat;
 	border-radius: 4px;
 	opacity: 0.7;
 	transition: all 150ms;
@@ -704,15 +711,18 @@ body.ready .sidebar-section.chat-settings .section-body {
 }
 
 .saved-chat-item .load-chat {
-	background-image: url(icons/import.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/import.svg);
 }
 
 .saved-chat-item .delete-chat {
-	background-image: url(icons/trash.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/trash.svg);
 }
 
 .saved-chat-item .overwrite-chat {
-	background-image: url(icons/save.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/save.svg);
 }
 
 .empty-state {
@@ -727,10 +737,11 @@ body.ready .sidebar-section.chat-settings .section-body {
 #save-current-chat {
 	width: 24px;
 	height: 24px;
-	background-image: url(icons/add.svg);
-	background-position: center;
-	background-size: 16px;
-	background-repeat: no-repeat;
+	background-color: var(--c-text);
+	mask-image: url(icons/add.svg);
+	mask-position: center;
+	mask-size: 16px;
+	mask-repeat: no-repeat;
 	border-radius: 4px;
 	opacity: 0.7;
 	transition: all 150ms;
@@ -804,10 +815,11 @@ body.ready #sidebar-trigger {
 	content: "";
 	width: 14px;
 	height: 14px;
-	background-image: url(icons/settings.svg);
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	background-color: var(--c-pink, #f5bde6);
+	mask-image: url(icons/settings.svg);
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 	opacity: 0.8;
 	transition: opacity 150ms;
 }
@@ -880,7 +892,8 @@ body.no-title #title {
 }
 
 #title #title-refresh {
-	background-image: url(icons/refresh.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/refresh.svg);
 	width: 15px;
 	height: 15px;
 	position: absolute;
@@ -1074,26 +1087,31 @@ body.no-title #title {
 }
 
 .message .tag-json {
-	background-image: url(icons/json-mode.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/json-mode.svg);
 }
 
 .message .tag-search {
-	background-image: url(icons/search-tool.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/search-tool.svg);
 }
 
 #role::before,
 .message.user .role::before {
-	background-image: url(icons/user.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/user.svg);
 }
 
 #role:has(.dropdown[data-value="system"])::before,
 .message.system .role::before {
-	background-image: url(icons/system.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/system.svg);
 }
 
 #role:has(.dropdown[data-value="assistant"])::before,
 .message.assistant .role::before {
-	background-image: url(icons/assistant.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/assistant.svg);
 }
 
 .message.assistant {
@@ -1389,7 +1407,8 @@ body.no-title #title {
 .reasoning .toggle::after,
 .reasoning .toggle::before {
 	content: "";
-	background-image: url(icons/reasoning.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/reasoning.svg);
 	position: absolute;
 	top: -2px;
 	left: 0px;
@@ -1399,7 +1418,8 @@ body.no-title #title {
 
 .tool .call .name::after,
 .reasoning .toggle::after {
-	background-image: url(icons/chevron.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/chevron.svg);
 	left: unset;
 	right: -2px;
 	transition: 150ms;
@@ -1462,7 +1482,8 @@ body.no-title #title {
 }
 
 .tool .call::before {
-	background-image: url(icons/tool.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/tool.svg);
 }
 
 .tool .call .name {
@@ -1557,7 +1578,8 @@ body.no-title #title {
 
 .message.reasoning .reasoning button.toggle::before {
 	animation: rotating 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/spinner.svg);
 	top: -1px;
 	width: 18px;
 	height: 18px;
@@ -1565,7 +1587,8 @@ body.no-title #title {
 
 .message.tooling .tool .call::before {
 	animation: rotating-y 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/spinner.svg);
 	width: 18px;
 	height: 18px;
 }
@@ -1634,23 +1657,28 @@ body.no-title #title {
 }
 
 .statistics .provider::before {
-	background-image: url(icons/provider.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/provider.svg);
 }
 
 .statistics .ttft::before {
-	background-image: url(icons/time.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/time.svg);
 }
 
 .statistics .tps::before {
-	background-image: url(icons/tps.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/tps.svg);
 }
 
 .statistics .tokens::before {
-	background-image: url(icons/tokens.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/tokens.svg);
 }
 
 .statistics .cost::before {
-	background-image: url(icons/money.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/money.svg);
 }
 
 .message:not(.assistant) .statistics {
@@ -1669,7 +1697,8 @@ body.no-title #title {
 	position: absolute;
 	bottom: 5px;
 	right: 2px;
-	background-image: url(icons/up.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/up.svg);
 	width: 14px;
 	height: 14px;
 	transition: 150ms;
@@ -1807,7 +1836,8 @@ body.no-title #title {
 
 .files .file::before {
 	content: "";
-	background-image: url(icons/file.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/file.svg);
 	flex-shrink: 0;
 }
 
@@ -1841,7 +1871,8 @@ body.no-title #title {
 .files .file button.replace {
 	content: "";
 	position: absolute;
-	background-image: url(icons/remove-big.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/remove-big.svg);
 	top: 2px;
 	right: 2px;
 	opacity: 0;
@@ -1851,7 +1882,8 @@ body.no-title #title {
 }
 
 .files .file button.replace {
-	background-image: url(icons/replace.svg);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/replace.svg);
 	right: 14px;
 }
 
@@ -2075,9 +2107,9 @@ body.loading #version,
 	display: block;
 	width: 20px;
 	height: 20px;
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 }
 
 #role::before,
@@ -2100,46 +2132,55 @@ input.invalid {
 }
 
 .message .collapse::before {
-	background-image: url(icons/collapse.svg);
+	background-color: var(--c-overlay2);
+	mask-image: url(icons/collapse.svg);
 }
 
 #upload::before,
 .message .attach::before {
-	background-image: url(icons/attach_message.svg);
+	background-color: var(--c-lavender);
+	mask-image: url(icons/attach_message.svg);
 }
 
 .pre-copy,
 .message .copy {
-	background-image: url(icons/copy.svg);
+	background-color: var(--c-lavender);
+	mask-image: url(icons/copy.svg);
 }
 
 .pre-copy.copied,
 .message .copy.copied {
-	background-image: url(icons/check.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/check.svg);
 }
 
 .message .retry {
-	background-image: url(icons/retry.svg);
+	background-color: var(--c-teal, #8bd5ca);
+	mask-image: url(icons/retry.svg);
 }
 
 .message .edit {
-	background-image: url(icons/edit.svg);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/edit.svg);
 }
 
 .message.editing .edit {
-	background-image: url(icons/save.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/save.svg);
 }
 
 .message .delete {
-	background-image: url(icons/delete.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/delete.svg);
 }
 
 .message .clear-files {
-	background-image: url(icons/trash.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/trash.svg);
 }
 
 #chat .option label {
-	background-size: 18px;
+	mask-size: 18px;
 }
 
 #model {
@@ -2161,48 +2202,59 @@ input.invalid {
 }
 
 #chat label[for="role"] {
-	background-image: url(icons/user.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/user.svg);
 }
 
 #chat label[for="model"] {
-	background-image: url(icons/model.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/model.svg);
 }
 
 #chat label[for="prompt"] {
-	background-image: url(icons/prompt.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/prompt.svg);
 }
 
 #chat label[for="temperature"] {
-	background-image: url(icons/temperature.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/temperature.svg);
 }
 
 #chat label[for="time-override"] {
-	background-image: url(icons/time.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/time.svg);
 }
 
 #chat label[for="iterations"] {
-	background-image: url(icons/iterations.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/iterations.svg);
 }
 
 #chat label[for="provider-sorting"] {
-	background-image: url(icons/provider.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/provider.svg);
 }
 
 #chat label[for="image-resolution"],
 #chat label[for="image-resize"] {
-	background-image: url(icons/resolution.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/resolution.svg);
 }
 
 #chat label[for="image-aspect"] {
-	background-image: url(icons/aspect.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/aspect.svg);
 }
 
 #chat label[for="reasoning-effort"] {
-	background-image: url(icons/reasoning.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/reasoning.svg);
 }
 
 #chat label[for="reasoning-tokens"] {
-	background-image: url(icons/amount.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/amount.svg);
 }
 
 #top,
@@ -2211,7 +2263,8 @@ input.invalid {
 	right: 20px;
 	width: 20px;
 	height: 20px;
-	background-image: url(icons/up.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/up.svg);
 	transition: 150ms;
 	z-index: 15;
 }
@@ -2230,19 +2283,22 @@ input.invalid {
 	right: 20px;
 	width: 28px;
 	height: 28px;
-	background-image: url(icons/send.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/send.svg);
 	z-index: 10;
 }
 
 #add {
 	right: 52px;
-	background-image: url(icons/add.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/add.svg);
 }
 
 .message .attach.loading::before,
 #upload.loading::before {
 	animation: rotating 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/spinner.svg);
 }
 
 #files,
@@ -2255,11 +2311,13 @@ input.invalid {
 }
 
 #scrolling {
-	background-image: url(icons/screen-slash.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/screen-slash.svg);
 }
 
 #scrolling.on {
-	background-image: url(icons/screen.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/screen.svg);
 }
 
 #scrolling.not-following {
@@ -2267,40 +2325,49 @@ input.invalid {
 }
 
 #files {
-	background-image: url(icons/files-off.svg);
+	background-color: var(--c-subtext);
+	mask-image: url(icons/files-off.svg);
 }
 
 #files.on {
-	background-image: url(icons/files-on.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/files-on.svg);
 }
 
 #json {
-	background-image: url(icons/json-off.svg);
+	background-color: var(--c-subtext);
+	mask-image: url(icons/json-off.svg);
 }
 
 #json.on {
-	background-image: url(icons/json-on.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/json-on.svg);
 }
 
 #search {
-	background-image: url(icons/search-off.svg);
+	background-color: var(--c-subtext);
+	mask-image: url(icons/search-off.svg);
 }
 
 #search.on {
-	background-image: url(icons/search-on.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/search-on.svg);
 }
 
 #dump {
-	background-image: url(icons/dump.svg);
+	background-color: var(--c-mauve);
+	mask-image: url(icons/dump.svg);
 }
 
 #dump.loading {
 	animation: rotating 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/spinner.svg);
 }
 
 #clear {
-	background-image: url(icons/trash.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/trash.svg);
 }
 
 .completing #add {
@@ -2308,7 +2375,8 @@ input.invalid {
 }
 
 .completing #send {
-	background-image: url(icons/stop.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/stop.svg);
 }
 
 .modal .background,
@@ -2386,7 +2454,8 @@ input.invalid {
 	left: 50%;
 	transform: translateX(-50%);
 	animation: rotating 1.2s linear infinite;
-	background-image: url(icons/spinner.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/spinner.svg);
 }
 
 .modal .error {

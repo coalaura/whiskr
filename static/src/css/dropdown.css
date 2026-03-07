@@ -20,9 +20,9 @@
 .dropdown .selected::after,
 .dropdown .opt.active::before,
 .dropdown .tags .tag {
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 }
 
 .dropdown .selected::after {
@@ -30,7 +30,8 @@
 	display: block;
 	width: 16px;
 	height: 16px;
-	background-image: url(icons/chevron.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/chevron.svg);
 	transform: rotate(180deg);
 	flex-shrink: 0;
 }
@@ -172,7 +173,8 @@
 	position: absolute;
 	top: 50%;
 	left: 3px;
-	background-image: url(icons/chevron.svg);
+	background-color: var(--c-text);
+	mask-image: url(icons/chevron.svg);
 	transform: translateY(-50%) rotate(90deg);
 }
 
@@ -272,8 +274,8 @@
 	content: "";
 	display: block;
 	background: url("icons/favorite.svg");
-	background-size: contain;
-	background-position: center;
+	mask-size: contain;
+	mask-position: center;
 	width: 10px;
 	height: 10px;
 	flex-shrink: 0;
@@ -317,36 +319,43 @@
 
 .tags .tag.reasoning {
 	--color: var(--c-mauve);
-	background-image: url(icons/tags/reasoning.svg);
+	background-color: var(--c-mauve);
+	mask-image: url(icons/tags/reasoning.svg);
 }
 
 .tags .tag.tools {
 	--color: var(--c-yellow);
-	background-image: url(icons/tags/tools.svg);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/tags/tools.svg);
 }
 
 .tags .tag.vision {
 	--color: var(--c-red);
-	background-image: url(icons/tags/vision.svg);
+	background-color: var(--c-red);
+	mask-image: url(icons/tags/vision.svg);
 }
 
 .tags .tag.json {
 	--color: var(--c-sapphire);
-	background-image: url(icons/tags/json.svg);
+	background-color: var(--c-blue);
+	mask-image: url(icons/tags/json.svg);
 }
 
 .tags .tag.image_gen {
 	--color: var(--c-rosewater);
-	background-image: url(icons/tags/image_gen.svg);
+	background-color: var(--c-peach, #f5a97f);
+	mask-image: url(icons/tags/image_gen.svg);
 }
 
 .tags .tag.free {
 	--color: var(--c-green);
-	background-image: url(icons/tags/free.svg);
+	background-color: var(--c-green);
+	mask-image: url(icons/tags/free.svg);
 }
 
 .tags .tag.all {
-	background-image: url(icons/tags/all.svg);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/tags/all.svg);
 }
 
 .dropdown .search-wrapper {
@@ -379,9 +388,9 @@
 	opacity: 0.3;
 	filter: saturate(0);
 	transition: 150ms;
-	background-position: center;
-	background-size: contain;
-	background-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+	mask-repeat: no-repeat;
 }
 
 .dropdown .search-wrapper .tag-filter .tag:hover {
