@@ -2577,7 +2577,7 @@ async function generate(cancel = false, noPush = false) {
 				case "error":
 					setGenerationState("error");
 
-					message.setError(chunk.data);
+					message?.setError(chunk.data);
 
 					break;
 			}
