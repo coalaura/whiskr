@@ -1008,7 +1008,7 @@ class Dropdown {
 		}
 
 		if (available && !available.includes(this.#_select.value)) {
-			this.#set(available[0]);
+			this.#_select.value = available[0];
 		}
 	}
 
