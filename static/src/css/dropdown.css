@@ -279,8 +279,8 @@
 	content: "";
 	display: block;
 	background: url("icons/favorite.svg");
-	mask-size: contain;
-	mask-position: center;
+	background-size: contain;
+	background-position: center;
 	width: 10px;
 	height: 10px;
 	flex-shrink: 0;
