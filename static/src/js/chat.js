@@ -375,9 +375,20 @@ function scroll(force = false, instant = false) {
 
 function applyTheme(theme) {
 	document.body.classList.remove(
-		"rose-pine", "gruvbox", "tokyo-night", "nord",
-		"dracula", "one-dark", "everforest", "night-owl", "aura",
-		"kanagawa", "poimandres", "andromeda", "vitesse", "synthwave-84"
+		"rose-pine",
+		"gruvbox",
+		"tokyo-night",
+		"nord",
+		"dracula",
+		"one-dark",
+		"everforest",
+		"night-owl",
+		"aura",
+		"kanagawa",
+		"poimandres",
+		"andromeda",
+		"vitesse",
+		"synthwave-84"
 	);
 
 	if (theme && theme !== "catppuccin") {
