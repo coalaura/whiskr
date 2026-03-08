@@ -16,7 +16,12 @@
 	cursor: pointer;
 }
 
-.dropdown .icon,
+.dropdown .icon {
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
 .dropdown .selected::after,
 .dropdown .opt.active::before,
 .dropdown .tags .tag {
@@ -309,12 +314,14 @@
 	position: absolute;
 	top: 100%;
 	left: 0;
+	mask-image: none;
 }
 
 .dropdown .selected:not(.all-tags) .tags:has(.tag:nth-child(3)) .tag {
 	background: var(--color);
 	width: 100%;
 	height: 2px;
+	mask-image: none;
 }
 
 .tags .tag.reasoning {
