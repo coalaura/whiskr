@@ -14,6 +14,8 @@ func HandleUsage(w http.ResponseWriter, r *http.Request) {
 
 	current, err := client.GetCurrentAPIKey(r.Context())
 	if err != nil {
+		log.Warnln(err)
+
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),
 		})

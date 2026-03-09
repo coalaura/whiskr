@@ -31,6 +31,8 @@ func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletio
 
 	stream, err := client.CreateChatCompletionStream(ctx, request)
 	if err != nil {
+		log.Warnln(err)
+
 		return nil, err
 	}
 
@@ -42,6 +44,8 @@ func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest
 
 	response, err := client.CreateChatCompletion(ctx, request)
 	if err != nil {
+		log.Warnln(err)
+
 		return response, err
 	}
 
