@@ -3436,7 +3436,7 @@ async function uploadImageInline() {
 }
 
 function getChatData(name) {
-	return {
+	const data = {
 		title: name?.trim?.() || chatTitle,
 		file: chatFilename,
 		message: $message.value,
@@ -3459,6 +3459,13 @@ function getChatData(name) {
 		messages: messages.map(message => message.getData(true)).filter(Boolean),
 		savedAt: Date.now(),
 	};
+
+	if (!chatTitleEnabled) {
+		delete data.title;
+		delete data.file;
+	}
+
+	return data;
 }
 
 function closeSidebar() {
