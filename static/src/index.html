@@ -132,6 +132,14 @@
 						<span>Data Management</span>
 					</div>
 
+					<div class="form-group export-format-group">
+						<label for="export-format">Export Format</label>
+						<select id="export-format">
+							<option value="whiskr" selected>Whiskr JSON</option>
+							<option value="openrouter">OpenRouter Request</option>
+						</select>
+					</div>
+
 					<div class="data-actions">
 						<button id="import-sidebar" title="Import chat from JSON file">
 							<span>Import Chat</span>
@@ -174,7 +182,6 @@
 
 					<div class="option">
 						<button id="upload" title="Add files to message"></button>
-						<button id="dump" title="Dump the actual OpenRouter request for the current chat"></button>
 						<button id="clear" title="Clear the entire chat"></button>
 					</div>
 				</div>

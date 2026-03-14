@@ -76,9 +76,9 @@ const $version = document.getElementById("version"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
 	$upload = document.getElementById("upload"),
+	$exportFormat = document.getElementById("export-format"),
 	$export = document.getElementById("export-sidebar"),
 	$import = document.getElementById("import-sidebar"),
-	$dump = document.getElementById("dump"),
 	$clear = document.getElementById("clear"),
 	$sidebar = document.getElementById("sidebar"),
 	$sidebarTrigger = document.getElementById("sidebar-trigger"),
@@ -133,6 +133,7 @@ let autoScrolling = false,
 	allowFiles = true,
 	jsonMode = false,
 	searchTool = false,
+	exportFormat = "whiskr",
 	chatTitle = false,
 	chatTitleEnabled = false,
 	chatFilename = false,
@@ -142,7 +143,6 @@ let searchAvailable = false,
 	isResizing = false,
 	scrollResize = false,
 	isUploading = false,
-	isDumping = false,
 	usageType = "monthly",
 	totalUsage = {},
 	promptOverheads = {};
@@ -3064,6 +3064,13 @@ function restore() {
 	$imageAspect.value = load("image-aspect", "");
 	$reasoningEffort.value = load("reasoning-effort", "medium");
 	$timeOverride.value = load("time-override", "");
+	$exportFormat.value = load("export-format", "whiskr");
+
+	if (!["whiskr", "openrouter"].includes($exportFormat.value)) {
+		$exportFormat.value = "whiskr";
+	}
+
+	exportFormat = $exportFormat.value;
 
 	$timeOverride.dispatchEvent(new Event("input"));
 
@@ -3466,6 +3473,24 @@ function getChatData(name) {
 	}
 
 	return data;
+}
+
+async function fetchOpenRouterRequest() {
+	const body = await buildRequest(true),
+		response = await fetch("/-/dump", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(body),
+		}),
+		dumped = await response.json();
+
+	if (!response.ok) {
+		throw new Error(dumped?.error || response.statusText);
+	}
+
+	return dumped.request;
 }
 
 function closeSidebar() {
@@ -4006,11 +4031,34 @@ $saveCurrentChat.addEventListener("click", () => {
 	}
 });
 
-$export?.addEventListener("click", () => {
-	const data = JSON.stringify(getChatData(false)),
-		name = chatTitleEnabled && chatFilename ? chatFilename : "chat";
+$exportFormat?.addEventListener("change", () => {
+	if (!["whiskr", "openrouter"].includes($exportFormat.value)) {
+		$exportFormat.value = "whiskr";
+	}
 
-	download(`${name}.json`, "application/json", data);
+	exportFormat = $exportFormat.value;
+
+	store("export-format", exportFormat);
+});
+
+$export?.addEventListener("click", async () => {
+	const name = chatTitleEnabled && chatFilename ? chatFilename : "chat";
+
+	try {
+		if (exportFormat === "openrouter") {
+			const request = await fetchOpenRouterRequest();
+
+			download(`${name}.openrouter.json`, "application/json", JSON.stringify(request, null, 4));
+
+			return;
+		}
+
+		download(`${name}.json`, "application/json", JSON.stringify(getChatData(false)));
+	} catch (err) {
+		console.error(err);
+
+		notify(err, "error");
+	}
 });
 
 $import?.addEventListener("click", async () => {
@@ -4058,45 +4106,6 @@ $import?.addEventListener("click", async () => {
 
 	closeSidebar();
 });
-
-$dump.addEventListener("click", async () => {
-	if (isDumping) {
-		return;
-	}
-
-	isDumping = true;
-
-	$dump.classList.add("loading");
-
-	const body = await buildRequest(true);
-
-	try {
-		const response = await fetch("/-/dump", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify(body),
-		});
-
-		const dumped = await response.json();
-
-		if (!response.ok) {
-			throw new Error(dumped?.error || response.statusText);
-		}
-
-		download("request.json", "application/json", JSON.stringify(dumped.request, null, 4));
-	} catch (err) {
-		console.error(err);
-
-		notify(err, "error");
-	}
-
-	$dump.classList.remove("loading");
-
-	isDumping = false;
-});
-
 $scrolling.addEventListener("click", () => {
 	autoScrolling = !autoScrolling;
 

@@ -769,6 +769,15 @@ body.ready .sidebar-section.chat-settings .section-body {
 	padding: 0 20px;
 }
 
+.export-format-group {
+	padding: 0 20px;
+	margin-bottom: 12px;
+}
+
+.export-format-group label {
+	margin-bottom: 6px;
+}
+
 .data-actions button {
 	display: flex;
 	align-items: center;
@@ -2109,7 +2118,6 @@ body.loading #version,
 #json,
 #search,
 #scrolling,
-#dump,
 #clear,
 #add,
 #send,
@@ -2315,7 +2323,6 @@ input.invalid {
 #json,
 #search,
 #scrolling,
-#dump,
 #clear {
 	position: unset !important;
 }
@@ -2362,17 +2369,6 @@ input.invalid {
 #search.on {
 	background-color: var(--c-green);
 	mask-image: url(icons/search-on.svg);
-}
-
-#dump {
-	background-color: var(--c-mauve);
-	mask-image: url(icons/dump.svg);
-}
-
-#dump.loading {
-	animation: rotating 1.2s linear infinite;
-	background-color: var(--c-text);
-	mask-image: url(icons/spinner.svg);
 }
 
 #clear {
