@@ -46,12 +46,12 @@ body {
 pre,
 code {
 	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;
-	font-size: 13px;
+	font-size: 14px;
 }
 
 pre {
 	white-space: pre-wrap;
-	line-height: 18px;
+	line-height: 19px;
 	overflow: hidden;
 	tab-size: 4;
 	margin: 0;

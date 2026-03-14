@@ -1,6 +1,6 @@
 .markdown {
-	font-size: 15px;
-	line-height: 22px;
+	font-size: 16px;
+	line-height: 23px;
 	color: var(--c-text);
 	overflow: visible;
 	word-wrap: break-word;
@@ -18,33 +18,33 @@
 }
 
 .markdown h1 {
-	font-size: 28px;
-	line-height: 34px;
+	font-size: 29px;
+	line-height: 35px;
 	border-bottom: 1px solid rgba(202, 211, 245, 0.15);
 	padding-bottom: 6px;
 }
 
 .markdown h2 {
-	font-size: 24px;
-	line-height: 30px;
+	font-size: 25px;
+	line-height: 31px;
 	border-bottom: 1px solid rgba(202, 211, 245, 0.1);
 	padding-bottom: 4px;
 }
 
 .markdown h3 {
-	font-size: 20px;
-	line-height: 26px;
+	font-size: 21px;
+	line-height: 27px;
 }
 
 .markdown h4 {
-	font-size: 17px;
-	line-height: 23px;
+	font-size: 18px;
+	line-height: 24px;
 	font-weight: 600;
 }
 
 .markdown h5 {
-	font-size: 15px;
-	line-height: 21px;
+	font-size: 16px;
+	line-height: 22px;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
@@ -52,8 +52,8 @@
 }
 
 .markdown h6 {
-	font-size: 14px;
-	line-height: 20px;
+	font-size: 15px;
+	line-height: 21px;
 	font-weight: 500;
 	opacity: 0.7;
 }
@@ -113,7 +113,7 @@
 .markdown table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 14px;
+	font-size: 15px;
 }
 
 .markdown th,
@@ -140,7 +140,7 @@
 .markdown code,
 .markdown pre {
 	font-family: var(--font-mono);
-	font-size: 13px;
+	font-size: 14px;
 }
 
 .markdown code {
@@ -155,7 +155,7 @@
 	white-space: pre-wrap;
 	padding: 0;
 	border-radius: 6px;
-	line-height: 18px;
+	line-height: 19px;
 	tab-size: 4;
 	position: relative;
 }
@@ -171,8 +171,8 @@
 	background: var(--c-surface0);
 	padding: 8px 12px;
 	margin: 0;
-	font-size: 12px;
-	line-height: 14px;
+	font-size: 13px;
+	line-height: 15px;
 	border-top-left-radius: 6px;
 	border-top-right-radius: 6px;
 }
