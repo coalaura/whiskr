@@ -1237,23 +1237,25 @@ class Message {
 				_link.href = url;
 
 				if (image.startsWith("data:image/")) {
+					let imageName = "image.jpg";
+
 					dataUrlFilename(image).then(name => {
+						imageName = name;
 						_link.download = name;
 					});
 
-					const openImage = async event => {
+					const openImage = event => {
 						event.preventDefault();
-
-						let name = "image.jpg";
-
-						try {
-							name = await dataUrlFilename(image);
-						} catch {}
-
-						previewImage(name, image);
+						previewImage(imageName, image);
 					};
 
-					_link.addEventListener("click", openImage);
+					_link.target = "";
+
+					_link.addEventListener("click", event => {
+						if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+							openImage(event);
+						}
+					});
 
 					_link.addEventListener("auxclick", event => {
 						if (event.button === 1) {
