@@ -1008,7 +1008,36 @@ class Dropdown {
 		}
 
 		if (available && !available.includes(this.#_select.value)) {
-			this.#_select.value = available[0];
+			const currentIndex = this.#options.findIndex(option => option.value === this.#_select.value),
+				availableIndexes = this.#options
+					.map((option, index) => ({
+						index: index,
+						value: option.value,
+					}))
+					.filter(option => available.includes(option.value));
+
+			if (availableIndexes.length) {
+				const fallback = availableIndexes.reduce((closest, option) => {
+					if (!closest) {
+						return option;
+					}
+
+					const closestDistance = Math.abs(closest.index - currentIndex),
+						distance = Math.abs(option.index - currentIndex);
+
+					if (distance < closestDistance) {
+						return option;
+					}
+
+					if (distance === closestDistance && option.index < closest.index) {
+						return option;
+					}
+
+					return closest;
+				}, false);
+
+				this.#_select.value = fallback.value;
+			}
 		}
 	}
 
