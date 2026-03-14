@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io"
-	"mime/multipart"
 	"net/http"
 )
 
@@ -77,9 +76,9 @@ func ReadPreviewRequest(r *http.Request) (*PreviewRequest, error) {
 		}
 
 		if part.FormName() == "name" {
-			request.Name, err = ReadFormPart(part)
+			request.Name, err = ReadMultipartPart(part)
 		} else if part.FormName() == "content" {
-			request.Content, err = ReadFormPart(part)
+			request.Content, err = ReadMultipartPart(part)
 		}
 
 		if err != nil {
@@ -88,13 +87,4 @@ func ReadPreviewRequest(r *http.Request) (*PreviewRequest, error) {
 	}
 
 	return &request, nil
-}
-
-func ReadFormPart(part *multipart.Part) (string, error) {
-	b, err := io.ReadAll(part)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), nil
 }

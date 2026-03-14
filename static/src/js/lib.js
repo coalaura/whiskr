@@ -298,6 +298,13 @@ export async function dataUrlFilename(dataUrl) {
 	return `${hash.slice(0, 4)}${hash.slice(-4)}.${ext}`;
 }
 
+export function dataUrlToBlobUrl(dataUrl) {
+	const { mime, bytes } = dataUrlToBytes(dataUrl),
+		blob = new Blob([bytes], { type: mime });
+
+	return URL.createObjectURL(blob);
+}
+
 export function download(name, type, data) {
 	let blob;
 
@@ -352,6 +359,37 @@ export function previewFile(file) {
 	form.appendChild(content);
 
 	// send form
+	document.body.appendChild(form);
+
+	form.submit();
+
+	form.remove();
+}
+
+export function previewImage(name, dataUrl) {
+	const form = make("form");
+
+	form.style.display = "none";
+
+	form.enctype = "multipart/form-data";
+	form.method = "post";
+	form.action = "/-/image";
+	form.target = "_blank";
+
+	const imageName = make("input");
+
+	imageName.name = "name";
+	imageName.value = name;
+
+	form.appendChild(imageName);
+
+	const content = make("textarea");
+
+	content.name = "content";
+	content.value = dataUrl;
+
+	form.appendChild(content);
+
 	document.body.appendChild(form);
 
 	form.submit();

@@ -11,6 +11,7 @@ import {
 	clamp,
 	convertToJpeg,
 	dataUrlFilename,
+	dataUrlToBlobUrl,
 	detectPlatform,
 	download,
 	fillSelect,
@@ -21,6 +22,7 @@ import {
 	lines,
 	make,
 	notify,
+	previewImage,
 	previewFile,
 	readFileAsDataUrl,
 	resizeDataUrl,
@@ -437,6 +439,7 @@ class Message {
 	#reasoningType;
 	#text;
 	#images = [];
+	#imageBlobs = new Map();
 	#files = [];
 	#inlineImages = new Map();
 	#inlineImagesBlobs = new Map();
@@ -1109,6 +1112,42 @@ class Message {
 		}
 	}
 
+	async #prepareImages() {
+		for (const [dataUrl, url] of this.#imageBlobs.entries()) {
+			if (!this.#images.includes(dataUrl)) {
+				URL.revokeObjectURL(url);
+
+				this.#imageBlobs.delete(dataUrl);
+			}
+		}
+
+		for (const image of this.#images) {
+			if (!image.startsWith("data:image/") || this.#imageBlobs.has(image)) {
+				continue;
+			}
+
+			try {
+				const url = dataUrlToBlobUrl(image);
+
+				this.#imageBlobs.set(image, url);
+			} catch {}
+		}
+	}
+
+	#revokeImageBlobs() {
+		for (const url of this.#imageBlobs.values()) {
+			URL.revokeObjectURL(url);
+		}
+
+		this.#imageBlobs.clear();
+
+		for (const url of this.#inlineImagesBlobs.values()) {
+			URL.revokeObjectURL(url);
+		}
+
+		this.#inlineImagesBlobs.clear();
+	}
+
 	#morph(from, to) {
 		morphdom(from, to, {
 			childrenOnly: true,
@@ -1182,29 +1221,56 @@ class Message {
 		}
 
 		if (!only || only === "images") {
+			await this.#prepareImages();
+
 			for (let x = 0; x < this.#images.length; x++) {
 				if (this.#_images.querySelector(`.i-${x}`)) {
 					continue;
 				}
 
-				const image = this.#images[x];
+				const image = this.#images[x],
+					url = this.#imageBlobs.get(image) || image;
 
 				const _link = make("a", "image", "image-wrapper", `i-${x}`);
 
 				_link.target = "_blank";
-				_link.href = image;
+				_link.href = url;
 
-				dataUrlFilename(image).then(name => {
-					_link.download = name;
-				});
+				if (image.startsWith("data:image/")) {
+					dataUrlFilename(image).then(name => {
+						_link.download = name;
+					});
+
+					const openImage = async event => {
+						event.preventDefault();
+
+						let name = "image.jpg";
+
+						try {
+							name = await dataUrlFilename(image);
+						} catch {}
+
+						previewImage(name, image);
+					};
+
+					_link.addEventListener("click", openImage);
+
+					_link.addEventListener("auxclick", event => {
+						if (event.button === 1) {
+							openImage(event);
+						}
+					});
+				}
 
 				this.#_images.appendChild(_link);
 
 				const _image = make("img");
 
-				_image.style.aspectRatio = getDataUrlAspectRatio(image);
+				if (image.startsWith("data:image/")) {
+					_image.style.aspectRatio = getDataUrlAspectRatio(image);
+				}
 
-				_image.src = image;
+				_image.src = url;
 
 				_link.appendChild(_image);
 
@@ -2141,6 +2207,8 @@ class Message {
 		}
 
 		this.#_message.remove();
+
+		this.#revokeImageBlobs();
 
 		messages.splice(index, 1);
 

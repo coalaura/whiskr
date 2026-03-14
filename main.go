@@ -111,6 +111,7 @@ func main() {
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 		gr.Post("/-/preview", HandlePreview)
+		gr.Post("/-/image", HandleImage)
 
 		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})
