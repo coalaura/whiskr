@@ -135,6 +135,7 @@ server {
 - Hover over a message to reveal controls to **edit, delete, copy, collapse, or retry**.
 - Click **"Reasoning"** on an assistant message to view the model's thought process or tool usage.
 - Adjust model, temperature, prompt, or message role from the controls in the bottom-left.
+- **Custom Prompts**: The `extra` folder contains additional pre-made system prompts. You can copy these into the main `prompts` folder if you want to use them alongside the default built-in prompts.
 - Attach images using markdown syntax (`![alt](url)`) or upload text/code files with the attachment button.
 - When using an **image-output model** (e.g., `google/gemini-2.5-flash-image-preview`) and `settings.image-generation` is enabled, whiskr will display returned images inline.
 - Use the buttons in the top-right to **import/export** the chat or clear all messages.
