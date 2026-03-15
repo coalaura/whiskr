@@ -137,6 +137,17 @@
 						<select id="export-format">
 							<option value="whiskr" selected>Whiskr JSON</option>
 							<option value="openrouter">OpenRouter Request</option>
+							<option value="markdown">Markdown</option>
+							<option value="html">HTML</option>
+						</select>
+					</div>
+
+					<div class="form-group export-roles-group">
+						<label for="export-roles">Included Roles (Markdown/HTML)</label>
+						<select id="export-roles" multiple>
+							<option value="user" selected>User</option>
+							<option value="assistant" selected>Assistant</option>
+							<option value="system">System</option>
 						</select>
 					</div>
 
@@ -145,7 +156,7 @@
 							<span>Import Chat</span>
 						</button>
 
-						<button id="export-sidebar" title="Export current chat to JSON">
+						<button id="export-sidebar" title="Export current chat">
 							<span>Export Chat</span>
 						</button>
 					</div>

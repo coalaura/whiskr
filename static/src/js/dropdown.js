@@ -22,7 +22,9 @@ class Dropdown {
 
 	#maxTags = false;
 	#search = false;
+	#multiple = false;
 	#selected = false;
+	#selectedValues = new Set();
 	#options = [];
 	#tabs = [];
 	#availableTags = [];
@@ -48,6 +50,7 @@ class Dropdown {
 
 		this.#maxTags = maxTags;
 		this.#search = "searchable" in el.dataset;
+		this.#multiple = !!el.multiple || "multiple" in el.dataset;
 		this.#tabs = Array.isArray(tabs) ? tabs : [];
 
 		this.#favoritesEnabled = Array.isArray(favorites);
@@ -91,7 +94,15 @@ class Dropdown {
 		this.#build();
 
 		if (this.#options.length) {
-			this.#set(this.#_select.value || this.#options[0].value);
+			if (this.#multiple) {
+				const values = Array.from(this.#_select.options)
+					.filter(option => option.selected)
+					.map(option => option.value);
+
+				this.setValues(values, false);
+			} else {
+				this.#set(this.#_select.value || this.#options[0].value);
+			}
 		}
 	}
 
@@ -108,8 +119,6 @@ class Dropdown {
 			set: value => {
 				descriptor.set.call(this.#_select, value);
 
-				this.#_select.dispatchEvent(new Event("change"));
-
 				this.#set(value);
 			},
 		});
@@ -120,30 +129,18 @@ class Dropdown {
 		// selected item
 		this.#_selected = make("div", "selected");
 
-		this.#_selected.addEventListener("click", () => {
-			const willOpen = !this.#_dropdown.classList.contains("open");
+		this.#_selected.addEventListener("click", event => {
+			event.stopPropagation();
 
-			if (willOpen) {
-				const rect = this.#_dropdown.getBoundingClientRect();
+			this.#toggleDropdownOpen();
+		});
 
-				if (rect.top < 250 && rect.top < window.innerHeight - rect.bottom) {
-					this.#_dropdown.classList.add("open-down");
-				} else {
-					this.#_dropdown.classList.remove("open-down");
-				}
+		this.#_dropdown.addEventListener("click", event => {
+			if (event.target !== this.#_dropdown) {
+				return;
 			}
 
-			this.#_dropdown.classList.toggle("open");
-
-			const selection = this.#options[this.#selected];
-
-			selection.el.scrollIntoView({
-				behavior: "smooth",
-				block: "nearest",
-				inline: "nearest",
-			});
-
-			this.#_search?.focus();
+			this.#toggleDropdownOpen();
 		});
 
 		this.#_dropdown.appendChild(this.#_selected);
@@ -265,7 +262,14 @@ class Dropdown {
 					return;
 				}
 
+				if (this.#multiple) {
+					this.#toggle(option.value);
+
+					return;
+				}
+
 				this.#_select.value = option.value;
+				this.#_select.dispatchEvent(new Event("change"));
 
 				this.#_dropdown.classList.remove("open");
 			});
@@ -344,7 +348,14 @@ class Dropdown {
 						return;
 					}
 
+					if (this.#multiple) {
+						this.#toggle(option.value);
+
+						return;
+					}
+
 					this.#_select.value = option.value;
+					this.#_select.dispatchEvent(new Event("change"));
 
 					this.#_dropdown.classList.remove("open");
 				});
@@ -519,6 +530,38 @@ class Dropdown {
 		});
 	}
 
+	#toggleDropdownOpen() {
+		const willOpen = !this.#_dropdown.classList.contains("open");
+
+		if (willOpen) {
+			const rect = this.#_dropdown.getBoundingClientRect();
+
+			if (rect.top < 250 && rect.top < window.innerHeight - rect.bottom) {
+				this.#_dropdown.classList.add("open-down");
+			} else {
+				this.#_dropdown.classList.remove("open-down");
+			}
+		}
+
+		this.#_dropdown.classList.toggle("open");
+
+		let selection = false;
+
+		if (this.#multiple) {
+			selection = this.#options.find(option => this.#selectedValues.has(option.value));
+		} else {
+			selection = this.#options[this.#selected];
+		}
+
+		selection?.el?.scrollIntoView({
+			behavior: "smooth",
+			block: "nearest",
+			inline: "nearest",
+		});
+
+		this.#_search?.focus();
+	}
+
 	#setupFavoritesDragAndDrop() {
 		const container = this.#favorites.container;
 
@@ -690,7 +733,14 @@ class Dropdown {
 				return;
 			}
 
+			if (this.#multiple) {
+				this.#toggle(option.value);
+
+				return;
+			}
+
 			this.#_select.value = option.value;
+			this.#_select.dispatchEvent(new Event("change"));
 
 			this.#_dropdown.classList.remove("open");
 		});
@@ -733,6 +783,42 @@ class Dropdown {
 	}
 
 	#render() {
+		if (this.#multiple) {
+			for (const option of this.#options) {
+				const active = this.#selectedValues.has(option.value);
+
+				option.el.classList.toggle("active", active);
+				option.favoriteClone?.classList?.toggle("active", active);
+
+				for (const tab in option.clones) {
+					option.clones[tab].classList.toggle("active", active);
+				}
+			}
+
+			const selected = this.#options.filter(option => this.#selectedValues.has(option.value));
+
+			this.#_selected.classList.remove("all-tags");
+
+			if (!selected.length) {
+				this.#_selected.title = this.#_select.title;
+				this.#_selected.textContent = "None";
+
+				this.#_dropdown.removeAttribute("data-value");
+
+				return;
+			}
+
+			const labels = selected.map(option => option.label),
+				title = labels.join(", ");
+
+			this.#_selected.title = title;
+			this.#_selected.textContent = labels.length <= 2 ? title : `${labels.length} selected`;
+
+			this.#_dropdown.setAttribute("data-value", selected.map(option => option.value).join(","));
+
+			return;
+		}
+
 		if (this.#selected === false) {
 			this.#_selected.title = "";
 			this.#_selected.innerHTML = "";
@@ -976,7 +1062,37 @@ class Dropdown {
 		}
 	}
 
+	#syncMultiple(triggerChange = true) {
+		for (const option of this.#_select.options) {
+			option.selected = this.#selectedValues.has(option.value);
+		}
+
+		if (triggerChange) {
+			this.#_select.dispatchEvent(new Event("change"));
+		}
+
+		this.#render();
+	}
+
+	#toggle(value) {
+		if (this.#selectedValues.has(value)) {
+			this.#selectedValues.delete(value);
+		} else {
+			this.#selectedValues.add(value);
+		}
+
+		this.#syncMultiple(true);
+	}
+
 	#set(value) {
+		if (this.#multiple) {
+			this.#selectedValues = new Set([value]);
+
+			this.#syncMultiple(false);
+
+			return;
+		}
+
 		const index = this.#options.findIndex(option => option.value === value);
 
 		if (this.#selected === index) {
@@ -1047,6 +1163,32 @@ class Dropdown {
 		}
 
 		this.#events[event].push(cb);
+	}
+
+	setValues(values, triggerChange = true) {
+		if (!this.#multiple) {
+			if (!values?.length) {
+				return;
+			}
+
+			this.#_select.value = values[0];
+
+			return;
+		}
+
+		const allowed = new Set(this.#options.map(option => option.value));
+
+		this.#selectedValues = new Set((values || []).filter(value => allowed.has(value)));
+
+		this.#syncMultiple(triggerChange);
+	}
+
+	getValues() {
+		if (!this.#multiple) {
+			return this.#selected === false ? [] : [this.#options[this.#selected].value];
+		}
+
+		return Array.from(this.#selectedValues);
 	}
 }
 

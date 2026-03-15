@@ -525,7 +525,7 @@ body.ready .sidebar-section.chat-settings .section-body {
 	background: var(--c-crust);
 	border: 1px solid var(--c-surface0);
 	border-radius: 6px;
-	padding: 10px 12px;
+	padding: 0;
 	font-size: 14px;
 	color: var(--c-text);
 	font-family: inherit;
@@ -533,7 +533,9 @@ body.ready .sidebar-section.chat-settings .section-body {
 }
 
 .sidebar-section .dropdown .selected {
-	height: 100%;
+	min-height: 38px;
+	padding: 10px 12px;
+	cursor: pointer;
 }
 
 .sidebar-section select {
@@ -774,8 +776,25 @@ body.ready .sidebar-section.chat-settings .section-body {
 	margin-bottom: 12px;
 }
 
+.export-roles-group {
+	padding: 0 20px;
+	margin-bottom: 12px;
+}
+
 .export-format-group label {
 	margin-bottom: 6px;
+}
+
+.export-roles-group label {
+	margin-bottom: 6px;
+}
+
+.export-roles-group.inactive {
+	opacity: 0.45;
+}
+
+.export-roles-group.inactive .dropdown {
+	pointer-events: none;
 }
 
 .data-actions button {
