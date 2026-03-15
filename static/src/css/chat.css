@@ -532,6 +532,11 @@ body.ready .sidebar-section.chat-settings .section-body {
 	transition: border-color 150ms;
 }
 
+.sidebar-section textarea,
+.sidebar-section input[type="text"] {
+	padding: 10px 12px;
+}
+
 .sidebar-section .dropdown .selected {
 	min-height: 38px;
 	padding: 10px 12px;
