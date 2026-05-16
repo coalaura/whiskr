@@ -2602,6 +2602,12 @@ async function generate(cancel = false, noPush = false) {
 
 					hasContent = !message.isEmpty();
 
+					if (chunk.data?.done) {
+						finish();
+					} else {
+						return; // prevent loading bar
+					}
+
 					break;
 				case "image":
 					receivedCompletion = true;

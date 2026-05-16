@@ -743,8 +743,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			tool.Args += call.Function.Arguments
 
 			hasContent = true
-		} else if tool != nil {
-			break
 		}
 
 		if delta.Content != "" {
