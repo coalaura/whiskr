@@ -153,12 +153,31 @@ func (t *ChatToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
 	}
 }
 
+func hasToolCallHistory(messages []openrouter.ChatCompletionMessage) bool {
+	for _, msg := range messages {
+		if len(msg.ToolCalls) > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, iteration int64) bool {
+	hasHistory := hasToolCallHistory(request.Messages)
+	needExplicitStop := hasHistory && r.Prompt != ""
+
 	if len(request.Tools) == 0 {
+		if needExplicitStop {
+			request.Messages = append(request.Messages, openrouter.SystemMessage("Do not perform any more search tool calls."))
+		}
+
 		return false
 	}
 
-	if iteration == r.Iterations-1 {
+	isLastIteration := iteration == r.Iterations-1
+
+	if isLastIteration {
 		debug("no more tool calls")
 
 		request.Tools = nil
@@ -176,6 +195,10 @@ func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, i
 	})
 
 	request.Messages = append(request.Messages, openrouter.SystemMessage(tools.String()))
+
+	if isLastIteration && needExplicitStop {
+		request.Messages = append(request.Messages, openrouter.SystemMessage("Do not perform any more search tool calls."))
+	}
 
 	return true
 }
