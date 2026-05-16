@@ -3082,7 +3082,11 @@ async function loadData() {
 		modelList.push(model);
 	});
 
-	modelDropdown = dropdown($model, 6, favorites);
+	modelDropdown = dropdown(
+		$model,
+		6,
+		favorites.filter(model => models[model])
+	);
 
 	modelDropdown.switchTab(modelTab);
 
