@@ -28,27 +28,23 @@ func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		valid := true
-
 		modelMx.RLock()
+
+		clean := make([]string, 0, len(favorites))
 
 		for _, favorite := range favorites {
 			if _, ok := ModelMap[favorite]; !ok {
-				valid = false
+				debug("invalid favorite model %q", favorite)
 
-				break
+				continue
 			}
+
+			clean = append(clean, favorite)
 		}
 
 		modelMx.RUnlock()
 
-		if !valid {
-			w.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-
-		settings.SetFavorites(user.Username, favorites)
+		settings.SetFavorites(user.Username, clean)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 
