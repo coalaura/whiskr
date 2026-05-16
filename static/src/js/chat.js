@@ -539,10 +539,10 @@ class Message {
 		if (data.tokens) {
 			this.#tokens = data.tokens;
 
-			if (data.textTokens !== undefined) {
-				this.#textTokens = data.textTokens;
-			} else {
+			if (data.textTokens === undefined) {
 				this.#textTokens = data.tokens - this.getImageTokens();
+			} else {
+				this.#textTokens = data.textTokens;
 			}
 
 			if (data.toolTokens !== undefined) {
@@ -1155,7 +1155,7 @@ class Message {
 		morphdom(from, to, {
 			childrenOnly: true,
 			onBeforeElUpdated: (fromEl, toEl) => {
-				return !fromEl.isEqualNode || !fromEl.isEqualNode(toEl);
+				return !fromEl.isEqualNode?.(toEl);
 			},
 			onBeforeNodeDiscarded: node => {
 				if (node.classList?.contains("image-info")) {
@@ -2602,12 +2602,6 @@ async function generate(cancel = false, noPush = false) {
 
 					hasContent = !message.isEmpty();
 
-					if (chunk.data?.done) {
-						finish();
-					} else {
-						return; // prevent loading bar
-					}
-
 					break;
 				case "image":
 					receivedCompletion = true;
@@ -3785,7 +3779,12 @@ function saveChatToStorage(name, skipConfirm = false) {
 		savedChats = getSavedChats(),
 		existingIndex = savedChats.findIndex(chat => chat.name === name);
 
-	if (existingIndex !== -1) {
+	if (existingIndex === -1) {
+		savedChats.push({
+			name: name,
+			data: chatData,
+		});
+	} else {
 		if (!skipConfirm && !confirm(`A chat named "${name}" already exists. Overwrite?`)) {
 			return false;
 		}
@@ -3794,11 +3793,6 @@ function saveChatToStorage(name, skipConfirm = false) {
 			name: name,
 			data: chatData,
 		};
-	} else {
-		savedChats.push({
-			name: name,
-			data: chatData,
-		});
 	}
 
 	store("saved-chats", savedChats);
