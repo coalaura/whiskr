@@ -1,9 +1,9 @@
 package main
 
 type ImagePricing struct {
-	K1 float64 `json:"k_1"`
-	K2 float64 `json:"k_2,omitempty"`
-	K4 float64 `json:"k_4,omitempty"`
+	K1 float64 `json:"k_1,omitzero"`
+	K2 float64 `json:"k_2,omitzero"`
+	K4 float64 `json:"k_4,omitzero"`
 }
 
 func NewImagePricing(k ...float64) *ImagePricing {
@@ -41,13 +41,13 @@ var ImageModelPricing = map[string]*ImagePricing{
 	"recraft/recraft-v4.1-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
 
 	// https://openrouter.ai/recraft/recraft-v4.1-utility-pro
-	"recraft/recraft-v4.1-utility-pro": NewImagePricing(0.25), // 2K by default?
+	"recraft/recraft-v4.1-utility-pro": NewImagePricing(0, 0.25), // 2K by default?
 
 	// https://openrouter.ai/recraft/recraft-v4.1-utility
 	"recraft/recraft-v4.1-utility": NewImagePricing(0.04), // 1K by default?
 
 	// https://openrouter.ai/recraft/recraft-v4.1-pro
-	"recraft/recraft-v4.1-pro": NewImagePricing(0.25), // 2K by default?
+	"recraft/recraft-v4.1-pro": NewImagePricing(0, 0.25), // 2K by default?
 
 	// https://openrouter.ai/recraft/recraft-v4.1
 	"recraft/recraft-v4.1": NewImagePricing(0.04), // 1K by default?
@@ -59,7 +59,7 @@ var ImageModelPricing = map[string]*ImagePricing{
 	"recraft/recraft-v4-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
 
 	// https://openrouter.ai/recraft/recraft-v4-pro
-	"recraft/recraft-v4-pro": NewImagePricing(0.25), // 2K by default?
+	"recraft/recraft-v4-pro": NewImagePricing(0, 0.25), // 2K by default?
 
 	// https://openrouter.ai/recraft/recraft-v4
 	"recraft/recraft-v4": NewImagePricing(0.04), // 1K by default?
