@@ -1317,11 +1317,17 @@ class Message {
 			this.#updateToolHeight();
 		}
 
-		if (!only || only === "statistics") {
+		if (!only || only === "statistics" || only === "tool") {
 			let html = "";
 
 			if (this.#statistics) {
 				const { provider, model, input, output, cost } = this.#statistics;
+
+				let extraCost = 0;
+
+				if (this.#tool?.cost) {
+					extraCost = this.#tool.cost;
+				}
 
 				html = [
 					provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
@@ -1332,7 +1338,7 @@ class Message {
 						=
 						<div class="total">${input + output}t</div>
 					</div>`,
-					`<div class="cost">${formatMoney(cost)}</div>`,
+					`<div class="cost">${formatMoney(cost)} ${extraCost ? `+ ${formatMoney(extraCost)} = ${formatMoney(cost + extraCost)}` : ""}</div>`,
 				].join("");
 			}
 
