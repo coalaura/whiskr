@@ -34,6 +34,39 @@ func NewImagePricing(k ...float64) *ImagePricing {
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
+	// https://openrouter.ai/recraft/recraft-v4.1-pro-vector
+	"recraft/recraft-v4.1-pro-vector": NewImagePricing(0.3), // svg (no 2K or 4K)
+
+	// https://openrouter.ai/recraft/recraft-v4.1-vector
+	"recraft/recraft-v4.1-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
+
+	// https://openrouter.ai/recraft/recraft-v4.1-utility-pro
+	"recraft/recraft-v4.1-utility-pro": NewImagePricing(0.25), // 2K by default?
+
+	// https://openrouter.ai/recraft/recraft-v4.1-utility
+	"recraft/recraft-v4.1-utility": NewImagePricing(0.04), // 1K by default?
+
+	// https://openrouter.ai/recraft/recraft-v4.1-pro
+	"recraft/recraft-v4.1-pro": NewImagePricing(0.25), // 2K by default?
+
+	// https://openrouter.ai/recraft/recraft-v4.1
+	"recraft/recraft-v4.1": NewImagePricing(0.04), // 1K by default?
+
+	// https://openrouter.ai/recraft/recraft-v4-pro-vector
+	"recraft/recraft-v4-pro-vector": NewImagePricing(0.3), // svg (no 2K or 4K)
+
+	// https://openrouter.ai/recraft/recraft-v4-vector
+	"recraft/recraft-v4-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
+
+	// https://openrouter.ai/recraft/recraft-v4-pro
+	"recraft/recraft-v4-pro": NewImagePricing(0.25), // 2K by default?
+
+	// https://openrouter.ai/recraft/recraft-v4
+	"recraft/recraft-v4": NewImagePricing(0.04), // 1K by default?
+
+	// https://openrouter.ai/recraft/recraft-v3
+	"recraft/recraft-v3": NewImagePricing(0.04), // 1K by default?
+
 	// https://developers.openai.com/api/docs/guides/image-generation#cost-and-latency
 	"openai/gpt-5.4-image-2": NewImagePricing(0.211), // No 2K or 4K support
 

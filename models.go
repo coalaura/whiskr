@@ -17,6 +17,7 @@ type ModelPricing struct {
 	Image  *ImagePricing `json:"image,omitempty"`
 }
 
+// gost:preserve-layout
 type Model struct {
 	ID          string       `json:"id"`
 	Created     int64        `json:"created"`
