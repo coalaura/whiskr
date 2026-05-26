@@ -19,7 +19,7 @@ const MathExtension = {
 	name: "math",
 	level: "inline",
 	start: pSrc => {
-		const match = pSrc.match(/\\\(|\\\[|\$\$|\$(?!\d)/);
+		const match = pSrc.match(/\\\(|\\\[|\$\$|\$(?=[^\s$])/);
 
 		return match?.index;
 	},
