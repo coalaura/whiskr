@@ -1482,7 +1482,7 @@ body.no-title #title {
 }
 
 .message .reasoning:not(.expanded) {
-	height: 18px;
+	height: 20px;
 }
 
 .message .tool:not(.expanded) {
