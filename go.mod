@@ -3,7 +3,7 @@ module chat
 go 1.26.2
 
 require (
-	github.com/coalaura/openingrouter v0.0.0-20260219212935-204abf45d5dd
+	github.com/coalaura/openingrouter v0.1.0
 	github.com/coalaura/plain v1.4.3
 	github.com/expr-lang/expr v1.17.8
 	github.com/go-chi/chi/v5 v5.2.5
