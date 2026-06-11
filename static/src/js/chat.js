@@ -18,6 +18,7 @@ import {
 	formatBytes,
 	formatMilliseconds,
 	formatMoney,
+	formatNumber,
 	formatTimestamp,
 	lines,
 	make,
@@ -277,7 +278,7 @@ async function updateChatTokens() {
 		costStr = formatMoney(costEstimate);
 	}
 
-	$chatTokens.textContent = `~${new Intl.NumberFormat("en-US").format(total)}t (~${costStr})`;
+	$chatTokens.textContent = `~${formatNumber(total)}t (~${costStr})`;
 }
 
 function updateTitle() {
@@ -1892,7 +1893,7 @@ class Message {
 		if ("tokens" in existing && Number.isInteger(existing.tokens)) {
 			const _tokens = make("div");
 
-			_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(existing.tokens)} tokens`;
+			_tokens.textContent = `~${formatNumber(existing.tokens)} tokens`;
 
 			_meta.appendChild(_tokens);
 			_meta.classList.add("has-tokens");
@@ -3095,6 +3096,7 @@ async function loadData() {
 	}
 
 	// render prompts
+	data.prompts = data.prompts.forEach(prompt => prompt.name += ` (${formatNumber(prompt.tokens)}tk)`);
 	data.prompts.unshift({
 		key: "",
 		name: "No Prompt",
@@ -3276,7 +3278,7 @@ function buildFileElement(file, removeCallback, replaceCallback) {
 	if ("tokens" in file && Number.isInteger(file.tokens)) {
 		const _tokens = make("div");
 
-		_tokens.textContent = `~${new Intl.NumberFormat("en-US").format(file.tokens)} tokens`;
+		_tokens.textContent = `~${formatNumber(file.tokens)} tokens`;
 
 		_meta.appendChild(_tokens);
 

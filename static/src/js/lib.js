@@ -45,7 +45,7 @@ export function wait(ms) {
 }
 
 export function wrapJSON(txt) {
-	if (!txt || !txt.startsWith("{")) {
+	if (!txt?.startsWith("{")) {
 		return txt;
 	}
 
@@ -86,6 +86,12 @@ const trailingZeroRgx = /\.?0+$/m;
 
 export function fixed(num, decimals = 0) {
 	return num.toFixed(decimals).replace(trailingZeroRgx, "");
+}
+
+const formatter = new Intl.NumberFormat("en-US");
+
+export function formatNumber(num) {
+	return formatter.format(num);
 }
 
 export function formatMoney(num) {
