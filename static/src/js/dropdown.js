@@ -64,7 +64,8 @@ class Dropdown {
 				isFavorite = !!option.dataset.favorite,
 				isDisabled = !!option.dataset.disabled,
 				isNew = !!option.dataset.new,
-				tabData = option.dataset.tabs?.trim();
+				tabData = option.dataset.tabs?.trim(),
+				subtitle = option.dataset.subtitle?.trim();
 
 			const optionTabs = tabData
 				? tabData
@@ -86,6 +87,7 @@ class Dropdown {
 				disabled: isDisabled,
 				new: isNew,
 				tabs: optionTabs,
+				subtitle: subtitle || "",
 
 				search: searchable(option.textContent),
 			});
@@ -288,11 +290,24 @@ class Dropdown {
 				_label.appendChild(_icon);
 			}
 
+			const _textWrapper = make("div", "text-wrapper");
+
+			_label.appendChild(_textWrapper);
+
 			const _span = make("span");
 
 			_span.textContent = option.label;
 
-			_label.appendChild(_span);
+			_textWrapper.appendChild(_span);
+
+			// subtitle (optional)
+			if (option.subtitle) {
+				const _subtitle = make("div", "subtitle");
+
+				_subtitle.textContent = option.subtitle;
+
+				_textWrapper.appendChild(_subtitle);
+			}
 
 			// new tag
 			if (option.new) {
@@ -1103,7 +1118,7 @@ class Dropdown {
 			return;
 		}
 
-		this.#selected = index !== -1 ? index : false;
+		this.#selected = index === -1 ? false : index;
 
 		this.#render();
 	}

@@ -269,10 +269,26 @@
 	overflow: hidden;
 }
 
+.dropdown .label .text-wrapper {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	text-align: left;
+}
+
 .dropdown .label span {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.dropdown .label .subtitle {
+	font-size: 11px;
+	color: var(--c-subtext);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	margin-top: 1px;
 }
 
 .dropdown .opt.favorite .label::after {
@@ -322,6 +338,10 @@
 	width: 100%;
 	height: 2px;
 	mask-image: none;
+}
+
+.dropdown .selected .subtitle {
+	display: none;
 }
 
 .tags .tag.reasoning {

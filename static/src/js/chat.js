@@ -3096,7 +3096,8 @@ async function loadData() {
 	}
 
 	// render prompts
-	data.prompts = data.prompts.forEach(prompt => prompt.name += ` (${formatNumber(prompt.tokens)}tk)`);
+	data.prompts.forEach(prompt => prompt.subtitle = `${formatNumber(prompt.tokens)} tokens`);
+
 	data.prompts.unshift({
 		key: "",
 		name: "No Prompt",
@@ -3106,6 +3107,10 @@ async function loadData() {
 		el.value = prompt.key;
 		el.title = prompt.description;
 		el.textContent = prompt.name;
+
+		if (prompt.subtitle) {
+			el.dataset.subtitle = prompt.subtitle;
+		}
 
 		promptList.push(prompt);
 	});
