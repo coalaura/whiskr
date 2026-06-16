@@ -2120,6 +2120,7 @@ body.loading #version,
 .message .collapse,
 .message .collapse::before,
 .message .copy,
+.message .dev-stats,
 .message .edit,
 .message .retry,
 .message .clear-files,
@@ -2192,6 +2193,16 @@ input.invalid {
 
 .pre-copy.copied,
 .message .copy.copied {
+	background-color: var(--c-green);
+	mask-image: url(icons/check.svg);
+}
+
+.message .dev-stats {
+	background-color: var(--c-blue);
+	mask-image: url(icons/dump.svg);
+}
+
+.message .dev-stats.copied {
 	background-color: var(--c-green);
 	mask-image: url(icons/check.svg);
 }

@@ -694,6 +694,13 @@ class Message {
 
 		_opts.appendChild(_optCopy);
 
+		// dev stats option
+		const _optDevStats = make("button", "dev-stats");
+
+		_optDevStats.title = "Copy exact stats";
+
+		_opts.appendChild(_optDevStats);
+
 		let timeout;
 
 		_optCopy.addEventListener("click", () => {
@@ -707,6 +714,20 @@ class Message {
 
 			timeout = setTimeout(() => {
 				_optCopy.classList.remove("copied");
+			}, 1000);
+		});
+
+		_optDevStats.addEventListener("click", () => {
+			this.stopEdit();
+
+			clearTimeout(timeout);
+
+			navigator.clipboard.writeText(this.#buildStatsText());
+
+			_optDevStats.classList.add("copied");
+
+			timeout = setTimeout(() => {
+				_optDevStats.classList.remove("copied");
 			}, 1000);
 		});
 
@@ -1574,6 +1595,112 @@ class Message {
 
 	countImages() {
 		return (this.#text.match(/!\[([^\]]*)\]\(/g) || []).length;
+	}
+
+	#formatMoneyExact(value) {
+		if (!Number.isFinite(value)) {
+			return "?";
+		}
+
+		if (Math.abs(value) < 0.000001) {
+			return `${(value * 100000).toFixed(value === 0 ? 0 : 3)}nct`;
+		}
+
+		if (Math.abs(value) < 0.001) {
+			return `${(value * 100).toFixed(4)}ct`;
+		}
+
+		return `$${value.toFixed(6)}`;
+	}
+
+	#buildStatsText() {
+		const lines = [];
+
+		lines.push(`role: ${this.#role}`);
+
+		if (this.#iteration) {
+			lines.push(`iteration: ${this.#iteration}`);
+		}
+
+		if (this.#statistics) {
+			const { provider, model, input, output, cost, reasoning } = this.#statistics;
+
+			lines.push(`provider: ${provider || "?"}`);
+			lines.push(`model: ${model || "?"}`);
+			lines.push(`input_tokens: ${input ?? "?"}`);
+			lines.push(`output_tokens: ${output ?? "?"}`);
+
+			if (reasoning) {
+				lines.push(`reasoning_tokens: ${reasoning}`);
+			}
+
+			lines.push(`total_tokens: ${(input ?? 0) + (output ?? 0)}`);
+			lines.push(`cost: ${this.#formatMoneyExact(cost ?? 0)}`);
+		}
+
+		if (this.#tool?.cost) {
+			lines.push(`tool_cost: ${this.#formatMoneyExact(this.#tool.cost)}`);
+		}
+
+		const extraCost = this.#tool?.cost || 0,
+			totalCost = (this.#statistics?.cost || 0) + extraCost;
+
+		if (extraCost > 0) {
+			lines.push(`total_cost: ${this.#formatMoneyExact(totalCost)}`);
+		}
+
+		lines.push(`estimated_text_tokens: ${this.#textTokens || 0}`);
+		lines.push(`estimated_reasoning_tokens: ${this.#reasoningTokens || 0}`);
+		lines.push(`estimated_tool_tokens: ${this.#toolTokens || 0}`);
+		lines.push(`estimated_image_tokens: ${this.getImageTokens()}`);
+		lines.push(`estimated_file_tokens: ${this.#files.reduce((sum, file) => sum + (file.tokens || 0), 0)}`);
+		lines.push(`estimated_message_tokens: ${this.getTokens()}`);
+
+		if (this.#time) {
+			lines.push(`time_total_seconds: ${this.#time.toFixed(3)}`);
+		}
+
+		if (this.#ttfr) {
+			lines.push(`time_to_first_reasoning_seconds: ${this.#ttfr.toFixed(3)}`);
+		}
+
+		if (this.#ttft) {
+			lines.push(`time_to_first_completion_seconds: ${this.#ttft.toFixed(3)}`);
+		}
+
+		if (this.#reasoningType) {
+			lines.push(`reasoning_type: ${this.#reasoningType}`);
+		}
+
+		if (this.#tool?.name) {
+			lines.push(`tool: ${this.#tool.name}`);
+		}
+
+		if (this.#files.length) {
+			lines.push(`files:`);
+
+			for (const file of this.#files) {
+				const size = new Blob([file.content]).size;
+
+				lines.push(`  - name: ${file.name}`);
+				lines.push(`    size_bytes: ${size}`);
+				lines.push(`    estimated_tokens: ${file.tokens ?? "?"}`);
+			}
+		}
+
+		if (this.#images.length) {
+			lines.push(`images: ${this.#images.length}`);
+		}
+
+		if (this.#inlineImages.size) {
+			lines.push(`inline_images: ${this.#inlineImages.size}`);
+		}
+
+		if (this.#tags.length) {
+			lines.push(`tags: [${this.#tags.join(", ")}]`);
+		}
+
+		return lines.join("\n");
 	}
 
 	getData(full = false, expandImages = false) {
