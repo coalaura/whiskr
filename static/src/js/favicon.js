@@ -4,6 +4,7 @@ const states = {
 	idle: null,
 	waiting: "#8087a2",
 	reasoning: "#eed49f",
+	tooling: "#8aadf4",
 	completing: "#a6da95",
 	error: "#ed8796",
 };

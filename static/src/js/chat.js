@@ -2729,7 +2729,7 @@ async function generate(cancel = false, noPush = false) {
 				case "tool":
 					receivedCompletion = true;
 
-					setGenerationState("completing");
+					setGenerationState("tooling");
 
 					message.setState("tooling");
 					message.setTool(chunk.data);
@@ -2746,7 +2746,7 @@ async function generate(cancel = false, noPush = false) {
 				case "image":
 					receivedCompletion = true;
 
-					setGenerationState("completing");
+					setGenerationState("tooling");
 
 					message.addImage(chunk.data);
 
