@@ -5,12 +5,12 @@ import (
 )
 
 type Statistics struct {
-	Provider         string  `msgpack:"provider"`
-	Model            string  `msgpack:"model"`
-	Cost             float64 `msgpack:"cost"`
-	InputTokens      int     `msgpack:"input"`
-	OutputTokens     int     `msgpack:"output"`
-	ReasoningTokens  int     `msgpack:"reasoning"`
+	Provider        string  `msgpack:"provider"`
+	Model           string  `msgpack:"model"`
+	Cost            float64 `msgpack:"cost"`
+	InputTokens     int     `msgpack:"input"`
+	OutputTokens    int     `msgpack:"output"`
+	ReasoningTokens int     `msgpack:"reasoning"`
 }
 
 func CreateStatistics(model, provider string, usage *openrouter.Usage) *Statistics {

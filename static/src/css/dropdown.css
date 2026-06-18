@@ -61,8 +61,19 @@
 	bottom: auto;
 }
 
-.dropdown.full-height .cont {
-	min-height: 250px;
+.dropdown.height-low .cont {
+	max-height: unset;
+	height: 250px;
+}
+
+.dropdown.height-medium .cont {
+	max-height: unset;
+	height: 350px;
+}
+
+.dropdown.height-high .cont {
+	max-height: unset;
+	height: 450px;
 }
 
 .dropdown:not(.open) .cont {
@@ -119,13 +130,17 @@
 }
 
 .dropdown .opts {
+	display: flex;
+	flex-direction: column;
 	overflow-y: auto;
+	height: 100%;
 }
 
 .dropdown .opts .tab {
 	display: flex;
 	flex-direction: column;
 	overflow-y: auto;
+	flex-shrink: 0;
 }
 
 .dropdown .opts .tab:not(.active) {
@@ -136,6 +151,15 @@
 	content: "No entries";
 	font-style: italic;
 	padding: 4px 6px;
+}
+
+.dropdown .spacer {
+	position: relative;
+	height: 100%;
+	border-top: 2px solid var(--c-surface2);
+	background: var(--c-surface0-dark);
+	-webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  	mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
 .dropdown .selected,
@@ -283,12 +307,61 @@
 }
 
 .dropdown .label .subtitle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
 	font-size: 11px;
 	color: var(--c-subtext);
+	margin-top: 1px;
+	min-width: 0;
+}
+
+.dropdown .label .subtitle .subtitle-text {
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	margin-top: 1px;
+	min-width: 0;
+}
+
+.dropdown .label .subtitle .subtitle-rank {
+	flex-shrink: 0;
+	line-height: 1.2;
+	font-weight: 650;
+	letter-spacing: 0.01em;
+	font-variant-numeric: tabular-nums;
+	color: color-mix(in srgb, var(--c-text) 70%, var(--c-subtext));
+	white-space: nowrap;
+	overflow: visible;
+	text-overflow: clip;
+}
+
+.dropdown .opt.benchmark-ranked:not(.benchmark-top5) .label .subtitle .subtitle-rank {
+	opacity: 0.9;
+}
+
+.dropdown .opt.benchmark-rank-1 .label .subtitle .subtitle-rank {
+	color: color-mix(in srgb, #d4af37 86%, var(--c-yellow));
+	font-weight: 700;
+}
+
+.dropdown .opt.benchmark-rank-2 .label .subtitle .subtitle-rank {
+	color: color-mix(in srgb, #c0c0c0 90%, var(--c-text));
+	font-weight: 700;
+}
+
+.dropdown .opt.benchmark-rank-3 .label .subtitle .subtitle-rank {
+	color: color-mix(in srgb, #cd7f32 88%, var(--c-peach, #f5a97f));
+	font-weight: 700;
+}
+
+.dropdown .opt.benchmark-rank-4 .label .subtitle .subtitle-rank {
+	color: color-mix(in srgb, #b5a642 86%, var(--c-yellow));
+	font-weight: 680;
+}
+
+.dropdown .opt.benchmark-rank-5 .label .subtitle .subtitle-rank {
+	color: color-mix(in srgb, #b87333 90%, var(--c-peach, #f5a97f));
+	font-weight: 680;
 }
 
 .dropdown .opt.favorite .label::after {

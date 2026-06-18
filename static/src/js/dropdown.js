@@ -64,8 +64,10 @@ class Dropdown {
 				isFavorite = !!option.dataset.favorite,
 				isDisabled = !!option.dataset.disabled,
 				isNew = !!option.dataset.new,
+				inAllData = option.dataset.all?.trim().toLowerCase(),
 				tabData = option.dataset.tabs?.trim(),
-				subtitle = option.dataset.subtitle?.trim();
+				subtitle = option.dataset.subtitle?.trim(),
+				includeInAll = !["0", "false", "no"].includes(inAllData || "");
 
 			const optionTabs = tabData
 				? tabData
@@ -86,6 +88,7 @@ class Dropdown {
 				favorite: isFavorite,
 				disabled: isDisabled,
 				new: isNew,
+				all: includeInAll,
 				tabs: optionTabs,
 				subtitle: subtitle || "",
 
@@ -126,7 +129,15 @@ class Dropdown {
 		});
 
 		// dropdown
-		this.#_dropdown = make("div", "dropdown", "open", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs", this.#options.length >= 9 ? "full-height" : "");
+		this.#_dropdown = make("div", "dropdown", "open", this.#favoritesEnabled || this.#tabs.length ? "has-tabs" : "no-tabs");
+
+		if (this.#options.length >= 15) {
+			this.#_dropdown.classList.add("height-high");
+		} else if (this.#options.length >= 12) {
+			this.#_dropdown.classList.add("height-medium");
+		} else if (this.#options.length >= 9) {
+			this.#_dropdown.classList.add("height-low");
+		}
 
 		// selected item
 		this.#_selected = make("div", "selected");
@@ -171,7 +182,7 @@ class Dropdown {
 
 		this.#all.count = make("sup", "count");
 
-		this.#all.count.textContent = this.#options.length;
+		this.#all.count.textContent = this.#options.filter(option => option.all).length;
 
 		this.#all.label.appendChild(this.#all.count);
 
@@ -246,6 +257,11 @@ class Dropdown {
 			this.#setupFavoritesDragAndDrop();
 		}
 
+		// spacer
+		const spacer = make("div", "spacer");
+
+		this.#_options.appendChild(spacer);
+
 		// options
 		for (const option of this.#options) {
 			// option wrapper
@@ -300,14 +316,10 @@ class Dropdown {
 
 			_textWrapper.appendChild(_span);
 
-			// subtitle (optional)
-			if (option.subtitle) {
-				const _subtitle = make("div", "subtitle");
+			const parsedSubtitle = this.#parseSubtitle(option.subtitle);
 
-				_subtitle.textContent = option.subtitle;
-
-				_textWrapper.appendChild(_subtitle);
-			}
+			this.#setSubtitleContent(_textWrapper, parsedSubtitle);
+			this.#setBenchmarkRankClasses(_opt, parsedSubtitle.rank);
 
 			// new tag
 			if (option.new) {
@@ -341,7 +353,9 @@ class Dropdown {
 			}
 
 			// add to options (all)
-			this.#all.container.appendChild(_opt);
+			if (option.all) {
+				this.#all.container.appendChild(_opt);
+			}
 
 			option.el = _opt;
 			option.clones = {};
@@ -987,6 +1001,115 @@ class Dropdown {
 		this.#trigger("favorite", this.#favoriteOrder);
 	}
 
+	#getOptionElements(option) {
+		const elements = [option.el, option.favoriteClone];
+
+		for (const tab in option.clones) {
+			elements.push(option.clones[tab]);
+		}
+
+		return elements.filter(Boolean);
+	}
+
+	#parseSubtitle(subtitle = "") {
+		const text = subtitle.trim();
+
+		if (!text) {
+			return {
+				text: "",
+				rank: false,
+			};
+		}
+
+		const match = text.match(/^(.*?)\s+\(#(\d+)\)$/);
+
+		if (!match) {
+			return {
+				text: text,
+				rank: false,
+			};
+		}
+
+		const rank = parseInt(match[2], 10);
+
+		return {
+			text: match[1].trim() || text,
+			rank: Number.isInteger(rank) && rank > 0 ? rank : false,
+		};
+	}
+
+	#setSubtitleContent(wrapper, parsedSubtitle) {
+		let subtitleEl = wrapper.querySelector(".subtitle");
+
+		if (!parsedSubtitle.text) {
+			subtitleEl?.remove();
+
+			return false;
+		}
+
+		if (!subtitleEl) {
+			subtitleEl = make("div", "subtitle");
+
+			wrapper.appendChild(subtitleEl);
+		}
+
+		subtitleEl.textContent = "";
+
+		const subtitleText = make("span", "subtitle-text");
+
+		subtitleText.textContent = parsedSubtitle.text;
+
+		subtitleEl.appendChild(subtitleText);
+
+		if (parsedSubtitle.rank) {
+			const subtitleRank = make("span", "subtitle-rank");
+
+			subtitleRank.textContent = `#${parsedSubtitle.rank}`;
+
+			subtitleEl.appendChild(subtitleRank);
+		}
+
+		return parsedSubtitle.rank;
+	}
+
+	#setBenchmarkRankClasses(element, rank) {
+		element.classList.remove(
+			"benchmark-ranked",
+			"benchmark-top5",
+			"benchmark-rank-1",
+			"benchmark-rank-2",
+			"benchmark-rank-3",
+			"benchmark-rank-4",
+			"benchmark-rank-5"
+		);
+
+		if (!Number.isInteger(rank) || rank < 1) {
+			return;
+		}
+
+		element.classList.add("benchmark-ranked");
+
+		if (rank <= 5) {
+			element.classList.add("benchmark-top5", `benchmark-rank-${rank}`);
+		}
+	}
+
+	#applyOptionSubtitle(option) {
+		const parsedSubtitle = this.#parseSubtitle(option.subtitle);
+
+		for (const element of this.#getOptionElements(option)) {
+			this.#setBenchmarkRankClasses(element, parsedSubtitle.rank);
+
+			const wrapper = element.querySelector(".text-wrapper");
+
+			if (!wrapper) {
+				continue;
+			}
+
+			this.#setSubtitleContent(wrapper, parsedSubtitle);
+		}
+	}
+
 	setFavorites(order) {
 		this.#favoriteOrder = Array.isArray(order) ? [...order] : [];
 
@@ -1015,6 +1138,22 @@ class Dropdown {
 		}
 
 		this.#updateFavoritesCount();
+	}
+
+	setSubtitles(subtitles = {}) {
+		for (const option of this.#options) {
+			const nextSubtitle = typeof subtitles[option.value] === "string" ? subtitles[option.value] : "";
+
+			if (option.subtitle === nextSubtitle) {
+				continue;
+			}
+
+			option.subtitle = nextSubtitle;
+
+			this.#applyOptionSubtitle(option);
+		}
+
+		this.#render();
 	}
 
 	#collectTags() {

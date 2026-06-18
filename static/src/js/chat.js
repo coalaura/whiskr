@@ -65,6 +65,7 @@ const $version = document.getElementById("version"),
 	$role = document.getElementById("role").querySelector("select"),
 	$model = document.getElementById("model"),
 	$providerSorting = document.getElementById("provider-sorting"),
+	$modelBenchmark = document.getElementById("model-benchmark"),
 	$imageResolution = document.getElementById("image-resolution"),
 	$imageResize = document.getElementById("image-resize"),
 	$imageAspect = document.getElementById("image-aspect"),
@@ -143,7 +144,8 @@ let autoScrolling = false,
 	chatTitle = false,
 	chatTitleEnabled = false,
 	chatFilename = false,
-	timeOverride = false;
+	timeOverride = false,
+	modelBenchmarkMode = "intelligence";
 
 let searchAvailable = false,
 	isResizing = false,
@@ -154,6 +156,98 @@ let searchAvailable = false,
 	promptOverheads = {};
 
 let modelDropdown, reasoningDropdown, exportRolesDropdown;
+
+const benchmarkLabels = {
+	intelligence: "Intelligence",
+	coding: "Coding",
+	agentic: "Agentic",
+};
+
+const benchmarkFormatter = new Intl.NumberFormat("en-US", {
+	maximumFractionDigits: 1,
+});
+
+function normalizeModelBenchmark(mode) {
+	if (mode === "intelligence" || mode === "coding" || mode === "agentic") {
+		return mode;
+	}
+
+	return "none";
+}
+
+function getBenchmarkRanks(mode) {
+	if (mode === "none") {
+		return {};
+	}
+
+	const ranked = modelList
+		.filter(model => Number.isFinite(model?.benchmarks?.[mode]))
+		.sort((a, b) => {
+			const aValue = a.benchmarks[mode],
+				bValue = b.benchmarks[mode];
+
+			if (aValue === bValue) {
+				return a.name.localeCompare(b.name);
+			}
+
+			return bValue - aValue;
+		});
+
+	const ranks = {};
+
+	for (const [index, model] of ranked.entries()) {
+		ranks[model.id] = index + 1;
+	}
+
+	return ranks;
+}
+
+function getBenchmarkSubtitle(model, mode = modelBenchmarkMode, ranks = false) {
+	if (mode === "none") {
+		return "";
+	}
+
+	const value = model?.benchmarks?.[mode];
+
+	if (!Number.isFinite(value)) {
+		return "";
+	}
+
+	const rank = ranks?.[model.id];
+
+	if (Number.isInteger(rank) && rank > 0) {
+		return `${benchmarkLabels[mode]}: ${benchmarkFormatter.format(value)} (#${rank})`;
+	}
+
+	return `${benchmarkLabels[mode]}: ${benchmarkFormatter.format(value)}`;
+}
+
+function updateModelBenchmarkDisplay(mode = modelBenchmarkMode) {
+	modelBenchmarkMode = normalizeModelBenchmark(mode);
+
+	if ($modelBenchmark.value !== modelBenchmarkMode) {
+		$modelBenchmark.value = modelBenchmarkMode;
+	}
+
+	const ranks = getBenchmarkRanks(modelBenchmarkMode),
+		subtitles = {};
+
+	for (const model of modelList) {
+		subtitles[model.id] = getBenchmarkSubtitle(model, modelBenchmarkMode, ranks);
+	}
+
+	for (const option of $model.options) {
+		const subtitle = subtitles[option.value] || "";
+
+		if (subtitle) {
+			option.dataset.subtitle = subtitle;
+		} else {
+			delete option.dataset.subtitle;
+		}
+	}
+
+	modelDropdown?.setSubtitles(subtitles);
+}
 
 function updateTotalUsage() {
 	$total.textContent = `${usageType[0].toUpperCase()} / ${formatMoney(totalUsage[usageType] || 0)}`;
@@ -3038,6 +3132,8 @@ async function loadData() {
 	settings.enabled = load("s-enabled", true);
 	settings.name = load("s-name", "");
 	settings.prompt = load("s-prompt", "");
+	modelBenchmarkMode = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
+	$modelBenchmark.value = modelBenchmarkMode;
 
 	$sEnabled.checked = settings.enabled;
 	$sName.value = settings.name;
@@ -3129,7 +3225,33 @@ async function loadData() {
 		storeSetting("favorites", newFavorites);
 	});
 
-	fillSelect($model, data.models, (el, model) => {
+	const sortedModels = [
+		...data.models.filter(model => !model.is_router),
+		...data.models
+			.filter(model => model.is_router)
+			.sort((a, b) => {
+				const author = (a.author || "").localeCompare(b.author || "", undefined, {
+					sensitivity: "base",
+				});
+
+				if (author !== 0) {
+					return author;
+				}
+
+				const priceA = Math.max(a.pricing.input || 0, a.pricing.output || 0),
+					priceB = Math.max(b.pricing.input || 0, b.pricing.output || 0);
+
+				if (priceA !== priceB) {
+					return priceB - priceA;
+				}
+
+				return (a.name || "").localeCompare(b.name || "", undefined, {
+					sensitivity: "base",
+				});
+			}),
+	];
+
+	fillSelect($model, sortedModels, (el, model) => {
 		const separator = "─".repeat(24);
 
 		let image;
@@ -3212,6 +3334,11 @@ async function loadData() {
 
 		el.dataset.tags = tags.join(",");
 
+		if (model.is_router) {
+			el.dataset.tabs = "routers";
+			el.dataset.all = "no";
+		}
+
 		if (tags.includes("image_gen") && !data.config.images) {
 			el.dataset.disabled = "yes";
 
@@ -3225,8 +3352,11 @@ async function loadData() {
 	modelDropdown = dropdown(
 		$model,
 		6,
-		favorites.filter(model => models[model])
+		favorites.filter(model => models[model]),
+		["routers"]
 	);
+
+	updateModelBenchmarkDisplay(modelBenchmarkMode);
 
 	modelDropdown.switchTab(modelTab);
 
@@ -3288,6 +3418,7 @@ function restore() {
 	$temperature.value = load("temperature", 0.85);
 	$iterations.value = load("iterations", 3);
 	$providerSorting.value = load("provider", "");
+	$modelBenchmark.value = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
 	$imageResolution.value = load("image-resolution", "1K");
 	$imageResize.value = load("image-resize", "8192");
 	$imageAspect.value = load("image-aspect", "");
@@ -3304,6 +3435,8 @@ function restore() {
 	}
 
 	exportRolesDropdown?.setValues(exportRoles, false);
+
+	updateModelBenchmarkDisplay($modelBenchmark.value);
 
 	updateExportRolesState();
 
@@ -4293,6 +4426,12 @@ $providerSorting.addEventListener("change", () => {
 	store("provider", $providerSorting.value);
 });
 
+$modelBenchmark.addEventListener("change", () => {
+	store("model-benchmark", $modelBenchmark.value);
+
+	updateModelBenchmarkDisplay($modelBenchmark.value);
+});
+
 $imageResolution.addEventListener("change", () => {
 	store("image-resolution", $imageResolution.value);
 });
@@ -4767,6 +4906,7 @@ dropdown($uiTheme).on("option:hover", option => {
 
 dropdown($role);
 dropdown($providerSorting);
+dropdown($modelBenchmark);
 dropdown($imageResolution);
 dropdown($imageResize);
 dropdown($imageAspect);

@@ -132,7 +132,7 @@ func LoadModels() error {
 		m := &Model{
 			ID:          model.Slug,
 			Created:     model.CreatedAt.Unix(),
-			Name:        model.ShortName,
+			Name:        CleanModelName(model.Author, model.ShortName),
 			Description: model.Description,
 			Author:      model.Author,
 
@@ -258,6 +258,25 @@ func GetModelTags(model openingrouter.FrontendModel, m *Model) {
 	sort.Strings(m.Tags)
 }
 
+func CleanModelName(author, name string) string {
+	if len(name) < len(author) {
+		return name
+	}
+
+	if !strings.EqualFold(name[:len(author)], author) {
+		return name
+	}
+
+	trimmed := strings.TrimSpace(name[len(author):])
+
+	// Special case, we trimmed too much
+	if len(trimmed) < 3 || HasVersionPrefix(trimmed) {
+		return name
+	}
+
+	return trimmed
+}
+
 func HasModelListChanged(list []openingrouter.FrontendModel) bool {
 	modelMx.RLock()
 	defer modelMx.RUnlock()
@@ -273,4 +292,25 @@ func HasModelListChanged(list []openingrouter.FrontendModel) bool {
 	}
 
 	return false
+}
+
+func HasVersionPrefix(str string) bool {
+	ln := len(str)
+
+	// "v123"
+	if ln >= 2 && strings.EqualFold(str[:1], "v") && isDigit(str[1]) {
+		return true
+	}
+
+	// "Mk123"
+	if ln >= 3 && strings.EqualFold(str[:2], "mk") && isDigit(str[2]) {
+		return true
+	}
+
+	// "1.2"
+	return ln > 0 && isDigit(str[0])
+}
+
+func isDigit(ch byte) bool {
+	return ch >= '0' && ch <= '9'
 }
