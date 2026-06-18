@@ -34,6 +34,18 @@ func NewImagePricing(k ...float64) *ImagePricing {
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
+	// https://openrouter.ai/sourceful/riverflow-v2.5-pro
+	"sourceful/riverflow-v2.5-pro": NewImagePricing(0.13, 0.15, 0.17),
+
+	// https://openrouter.ai/sourceful/riverflow-v2.5-fast
+	"sourceful/riverflow-v2.5-fast": NewImagePricing(0.019, 0.021), // No 4K
+
+	// No reliable pricing, only by million tokens, determined by testing
+	"microsoft/mai-image-2.5": NewImagePricing(0.048), // No 2K or 4K
+
+	// https://openrouter.ai/x-ai/grok-imagine-image-quality
+	"x-ai/grok-imagine-image-quality": NewImagePricing(0.05, 0.07), // No 4K
+
 	// https://openrouter.ai/recraft/recraft-v4.1-pro-vector
 	"recraft/recraft-v4.1-pro-vector": NewImagePricing(0.3), // svg (no 2K or 4K)
 
@@ -68,7 +80,7 @@ var ImageModelPricing = map[string]*ImagePricing{
 	"recraft/recraft-v3": NewImagePricing(0.04), // 1K by default?
 
 	// https://developers.openai.com/api/docs/guides/image-generation#cost-and-latency
-	"openai/gpt-5.4-image-2": NewImagePricing(0.211), // No 2K or 4K support
+	"openai/gpt-5.4-image-2": NewImagePricing(0.211), // No 2K or 4K
 
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3.1-flash-image-preview
 	"google/gemini-3.1-flash-image-preview": NewImagePricing(0.067, 0.101, 0.151),
@@ -77,7 +89,7 @@ var ImageModelPricing = map[string]*ImagePricing{
 	"sourceful/riverflow-v2-pro": NewImagePricing(0.15, 0.15, 0.33),
 
 	// https://openrouter.ai/sourceful/riverflow-v2-fast
-	"sourceful/riverflow-v2-fast": NewImagePricing(0.02, 0.04), // No 4K support
+	"sourceful/riverflow-v2-fast": NewImagePricing(0.02, 0.04), // No 4K
 
 	// https://openrouter.ai/black-forest-labs/flux.2-klein-4b
 	"black-forest-labs/flux.2-klein-4b": NewImagePricing(0.014, 0.015, 0.016),
@@ -107,11 +119,11 @@ var ImageModelPricing = map[string]*ImagePricing{
 	"google/gemini-3-pro-image-preview": NewImagePricing(0.134, 0.134, 0.24),
 
 	// https://developers.openai.com/api/docs/pricing/#image-generation
-	"openai/gpt-5-image-mini": NewImagePricing(0.036), // No 2K or 4K support
+	"openai/gpt-5-image-mini": NewImagePricing(0.036), // No 2K or 4K
 
 	// https://developers.openai.com/api/docs/pricing/#image-generation
-	"openai/gpt-5-image": NewImagePricing(0.167), // No 2K or 4K support
+	"openai/gpt-5-image": NewImagePricing(0.167), // No 2K or 4K
 
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-2.5-flash-image
-	"google/gemini-2.5-flash-image": NewImagePricing(0.039), // No 2K or 4K support
+	"google/gemini-2.5-flash-image": NewImagePricing(0.039), // No 2K or 4K
 }
