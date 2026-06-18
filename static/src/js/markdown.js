@@ -314,7 +314,7 @@ addEventListener("pointerdown", event => {
 
 	const el = event.target.closest(".table-wrapper");
 
-	if (!el || !el.classList.contains("overflowing")) {
+	if (!el?.classList.contains("overflowing")) {
 		return;
 	}
 

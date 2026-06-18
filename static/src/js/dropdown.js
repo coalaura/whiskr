@@ -1073,15 +1073,7 @@ class Dropdown {
 	}
 
 	#setBenchmarkRankClasses(element, rank) {
-		element.classList.remove(
-			"benchmark-ranked",
-			"benchmark-top5",
-			"benchmark-rank-1",
-			"benchmark-rank-2",
-			"benchmark-rank-3",
-			"benchmark-rank-4",
-			"benchmark-rank-5"
-		);
+		element.classList.remove("benchmark-ranked", "benchmark-top5", "benchmark-rank-1", "benchmark-rank-2", "benchmark-rank-3", "benchmark-rank-4", "benchmark-rank-5");
 
 		if (!Number.isInteger(rank) || rank < 1) {
 			return;
@@ -1261,7 +1253,7 @@ class Dropdown {
 			return;
 		}
 
-		let index = this.#options.findIndex(option => option.value === value);
+		const index = this.#options.findIndex(option => option.value === value);
 
 		if (index === -1) {
 			this.#syncSelectedFromNative();

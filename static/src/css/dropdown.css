@@ -159,7 +159,7 @@
 	border-top: 2px solid var(--c-surface2);
 	background: var(--c-surface0-dark);
 	-webkit-mask-image: linear-gradient(to bottom, #000, transparent);
-  	mask-image: linear-gradient(to bottom, #000, transparent);
+	mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
 .dropdown .selected,

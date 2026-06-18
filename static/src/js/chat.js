@@ -3133,6 +3133,7 @@ async function loadData() {
 	settings.name = load("s-name", "");
 	settings.prompt = load("s-prompt", "");
 	modelBenchmarkMode = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
+
 	$modelBenchmark.value = modelBenchmarkMode;
 
 	$sEnabled.checked = settings.enabled;
@@ -3365,7 +3366,7 @@ async function loadData() {
 	}
 
 	// render prompts
-	data.prompts.forEach(prompt => prompt.subtitle = `${formatNumber(prompt.tokens)} tokens`);
+	data.prompts.forEach(prompt => (prompt.subtitle = `${formatNumber(prompt.tokens)} tokens`));
 
 	data.prompts.unshift({
 		key: "",
