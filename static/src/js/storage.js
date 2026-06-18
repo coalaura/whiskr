@@ -136,7 +136,7 @@ class StorageDB {
 		await this.#write(key, true);
 	}
 
-	async store(key, value = false) {
+	async #store(key, value, immediate = false) {
 		if (isNull(value)) {
 			this.#cache.delete(key);
 		} else {
@@ -145,7 +145,19 @@ class StorageDB {
 
 		this.#lastWrite.set(key, Date.now());
 
+		if (immediate) {
+			this.#scheduled.delete(key);
+
+			await this.#write(key, false);
+
+			return;
+		}
+
 		await this.#schedule(key);
+	}
+
+	async store(key, value = false, immediate = false) {
+		await this.#store(key, value, immediate);
 	}
 
 	async refresh(keys = []) {
@@ -202,12 +214,12 @@ export async function connectDB() {
 	db = newDB;
 }
 
-export function store(key, value = false) {
+export function store(key, value = false, immediate = false) {
 	if (!db) {
 		return;
 	}
 
-	db.store(key, value);
+	db.store(key, value, immediate);
 }
 
 export function load(key, fallback = false) {

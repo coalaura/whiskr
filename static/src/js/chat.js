@@ -330,6 +330,16 @@ function setupCrossTabSync() {
 		if (change.key === "saved-chats") {
 			schedule(syncSavedChats);
 		}
+
+		if (change.key === "model-favorites" && modelDropdown) {
+			schedule(() => {
+				modelDropdown.setFavorites(change.value || []);
+			});
+		}
+
+		if (change.key === "reasoning-effort" && reasoningDropdown) {
+			$reasoningEffort.value = change.value ?? "medium";
+		}
 	});
 }
 
@@ -3008,8 +3018,8 @@ async function syncSettings() {
 		const remoteSettings = await response.json(),
 			remoteFavorites = remoteSettings?.favorites;
 
-		if (remoteFavorites && remoteFavorites.length > 0) {
-			store("model-favorites", remoteFavorites);
+		if (Array.isArray(remoteFavorites)) {
+			store("model-favorites", remoteFavorites, true);
 
 			modelDropdown.setFavorites(remoteFavorites);
 		}
@@ -3022,6 +3032,8 @@ async function loadData() {
 	const [_, data] = await Promise.all([connectDB(), json("/-/data")]);
 
 	setupCrossTabSync();
+
+	await refresh(["model-favorites"]);
 
 	settings.enabled = load("s-enabled", true);
 	settings.name = load("s-name", "");
@@ -3112,7 +3124,7 @@ async function loadData() {
 	$model.addEventListener("favorite", event => {
 		const newFavorites = event.detail;
 
-		store("model-favorites", newFavorites);
+		store("model-favorites", newFavorites, true);
 
 		storeSetting("favorites", newFavorites);
 	});
@@ -3219,7 +3231,7 @@ async function loadData() {
 	modelDropdown.switchTab(modelTab);
 
 	if (data.config.auth && data.authenticated) {
-		syncSettings();
+		await syncSettings();
 	}
 
 	// render prompts
@@ -3302,6 +3314,8 @@ function restore() {
 	}
 
 	$model.dispatchEvent(new Event("change"));
+
+	reasoningDropdown?.sync();
 
 	const files = load("attachments", []);
 

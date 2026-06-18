@@ -1103,6 +1103,16 @@ class Dropdown {
 		this.#syncMultiple(true);
 	}
 
+	#syncSelectedFromNative() {
+		if (this.#multiple) {
+			return;
+		}
+
+		const index = this.#options.findIndex(option => option.value === this.#_select.value);
+
+		this.#selected = index === -1 ? false : index;
+	}
+
 	#set(value) {
 		if (this.#multiple) {
 			this.#selectedValues = new Set([value]);
@@ -1112,14 +1122,38 @@ class Dropdown {
 			return;
 		}
 
-		const index = this.#options.findIndex(option => option.value === value);
+		let index = this.#options.findIndex(option => option.value === value);
 
-		if (this.#selected === index) {
+		if (index === -1) {
+			this.#syncSelectedFromNative();
+			this.#render();
+
 			return;
 		}
 
-		this.#selected = index === -1 ? false : index;
+		if (this.#selected === index) {
+			this.#render();
 
+			return;
+		}
+
+		this.#selected = index;
+
+		this.#render();
+	}
+
+	sync() {
+		if (this.#multiple) {
+			const values = Array.from(this.#_select.options)
+				.filter(option => option.selected)
+				.map(option => option.value);
+
+			this.setValues(values, false);
+
+			return;
+		}
+
+		this.#syncSelectedFromNative();
 		this.#render();
 	}
 
@@ -1175,6 +1209,7 @@ class Dropdown {
 			}
 		}
 
+		this.#syncSelectedFromNative();
 		this.#render();
 	}
 
