@@ -15,6 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// gost:preserve-layout
 type EnvTokens struct {
 	Secret     string `yaml:"secret"`
 	OpenRouter string `yaml:"openrouter"`
@@ -22,16 +23,19 @@ type EnvTokens struct {
 	GitHub     string `yaml:"github"`
 }
 
+// gost:preserve-layout
 type EnvServer struct {
 	Port int64 `yaml:"port"`
 }
 
+// gost:preserve-layout
 type EnvSettings struct {
 	CleanContent    bool  `yaml:"cleanup"`
 	Timeout         int64 `yaml:"timeout"`
 	RefreshInterval int64 `yaml:"refresh-interval"`
 }
 
+// gost:preserve-layout
 type EnvModels struct {
 	TitleModel      string `yaml:"title-model"`
 	ImageGeneration bool   `yaml:"image-generation"`
@@ -41,15 +45,18 @@ type EnvModels struct {
 	filters *Filters
 }
 
+// gost:preserve-layout
 type EnvUI struct {
 	ReducedMotion bool `yaml:"reduced-motion"`
 }
 
+// gost:preserve-layout
 type EnvUser struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 }
 
+// gost:preserve-layout
 type EnvAuthentication struct {
 	lookup map[string]*EnvUser
 
@@ -57,6 +64,7 @@ type EnvAuthentication struct {
 	Users   []*EnvUser `yaml:"users"`
 }
 
+// gost:preserve-layout
 type Environment struct {
 	dmx sync.RWMutex // data mutex
 	fmx sync.Mutex   // file mutex

@@ -1,5 +1,7 @@
 github.com/coalaura/byteconv v0.1.0 h1:LSS0zi3STk/y81YNrjkv9OKwZZ1CS5TcOmM1JfIWQYQ=
 github.com/coalaura/byteconv v0.1.0/go.mod h1:0UH4yRUmQnRcvT8amAaLDpasKBPWxkmDKaHVnI3sn5k=
+github.com/coalaura/go-openrouter v0.2.9-0.20260618191438-8742081b2e34 h1:0WT33VIHkK/y/nVxx3qtP4BtRIARO9zhtn8qNN81jpk=
+github.com/coalaura/go-openrouter v0.2.9-0.20260618191438-8742081b2e34/go.mod h1:xByLw2kG+6qcregvtIY8MB7xvmVHns8McC9B0lQJluY=
 github.com/coalaura/openingrouter v0.1.0 h1:GcDVAapC9WEWKmpuQrniVgkXiLmDH8eBfDzbDhAU3iA=
 github.com/coalaura/openingrouter v0.1.0/go.mod h1:C3GfmNDQLbBU+R3hcScNNytuZaAvOWbQZsDgQKe4MUQ=
 github.com/coalaura/plain v1.4.3 h1:BKup0c+61D0HJPwYM9ddh+3CsHzMXWg6vGhRP/mmVXc=
@@ -16,8 +18,6 @@ github.com/goccy/go-yaml v1.19.2 h1:PmFC1S6h8ljIz6gMRBopkjP1TVT7xuwrButHID66PoM=
 github.com/goccy/go-yaml v1.19.2/go.mod h1:XBurs7gK8ATbW4ZPGKgcbrY1Br56PdM69F7LkFRi1kA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/revrost/go-openrouter v1.6.0 h1:A3++J/DypecvL6AcG3bZA/oBc7gs2zBBqD9haydxToE=
-github.com/revrost/go-openrouter v1.6.0/go.mod h1:xByLw2kG+6qcregvtIY8MB7xvmVHns8McC9B0lQJluY=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=

@@ -5,10 +5,12 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/coalaura/openingrouter"
+	"github.com/revrost/go-openrouter"
 )
 
 type ModelPricing struct {
@@ -17,18 +19,27 @@ type ModelPricing struct {
 	Image  *ImagePricing `json:"image,omitempty"`
 }
 
+type ModelBenchmarks struct {
+	Intelligence float64 `json:"intelligence,omitempty"`
+	Coding       float64 `json:"coding,omitempty"`
+	Agentic      float64 `json:"agentic,omitempty"`
+}
+
 // gost:preserve-layout
 type Model struct {
-	ID          string       `json:"id"`
-	Created     int64        `json:"created"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Pricing     ModelPricing `json:"pricing"`
-	Tags        []string     `json:"tags,omitempty"`
-	Author      string       `json:"author,omitempty"`
+	ID          string           `json:"id"`
+	Created     int64            `json:"created"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Pricing     ModelPricing     `json:"pricing"`
+	Benchmarks  *ModelBenchmarks `json:"benchmarks,omitempty"`
+	Tags        []string         `json:"tags,omitempty"`
+	Author      string           `json:"author,omitempty"`
 
 	Reasoning       bool     `json:"reasoning"`
 	ReasoningLevels []string `json:"reasoning_levels,omitempty"`
+
+	IsRouter bool `json:"is_router"`
 
 	Vision bool `json:"-"`
 	JSON   bool `json:"-"`
@@ -104,11 +115,15 @@ func LoadModels() error {
 		var (
 			input  float64
 			output float64
+
+			benchmarks *ModelBenchmarks
 		)
 
 		if full, ok := base[model.Slug]; ok {
 			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
 			output, _ = strconv.ParseFloat(full.Pricing.Completion, 64)
+
+			benchmarks = GetModelBenchmarks(full)
 		} else {
 			input = model.Endpoint.Pricing.Prompt.Float64()
 			output = model.Endpoint.Pricing.Completion.Float64()
@@ -121,11 +136,14 @@ func LoadModels() error {
 			Description: model.Description,
 			Author:      model.Author,
 
+			Benchmarks: benchmarks,
 			Pricing: ModelPricing{
 				Input:  input * 1000000,
 				Output: output * 1000000,
 				Image:  ImageModelPricing[model.Slug],
 			},
+
+			IsRouter: strings.EqualFold(model.Group, "router"),
 		}
 
 		GetModelTags(model, m)
@@ -155,6 +173,39 @@ func LoadModels() error {
 	modelMx.Unlock()
 
 	return nil
+}
+
+func GetModelBenchmarks(model openrouter.Model) *ModelBenchmarks {
+	benchmarks := model.Benchmarks
+	if benchmarks == nil {
+		return nil
+	}
+
+	artificial := benchmarks.ArtificialAnalysis
+
+	intelligence := artificial.IntelligenceIndex
+	coding := artificial.CodingIndex
+	agentic := artificial.AgenticIndex
+
+	if intelligence == nil && coding == nil && agentic == nil {
+		return nil
+	}
+
+	var result ModelBenchmarks
+
+	if intelligence != nil {
+		result.Intelligence = *intelligence
+	}
+
+	if coding != nil {
+		result.Coding = *coding
+	}
+
+	if agentic != nil {
+		result.Agentic = *agentic
+	}
+
+	return &result
 }
 
 func GetModelTags(model openingrouter.FrontendModel, m *Model) {
