@@ -38,6 +38,7 @@ type Model struct {
 
 	Reasoning       bool     `json:"reasoning"`
 	ReasoningLevels []string `json:"reasoning_levels,omitempty"`
+	Voices          []string `json:"voices,omitempty"`
 
 	IsRouter bool `json:"is_router"`
 
@@ -52,8 +53,9 @@ type Model struct {
 var (
 	modelMx sync.RWMutex
 
-	ModelMap  map[string]*Model
+	AudioList []*Model
 	ModelList []*Model
+	ModelMap  map[string]*Model
 )
 
 func GetModel(name string) *Model {
@@ -99,16 +101,21 @@ func LoadModels() error {
 	})
 
 	var (
-		newList = make([]*Model, 0, len(list))
-		newMap  = make(map[string]*Model, len(list))
+		newModelList = make([]*Model, 0, len(list))
+		newAudioList = make([]*Model, 0, len(list))
+		newModelMap  = make(map[string]*Model, len(list))
 	)
 
 	for _, model := range list {
-		if !slices.Contains(model.OutputModalities, "text") && (!env.Models.ImageGeneration || !slices.Contains(model.OutputModalities, "image")) {
+		if model.Endpoint == nil {
 			continue
 		}
 
-		if model.Endpoint == nil {
+		canText := slices.Contains(model.OutputModalities, "text")
+		canImage := env.Models.ImageGeneration && slices.Contains(model.OutputModalities, "image")
+		canAudio := env.Models.TextToSpeech && slices.Contains(model.OutputModalities, "audio")
+
+		if !canText && !canImage && !canAudio {
 			continue
 		}
 
@@ -116,7 +123,8 @@ func LoadModels() error {
 			input  float64
 			output float64
 
-			benchmarks *ModelBenchmarks
+			benchmarks      *ModelBenchmarks
+			supportedVoices []string
 		)
 
 		if full, ok := base[model.Slug]; ok {
@@ -124,6 +132,10 @@ func LoadModels() error {
 			output, _ = strconv.ParseFloat(full.Pricing.Completion, 64)
 
 			benchmarks = GetModelBenchmarks(full)
+
+			if full.SupportedVoices != nil {
+				supportedVoices = *full.SupportedVoices
+			}
 		} else {
 			input = model.Endpoint.Pricing.Prompt.Float64()
 			output = model.Endpoint.Pricing.Completion.Float64()
@@ -135,6 +147,8 @@ func LoadModels() error {
 			Name:        CleanModelName(model.Author, model.ShortName),
 			Description: model.Description,
 			Author:      model.Author,
+
+			Voices: supportedVoices,
 
 			Benchmarks: benchmarks,
 			Pricing: ModelPricing{
@@ -148,27 +162,35 @@ func LoadModels() error {
 
 		GetModelTags(model, m)
 
-		if env.Models.filters != nil {
-			matched, err := env.Models.filters.Match(m)
-			if err != nil {
-				return err
+		if canText || canImage {
+			if env.Models.filters != nil {
+				matched, err := env.Models.filters.Match(m)
+				if err != nil {
+					return err
+				}
+
+				if !matched {
+					continue
+				}
 			}
 
-			if !matched {
-				continue
-			}
+			newModelList = append(newModelList, m)
 		}
 
-		newList = append(newList, m)
-		newMap[m.ID] = m
+		if canAudio {
+			newAudioList = append(newAudioList, m)
+		}
+
+		newModelMap[m.ID] = m
 	}
 
-	log.Printf("Loaded %d models\n", len(newList))
+	log.Printf("Loaded %d models\n", len(newModelList))
 
 	modelMx.Lock()
 
-	ModelList = newList
-	ModelMap = newMap
+	AudioList = newAudioList
+	ModelList = newModelList
+	ModelMap = newModelMap
 
 	modelMx.Unlock()
 
