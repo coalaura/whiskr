@@ -34,6 +34,12 @@ func NewImagePricing(k ...float64) *ImagePricing {
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
+	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3.1-flash-image
+	"google/gemini-3.1-flash-image": NewImagePricing(0.067, 0.101, 0.151),
+
+	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3-pro-image
+	"google/gemini-3-pro-image": NewImagePricing(0.134, 0.134, 0.24),
+
 	// https://openrouter.ai/sourceful/riverflow-v2.5-pro
 	"sourceful/riverflow-v2.5-pro": NewImagePricing(0.13, 0.15, 0.17),
 
