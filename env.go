@@ -19,7 +19,6 @@ import (
 type EnvTokens struct {
 	Secret     string `yaml:"secret"`
 	OpenRouter string `yaml:"openrouter"`
-	Exa        string `yaml:"exa"`
 	Tavily     string `yaml:"tavily"`
 	GitHub     string `yaml:"github"`
 }
@@ -162,9 +161,9 @@ func (e *Environment) Init() error {
 		return errors.New("missing tokens.openrouter")
 	}
 
-	// check if exa token is set
-	if e.Tokens.Exa == "" {
-		log.Warnln("Missing token.exa, web search unavailable")
+	// check if tavily token is set
+	if e.Tokens.Tavily == "" {
+		log.Warnln("Missing token.tavily, web search unavailable")
 	}
 
 	// check if github token is set
@@ -255,7 +254,6 @@ func (e *Environment) Store() error {
 
 			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
-			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
 			"$.tokens.tavily":     {yaml.HeadComment(" tavily search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 

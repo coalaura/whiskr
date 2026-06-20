@@ -75,17 +75,17 @@ func main() {
 			"authenticated": IsAuthenticated(r),
 			"config": map[string]any{
 				"auth":   env.Authentication.Enabled,
-				"search": env.Tokens.Exa != "",
+				"search": env.Tokens.Tavily != "",
 				"motion": env.UI.ReducedMotion,
 				"images": env.Models.ImageGeneration,
 				"tts":    env.Models.TextToSpeech,
 				"title":  env.Models.TitleModel != "-",
 			},
-			"overhead": overhead,
-			"models":   ModelList,
+			"overhead":     overhead,
+			"models":       ModelList,
 			"audio_models": AudioList,
-			"prompts":  Prompts,
-			"version":  Version,
+			"prompts":      Prompts,
+			"version":      Version,
 		})
 	})
 

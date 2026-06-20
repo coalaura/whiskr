@@ -6,8 +6,8 @@ tokens:
   secret: ""
   # openrouter.ai api token (required)
   openrouter: ""
-  # exa search api token (optional; used by search tools)
-  exa: ""
+  # tavily search api token (optional; used by search tools)
+  tavily: ""
   # github api token (optional; used by search tools)
   github: ""
 

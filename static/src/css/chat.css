@@ -1725,7 +1725,7 @@ body.no-title #title {
 	display: none;
 }
 
-.message.has-voice .body {
+.message.has-voice.has-text .body {
 	padding-bottom: 20px;
 }
 
@@ -1740,6 +1740,10 @@ body.no-title #title {
 	opacity: 0;
 	pointer-events: none;
 	z-index: 10;
+}
+
+.message.has-voice:not(.has-text) .voice-controls {
+	display: none;
 }
 
 .message:hover .voice-controls {

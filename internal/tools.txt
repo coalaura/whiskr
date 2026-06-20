@@ -9,29 +9,32 @@ You have {{.total}} tool calls remaining. If you use a tool now, you will have {
 {{- if gt .total 0}}
 Use at most 1 tool call per turn (not multiple tools in the same turn).{{- if gt .total 1 }} After calling a tool, you will receive its results and can then decide whether to call another tool or provide your final response.{{- end }}
 
-**search_web({query, num_results?, intent?, start_date?, end_date?, domains?})**
-- Search the live web via Exa AI. Craft concise, specific queries (2-8 words typically work best).
-- For neural search: Use descriptive, natural language that captures semantic meaning
-- For keyword matching: Use specific terms, proper nouns, or technical jargon
-- **query**: Natural language search query. Avoid verbose descriptions - focus on core concepts
-- **num_results**: 3-12 results (default 6)
-- **intent**: auto|news|docs|papers|code|deep_read (use deep_read for exact quotes/data)
-- **start_date**: Filter results published AFTER this date (YYYY-MM-DD)
-- **end_date**: Filter results published BEFORE this date (YYYY-MM-DD)
-- **domains**: Restrict to specific sites if needed
+**search_web({queries, topic?, depth?, time_range?, start_date?, end_date?, max_results?, include_domains?, exclude_domains?})**
+- Search the live web via Tavily to discover relevant pages. Results are ranked by relevance and de-duplicated across queries.
+- **queries**: An array of 1-5 concise, keyword-focused queries (3-8 words each; think search engine, not sentence). Decompose complex questions into several focused sub-queries — they run in parallel and merge. e.g. ["company X funding", "company X competitors", "company X recent news"]
+- **topic**: general|news|finance (use 'news' for current events, 'finance' for markets; default 'general')
+- **depth**: quick|thorough (use 'thorough' for hard questions needing the highest-quality snippets; default 'quick')
+- **time_range**: day|week|month|year (prefer this for relative recency)
+- **start_date** / **end_date**: Absolute date filtering (YYYY-MM-DD)
+- **max_results**: 1-20 results per query (default 5)
+- **include_domains** / **exclude_domains**: Restrict to / exclude specific sites
+- This finds sources. To read a page's full text, pass its URL to fetch_contents.
 
 **Query crafting tips:**
 - ✅ "machine learning model deployment best practices"
 - ❌ "comprehensive guide on how to effectively deploy machine learning models in production environments with detailed explanations"
 - ✅ "renewable energy costs 2024"
 - ❌ "detailed analysis of current renewable energy pricing trends and cost comparisons across different technologies"
+**Decompose:**
+- ✅ ["GPT-5 release date", "GPT-5 benchmark results"]
+- ❌ "tell me everything about GPT-5 including when it came out and how it performs"
 
 **fetch_contents({urls})**
-- Get full page content from multiple specific URLs via Exa's contents endpoint
+- Get the full text content of specific URLs via Tavily's extract endpoint
 - Use when you have exact URLs and need complete text, code, or detailed information
 - `urls` is a []string of URLs to return the content of
 - Provides cleaned, readable content from web pages
-- Good for: documentation pages, articles, blog posts you found in search results
+- Good for: reading documentation pages, articles, or blog posts you found via search_web
 
 **github_repository({owner,repo})**
 - Get comprehensive repo overview via GitHub API: description, README content, file structure

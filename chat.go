@@ -336,7 +336,7 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
 	}
 
-	if model.Tools && r.Tools.Search && env.Tokens.Exa != "" {
+	if model.Tools && r.Tools.Search && env.Tokens.Tavily != "" {
 		if r.Iterations > 1 {
 			request.Tools = GetSearchTools()
 			request.ToolChoice = "auto"

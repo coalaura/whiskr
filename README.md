@@ -39,8 +39,8 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - **Smooth Interface**: Built with [morphdom](https://github.com/patrick-steele-idem/morphdom) to ensure UI updates don't lose your selections, scroll position, or focus.
 
 ### Powerful Integrated Tools
-- **`search_web`**: Search the web via Exa; returns up to 12 results with short summaries.
-- **`fetch_contents`**: Fetch and summarize the contents of one or more URLs.
+- **`search_web`**: Search the web via Tavily; supports topic, recency, and domain filters and returns relevant result snippets.
+- **`fetch_contents`**: Fetch the contents of one or more URLs.
 - **`github_repository`**: Get a comprehensive overview of a GitHub repository. The tool returns:
   - Core info (URL, description, stars, forks).
   - A list of top-level files and directories.
@@ -61,7 +61,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - Go
 - [chi/v5](https://go-chi.io/) for the http routing/server
 - [OpenRouter](https://openrouter.ai/) for model list and completions
-- [Exa](https://exa.ai/) for web search and content retrieval (`/search`, `/contents`)
+- [Tavily](https://www.tavily.com/) for web search and content retrieval (`/search`, `/extract`)
 
 ## Getting Started
 
@@ -79,7 +79,7 @@ go build -o whiskr
 Optional configuration notes (from `config.yml`):
 - `settings.image-generation` (bool, default: true) - allow models with image output to generate images. If set to false, whiskr requests text-only responses even for image-capable models.
 - `settings.title-model` (string, default: `google/gemini-2.5-flash-lite`) - model used to generate chat titles (requires structured output support).
-- `tokens.exa` (optional) - enables the search tools; without it, web search is unavailable.
+- `tokens.tavily` (optional) - enables the search tools; without it, web search is unavailable.
 - `tokens.github` (optional) - increases GitHub API limits for the GitHub repository tool.
 
 ## Authentication (optional)
