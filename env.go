@@ -20,6 +20,7 @@ type EnvTokens struct {
 	Secret     string `yaml:"secret"`
 	OpenRouter string `yaml:"openrouter"`
 	Exa        string `yaml:"exa"`
+	Tavily     string `yaml:"tavily"`
 	GitHub     string `yaml:"github"`
 }
 
@@ -255,6 +256,7 @@ func (e *Environment) Store() error {
 			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
 			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
 			"$.tokens.exa":        {yaml.HeadComment(" exa search api token (optional; used by search tools)")},
+			"$.tokens.tavily":     {yaml.HeadComment(" tavily search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
 			"$.server.port": {yaml.HeadComment(" port to serve whiskr on (required; default 3443)")},
