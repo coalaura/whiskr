@@ -1725,7 +1725,7 @@ body.no-title #title {
 	display: none;
 }
 
-.message.has-voice.has-text .body {
+.message.has-voice.has-text:not(.editing) .body {
 	padding-bottom: 20px;
 }
 
@@ -1733,7 +1733,7 @@ body.no-title #title {
 	position: absolute;
 	bottom: 4px;
 	right: 6px;
-	display: flex;
+	display: none;
 	gap: 4px;
 	align-items: center;
 	transition: 150ms;
@@ -1742,11 +1742,11 @@ body.no-title #title {
 	z-index: 10;
 }
 
-.message.has-voice:not(.has-text) .voice-controls {
-	display: none;
+.message.has-text:not(.editing) .voice-controls {
+	display: flex;
 }
 
-.message:hover .voice-controls {
+.message.has-text:hover .voice-controls {
 	opacity: 1;
 	pointer-events: all;
 }

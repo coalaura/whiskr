@@ -26,7 +26,7 @@ type TavilyResults struct {
 	RequestID string         `json:"requestId,omitempty"`
 	Query     string         `json:"query,omitempty"`
 	Results   []TavilyResult `json:"results"`
-	Usage     TavilyUsage    `json:"usage"`
+	Usage     TavilyUsage    `json:"usage,omitempty"`
 }
 
 func (t *TavilyResults) String() string {
@@ -72,7 +72,7 @@ type TavilyExtractResponse struct {
 	Results       []TavilyExtractResult       `json:"results"`
 	FailedResults []TavilyExtractFailedResult `json:"failed_results"`
 	ResponseTime  float64                     `json:"response_time"`
-	Usage         TavilyUsage                 `json:"usage"`
+	Usage         TavilyUsage                 `json:"usage,omitempty"`
 	RequestID     string                      `json:"request_id,omitempty"`
 }
 
@@ -122,7 +122,7 @@ type TavilySearchResponse struct {
 	Results        []TavilySearchResult `json:"results"`
 	AutoParameters any                  `json:"auto_parameters,omitempty"`
 	ResponseTime   float64              `json:"response_time"`
-	Usage          TavilyUsage          `json:"usage"`
+	Usage          TavilyUsage          `json:"usage,omitempty"`
 	RequestID      string               `json:"request_id,omitempty"`
 }
 
