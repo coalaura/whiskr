@@ -78,10 +78,12 @@ func main() {
 				"search": env.Tokens.Exa != "",
 				"motion": env.UI.ReducedMotion,
 				"images": env.Models.ImageGeneration,
+				"tts":    env.Models.TextToSpeech,
 				"title":  env.Models.TitleModel != "-",
 			},
 			"overhead": overhead,
 			"models":   ModelList,
+			"audio_models": AudioList,
 			"prompts":  Prompts,
 			"version":  Version,
 		})
@@ -112,6 +114,7 @@ func main() {
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))
 		gr.Post("/-/preview", HandlePreview)
 		gr.Post("/-/image", HandleImage)
+		gr.Post("/-/tts", HandleTTS)
 
 		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})

@@ -87,12 +87,20 @@ const $version = document.getElementById("version"),
 	$clear = document.getElementById("clear"),
 	$sidebar = document.getElementById("sidebar"),
 	$sidebarTrigger = document.getElementById("sidebar-trigger"),
-	$sidebarClose = document.getElementById("sidebar-close"),
+	$sidebarVersion = document.getElementById("sidebar-version"),
 	$chatSettingsHeader = document.getElementById("chat-settings-header"),
 	$chatSettingsBody = document.getElementById("chat-settings-body"),
 	$chatSettingsCollapse = document.getElementById("chat-settings-collapse"),
 	$uiTheme = document.getElementById("ui-theme"),
+	$ttsModel = document.getElementById("tts-model"),
+	$ttsVoice = document.getElementById("tts-voice"),
+	$ttsPreview = document.getElementById("tts-preview"),
 	$sEnabled = document.getElementById("s-enabled"),
+	$modalSEnabled = document.getElementById("modal-s-enabled"),
+	$openSettings = document.getElementById("open-settings"),
+	$settingsClose = document.getElementById("settings-close"),
+	$settingsModal = document.getElementById("settings-modal"),
+	$settingsPersonalizationSection = document.getElementById("settings-personalization-section"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
 	$timeOverride = document.getElementById("time-override"),
@@ -148,6 +156,7 @@ let autoScrolling = false,
 	modelBenchmarkMode = "intelligence";
 
 let searchAvailable = false,
+	ttsAvailable = false,
 	isResizing = false,
 	scrollResize = false,
 	isUploading = false,
@@ -395,7 +404,8 @@ function updateTitle() {
 function updatePersonalizationVisualState() {
 	const isDisabled = !settings.enabled;
 
-	$personalizationSection.classList.toggle("disabled", isDisabled);
+	$personalizationSection?.classList.toggle("disabled", isDisabled);
+	$settingsPersonalizationSection?.classList.toggle("disabled", isDisabled);
 
 	$sName.disabled = isDisabled;
 	$sPrompt.disabled = isDisabled;
@@ -552,6 +562,11 @@ class Message {
 	#inlineImages = new Map();
 	#inlineImagesBlobs = new Map();
 
+	#audioBlob = null;
+	#audioUrl = null;
+	#audioElement = null;
+	#audioState = "idle";
+
 	#tool;
 	#tags = [];
 	#iteration = "";
@@ -581,6 +596,9 @@ class Message {
 	#_tool;
 	#_statistics;
 	#_roleSelect;
+	#_optSpeak;
+	#_optSpeakRefresh;
+	#_optSpeakDownload;
 	#tokens = 0;
 	#textTokens = 0;
 	#toolTokens = 0;
@@ -1099,19 +1117,46 @@ class Message {
 
 		this.#_message.appendChild(this.#_statistics);
 
-		// scroll into view
-		const _scroll = make("button", "scroll-view");
+		// voice controls (if tts is available)
+		if (ttsAvailable) {
+			this.#_message.classList.add("has-voice");
 
-		_scroll.title = "Scroll message into view";
+			const _voiceControls = make("div", "voice-controls");
 
-		this.#_message.appendChild(_scroll);
+			this.#_optSpeak = make("button", "speak");
 
-		_scroll.addEventListener("click", () => {
-			this.#_message.scrollIntoView({
-				behavior: "smooth",
-				block: "start",
+			this.#_optSpeak.title = "Read message out loud";
+
+			_voiceControls.appendChild(this.#_optSpeak);
+
+			this.#_optSpeakRefresh = make("button", "speak-refresh");
+
+			this.#_optSpeakRefresh.title = "Regenerate voice from scratch";
+			this.#_optSpeakRefresh.style.display = "none";
+
+			_voiceControls.appendChild(this.#_optSpeakRefresh);
+
+			this.#_optSpeakDownload = make("button", "speak-download");
+
+			this.#_optSpeakDownload.title = "Download voice as audio file";
+			this.#_optSpeakDownload.style.display = "none";
+
+			_voiceControls.appendChild(this.#_optSpeakDownload);
+
+			this.#_optSpeak.addEventListener("click", () => {
+				this.toggleSpeak();
 			});
-		});
+
+			this.#_optSpeakRefresh.addEventListener("click", () => {
+				this.triggerSpeak(true);
+			});
+
+			this.#_optSpeakDownload.addEventListener("click", () => {
+				this.downloadSpeak();
+			});
+
+			this.#_message.appendChild(_voiceControls);
+		}
 
 		// add to dom
 		$messages.appendChild(this.#_message);
@@ -2449,6 +2494,16 @@ class Message {
 			return;
 		}
 
+		if (this.#audioElement) {
+			this.#audioElement.pause();
+			this.#audioElement = null;
+		}
+
+		if (this.#audioUrl) {
+			URL.revokeObjectURL(this.#audioUrl);
+			this.#audioUrl = null;
+		}
+
 		this.#_message.remove();
 
 		this.#revokeImageBlobs();
@@ -2478,6 +2533,181 @@ class Message {
 				updateTitle();
 			}
 		}
+	}
+
+	toggleSpeak() {
+		if (this.#audioState === "playing") {
+			this.pauseSpeak();
+		} else if (this.#audioState === "idle") {
+			this.triggerSpeak();
+		}
+	}
+
+	pauseSpeak() {
+		if (this.#audioElement) {
+			this.#audioElement.pause();
+		}
+
+		this.#audioState = "idle";
+
+		if (this.#_optSpeak) {
+			this.#_optSpeak.classList.remove("playing");
+			this.#_optSpeak.title = "Read message out loud";
+		}
+	}
+
+	async triggerSpeak(forceRefresh = false) {
+		if (forceRefresh) {
+			this.pauseSpeak();
+
+			if (this.#audioUrl) {
+				URL.revokeObjectURL(this.#audioUrl);
+
+				this.#audioUrl = null;
+			}
+
+			this.#audioBlob = null;
+
+			if (this.#_optSpeakDownload) {
+				this.#_optSpeakDownload.style.display = "none";
+			}
+
+			if (this.#_optSpeakRefresh) {
+				this.#_optSpeakRefresh.style.display = "none";
+			}
+		}
+
+		if (this.#audioBlob) {
+			this.playSpeak();
+
+			return;
+		}
+
+		const ttsModel = load("tts-model"),
+			ttsVoice = load("tts-voice");
+
+		if (!ttsModel || !ttsVoice) {
+			notify("Please select a Voice Model and Voice in Settings first.", "error");
+
+			return;
+		}
+
+		this.#audioState = "loading";
+
+		if (this.#_optSpeak) {
+			this.#_optSpeak.classList.add("loading");
+			this.#_optSpeak.title = "Generating voice...";
+		}
+
+		try {
+			const textToRead = this.#text.trim();
+
+			if (!textToRead) {
+				throw new Error("Message content is empty.");
+			}
+
+			const response = await fetch("/-/tts", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					model: ttsModel,
+					voice: ttsVoice,
+					input: textToRead,
+				}),
+			});
+
+			if (!response.ok) {
+				const errData = await response.json().catch(() => ({}));
+
+				throw new Error(errData.error || `Server returned code ${response.status}`);
+			}
+
+			const blob = await response.blob();
+
+			this.#audioBlob = blob;
+			this.#audioUrl = URL.createObjectURL(blob);
+
+			if (this.#_optSpeakDownload) {
+				this.#_optSpeakDownload.style.display = "block";
+			}
+			if (this.#_optSpeakRefresh) {
+				this.#_optSpeakRefresh.style.display = "block";
+			}
+
+			this.playSpeak();
+		} catch (err) {
+			console.error(err);
+
+			notify(`Failed to generate TTS: ${err.message}`, "error");
+
+			this.#audioState = "idle";
+
+			if (this.#_optSpeak) {
+				this.#_optSpeak.classList.remove("loading");
+				this.#_optSpeak.title = "Read message out loud";
+			}
+		}
+	}
+
+	playSpeak() {
+		this.#audioState = "playing";
+
+		if (this.#_optSpeak) {
+			this.#_optSpeak.classList.remove("loading");
+			this.#_optSpeak.classList.add("playing");
+			this.#_optSpeak.title = "Pause voice playback";
+		}
+
+		if (!this.#audioElement) {
+			this.#audioElement = new Audio();
+
+			this.#audioElement.addEventListener("ended", () => {
+				this.pauseSpeak();
+			});
+		}
+
+		this.#audioElement.src = this.#audioUrl;
+
+		this.#audioElement.play().catch(err => {
+			console.error(err);
+
+			notify("Playback failed: browser blocked autoplay or audio format unsupported.", "error");
+
+			this.pauseSpeak();
+		});
+	}
+
+	downloadSpeak() {
+		if (!this.#audioBlob) {
+			return;
+		}
+
+		const mimeType = (this.#audioBlob.type || "").toLowerCase();
+
+		let extension = "mp3";
+
+		if (mimeType.includes("wav")) {
+			extension = "wav";
+		} else if (mimeType.includes("ogg")) {
+			extension = "ogg";
+		} else if (mimeType.includes("webm")) {
+			extension = "webm";
+		} else if (mimeType.includes("flac")) {
+			extension = "flac";
+		}
+
+		const a = document.createElement("a");
+
+		a.href = this.#audioUrl;
+		a.download = `voice-${this.#id}.${extension}`;
+
+		document.body.appendChild(a);
+
+		a.click();
+
+		document.body.removeChild(a);
 	}
 }
 
@@ -3137,19 +3367,20 @@ async function loadData() {
 	$modelBenchmark.value = modelBenchmarkMode;
 
 	$sEnabled.checked = settings.enabled;
+	$modalSEnabled.checked = settings.enabled;
 	$sName.value = settings.name;
 	$sPrompt.value = settings.prompt;
 
 	const personalizationCollapsed = load("personalization-collapsed", false);
 
-	if (personalizationCollapsed) {
+	if (personalizationCollapsed && $personalizationBody && $personalizationCollapse) {
 		$personalizationBody.classList.add("collapsed");
 		$personalizationCollapse.classList.add("collapsed");
 	}
 
 	const chatSettingsCollapsed = load("chat-settings-collapsed", false);
 
-	if (chatSettingsCollapsed) {
+	if (chatSettingsCollapsed && $chatSettingsBody && $chatSettingsCollapse) {
 		$chatSettingsBody.classList.add("collapsed");
 		$chatSettingsCollapse.classList.add("collapsed");
 	}
@@ -3181,6 +3412,10 @@ async function loadData() {
 	// render version
 	$version.innerHTML = `<a href="https://github.com/coalaura/whiskr" target="_blank">whiskr</a> ${data.version === "dev" ? "dev" : `<a href="https://github.com/coalaura/whiskr/releases/tag/${data.version}" target="_blank">${data.version}</a>`}`;
 
+	if ($sidebarVersion) {
+		$sidebarVersion.textContent = data.version;
+	}
+
 	// store overheads
 	promptOverheads = data.overhead || { files: 0, no_files: 0, search: 0 };
 
@@ -3191,6 +3426,13 @@ async function loadData() {
 
 	// update search availability
 	searchAvailable = data.config.search;
+	ttsAvailable = data.config.tts;
+
+	if (ttsAvailable) {
+		document.querySelectorAll(".tts-only").forEach(el => el.classList.remove("none"));
+	} else {
+		document.querySelectorAll(".tts-only").forEach(el => el.classList.add("none"));
+	}
 
 	// initialize floaters (unless disabled)
 	if (!data.config.motion) {
@@ -3360,6 +3602,160 @@ async function loadData() {
 	updateModelBenchmarkDisplay(modelBenchmarkMode);
 
 	modelDropdown.switchTab(modelTab);
+
+	if (ttsAvailable) {
+		const ttsModels = data.audio_models || [];
+
+		$ttsModel.innerHTML = "";
+		for (const model of ttsModels) {
+			const opt = document.createElement("option");
+			opt.value = model.id;
+			opt.textContent = model.name;
+			$ttsModel.appendChild(opt);
+		}
+
+		let restoredTtsModel = load("tts-model", "");
+		if (!restoredTtsModel || !ttsModels.find(m => m.id === restoredTtsModel)) {
+			restoredTtsModel = ttsModels[0]?.id || "";
+			store("tts-model", restoredTtsModel);
+		}
+		$ttsModel.value = restoredTtsModel;
+
+		const updateVoicesList = () => {
+			const selectedModelId = $ttsModel.value;
+			const selectedModel = ttsModels.find(m => m.id === selectedModelId);
+			$ttsVoice.innerHTML = "";
+
+			if (selectedModel?.voices) {
+				for (const voice of selectedModel.voices) {
+					const opt = document.createElement("option");
+					opt.value = voice;
+					opt.textContent = voice;
+					$ttsVoice.appendChild(opt);
+				}
+			}
+
+			let restoredTtsVoice = load("tts-voice", "");
+			if (!restoredTtsVoice || !selectedModel?.voices?.includes(restoredTtsVoice)) {
+				restoredTtsVoice = selectedModel?.voices?.[0] || "";
+				store("tts-voice", restoredTtsVoice);
+			}
+			$ttsVoice.value = restoredTtsVoice;
+
+			const oldVoiceDropdown = $ttsVoice.nextElementSibling;
+			if (oldVoiceDropdown?.classList.contains("dropdown")) {
+				oldVoiceDropdown.remove();
+			}
+
+			dropdown($ttsVoice);
+		};
+
+		$ttsModel.addEventListener("change", () => {
+			store("tts-model", $ttsModel.value);
+			updateVoicesList();
+		});
+
+		const oldModelDropdown = $ttsModel.nextElementSibling;
+		if (oldModelDropdown?.classList.contains("dropdown")) {
+			oldModelDropdown.remove();
+		}
+
+		dropdown($ttsModel);
+
+		updateVoicesList();
+
+		$ttsVoice.addEventListener("change", () => {
+			store("tts-voice", $ttsVoice.value);
+		});
+
+		let previewAudioElement = null;
+		let previewAudioUrl = null;
+
+		$ttsPreview?.addEventListener("click", async () => {
+			const model = $ttsModel.value;
+			const voice = $ttsVoice.value;
+
+			if (!model || !voice) {
+				notify("Please select both a Voice Model and a Voice to preview.", "error");
+				return;
+			}
+
+			if ($ttsPreview.classList.contains("loading")) {
+				return;
+			}
+
+			if ($ttsPreview.classList.contains("playing")) {
+				if (previewAudioElement) {
+					previewAudioElement.pause();
+				}
+				return;
+			}
+
+			if (previewAudioElement) {
+				previewAudioElement.pause();
+				previewAudioElement = null;
+			}
+
+			if (previewAudioUrl) {
+				URL.revokeObjectURL(previewAudioUrl);
+				previewAudioUrl = null;
+			}
+
+			$ttsPreview.classList.add("loading");
+			$ttsPreview.title = "Generating preview...";
+
+			try {
+				const textToRead = "Hello! This is a preview of the selected voice.";
+
+				const response = await fetch("/-/tts", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						model: model,
+						voice: voice,
+						input: textToRead,
+					}),
+				});
+
+				if (!response.ok) {
+					const errData = await response.json().catch(() => ({}));
+					throw new Error(errData.error || `Server returned code ${response.status}`);
+				}
+
+				const blob = await response.blob();
+				previewAudioUrl = URL.createObjectURL(blob);
+
+				previewAudioElement = new Audio();
+				previewAudioElement.addEventListener("ended", () => {
+					$ttsPreview.classList.remove("playing");
+					$ttsPreview.title = "Preview Voice";
+				});
+				previewAudioElement.addEventListener("pause", () => {
+					$ttsPreview.classList.remove("playing");
+					$ttsPreview.title = "Preview Voice";
+				});
+				previewAudioElement.src = previewAudioUrl;
+
+				$ttsPreview.classList.remove("loading");
+				$ttsPreview.classList.add("playing");
+				$ttsPreview.title = "Stop preview playback";
+
+				previewAudioElement.play().catch(err => {
+					console.error(err);
+					$ttsPreview.classList.remove("playing");
+					$ttsPreview.title = "Preview Voice";
+					notify("Playback failed: browser blocked autoplay or audio format unsupported.", "error");
+				});
+			} catch (err) {
+				console.error(err);
+				$ttsPreview.classList.remove("loading");
+				$ttsPreview.title = "Preview Voice";
+				notify(`Preview failed: ${err.message}`, "error");
+			}
+		});
+	}
 
 	if (data.config.auth && data.authenticated) {
 		await syncSettings();
@@ -4578,7 +4974,6 @@ $clear.addEventListener("click", () => {
 });
 
 $sidebarTrigger.addEventListener("click", toggleSidebar);
-$sidebarClose.addEventListener("click", closeSidebar);
 
 $saveCurrentChat.addEventListener("click", () => {
 	const name = prompt("Enter a name for this chat:", chatTitle || "New Chat");
@@ -4738,10 +5133,32 @@ $password.addEventListener("input", () => {
 
 $sEnabled.addEventListener("change", () => {
 	settings.enabled = $sEnabled.checked;
+	$modalSEnabled.checked = settings.enabled;
 
 	store("s-enabled", settings.enabled);
 
 	updatePersonalizationVisualState();
+});
+
+$modalSEnabled.addEventListener("change", () => {
+	settings.enabled = $modalSEnabled.checked;
+	$sEnabled.checked = settings.enabled;
+
+	store("s-enabled", settings.enabled);
+
+	updatePersonalizationVisualState();
+});
+
+$openSettings.addEventListener("click", () => {
+	$settingsModal.classList.add("open");
+});
+
+$settingsClose.addEventListener("click", () => {
+	$settingsModal.classList.remove("open");
+});
+
+$settingsModal.querySelector(".background").addEventListener("click", () => {
+	$settingsModal.classList.remove("open");
 });
 
 $sName.addEventListener("change", () => {
@@ -4799,26 +5216,6 @@ $message.addEventListener("keydown", event => {
 	if (event.ctrlKey && event.key === "Enter") {
 		$send.click();
 	}
-});
-
-$personalizationHeader.addEventListener("click", event => {
-	if (event.target.closest(".toggle-switch") || event.target.closest("input[type='checkbox']")) {
-		return;
-	}
-
-	const isCollapsed = $personalizationBody.classList.toggle("collapsed");
-
-	$personalizationCollapse.classList.toggle("collapsed", isCollapsed);
-
-	store("personalization-collapsed", isCollapsed);
-});
-
-$chatSettingsHeader.addEventListener("click", () => {
-	const isCollapsed = $chatSettingsBody.classList.toggle("collapsed");
-
-	$chatSettingsCollapse.classList.toggle("collapsed", isCollapsed);
-
-	store("chat-settings-collapsed", isCollapsed);
 });
 
 addEventListener("mousemove", event => {

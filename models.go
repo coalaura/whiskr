@@ -113,9 +113,9 @@ func LoadModels() error {
 
 		canText := slices.Contains(model.OutputModalities, "text")
 		canImage := env.Models.ImageGeneration && slices.Contains(model.OutputModalities, "image")
-		canAudio := env.Models.TextToSpeech && slices.Contains(model.OutputModalities, "audio")
+		canSpeak := env.Models.TextToSpeech && slices.Contains(model.OutputModalities, "speech")
 
-		if !canText && !canImage && !canAudio {
+		if !canText && !canImage && !canSpeak {
 			continue
 		}
 
@@ -123,19 +123,19 @@ func LoadModels() error {
 			input  float64
 			output float64
 
-			benchmarks      *ModelBenchmarks
-			supportedVoices []string
+			benchmarks *ModelBenchmarks
+			voices     []string
 		)
+
+		if canSpeak && len(model.SupportedTTSVoices) > 0 {
+			voices = model.SupportedTTSVoices
+		}
 
 		if full, ok := base[model.Slug]; ok {
 			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
 			output, _ = strconv.ParseFloat(full.Pricing.Completion, 64)
 
 			benchmarks = GetModelBenchmarks(full)
-
-			if full.SupportedVoices != nil {
-				supportedVoices = *full.SupportedVoices
-			}
 		} else {
 			input = model.Endpoint.Pricing.Prompt.Float64()
 			output = model.Endpoint.Pricing.Completion.Float64()
@@ -148,7 +148,7 @@ func LoadModels() error {
 			Description: model.Description,
 			Author:      model.Author,
 
-			Voices: supportedVoices,
+			Voices: voices,
 
 			Benchmarks: benchmarks,
 			Pricing: ModelPricing{
@@ -177,7 +177,7 @@ func LoadModels() error {
 			newModelList = append(newModelList, m)
 		}
 
-		if canAudio {
+		if canSpeak && len(m.Voices) > 0 {
 			newAudioList = append(newAudioList, m)
 		}
 

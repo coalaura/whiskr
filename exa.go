@@ -79,7 +79,7 @@ func RunExaRequest(req *http.Request) (*ExaResults, error) {
 			body = err.Error()
 		}
 
-		return nil, fmt.Errorf("Exa API error (%d): %s", resp.StatusCode, body)
+		return nil, fmt.Errorf("exa api error (%d): %s", resp.StatusCode, body)
 	}
 
 	var result ExaResults

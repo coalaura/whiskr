@@ -118,6 +118,7 @@ class Dropdown {
 		const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
 
 		Object.defineProperty(this.#_select, "value", {
+			configurable: true,
 			get: () => {
 				return descriptor.get.call(this.#_select);
 			},

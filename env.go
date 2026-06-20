@@ -39,6 +39,7 @@ type EnvSettings struct {
 type EnvModels struct {
 	TitleModel      string `yaml:"title-model"`
 	ImageGeneration bool   `yaml:"image-generation"`
+	TextToSpeech    bool   `yaml:"text-to-speech"`
 	Transformation  string `yaml:"transformation"`
 	Filters         string `yaml:"filters"`
 
@@ -91,6 +92,7 @@ func LoadEnv() (*Environment, error) {
 		},
 		Models: EnvModels{
 			ImageGeneration: true,
+			TextToSpeech:    true,
 		},
 	}
 
@@ -131,6 +133,13 @@ func (e *Environment) Init() error {
 		log.Warnln("Image generation enabled")
 	} else {
 		log.Warnln("Image generation disabled")
+	}
+
+	// print if text-to-speech is enabled
+	if e.Models.TextToSpeech {
+		log.Warnln("Text-to-speech enabled")
+	} else {
+		log.Warnln("Text-to-speech disabled")
 	}
 
 	// check if server secret is set

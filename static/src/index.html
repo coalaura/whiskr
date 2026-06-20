@@ -27,101 +27,25 @@
 
 		<div id="sidebar" class="collapsed">
 			<div class="sidebar-header">
-				<h3>Configuration</h3>
+				<div class="sidebar-brand">
+					<h3>whiskr</h3>
+					<small id="sidebar-version">dev</small>
+				</div>
 
-				<button id="sidebar-close" title="Close sidebar"></button>
+				<div class="header-actions">
+					<button id="open-settings" title="Open Settings"></button>
+				</div>
 			</div>
-			
+
 			<div class="sidebar-content">
 				<div class="sidebar-section personalization" id="personalization-section">
 					<div class="section-header" id="personalization-header">
-						<div class="section-collapse" id="personalization-collapse"></div>
-
 						<span>Personalization</span>
 
 						<label class="toggle-switch">
 							<input type="checkbox" id="s-enabled" />
 							<span class="toggle-slider"></span>
 						</label>
-					</div>
-
-					<div class="section-body" id="personalization-body">
-						<div class="form-group">
-							<label for="s-name">What should whiskr call you?</label>
-							<input type="text" id="s-name" placeholder="Your Name" />
-						</div>
-
-						<div class="form-group">
-							<label for="s-prompt">Anything whiskr should know about you?</label>
-							<textarea id="s-prompt" placeholder="Custom instructions, details..."></textarea>
-						</div>
-					</div>
-				</div>
-
-				<div class="sidebar-section chat-settings" id="chat-settings-section">
-					<div class="section-header" id="chat-settings-header">
-						<div class="section-collapse" id="chat-settings-collapse"></div>
-						<span>Chat Settings</span>
-					</div>
-
-					<div class="section-body" id="chat-settings-body">
-						<div class="form-group vertical">
-							<label for="ui-theme">Theme</label>
-							<select id="ui-theme" data-searchable>
-								<option value="catppuccin" selected>Catppuccin</option>
-								<option value="rose-pine">Rosé Pine</option>
-								<option value="gruvbox">Gruvbox</option>
-								<option value="tokyo-night">Tokyo Night</option>
-								<option value="dracula">Dracula</option>
-								<option value="nord">Nord</option>
-								<option value="one-dark">One Dark</option>
-								<option value="kanagawa">Kanagawa</option>
-								<option value="poimandres">Poimandres</option>
-								<option value="everforest">Everforest</option>
-								<option value="night-owl">Night Owl</option>
-								<option value="andromeda">Andromeda</option>
-								<option value="aura">Aura Theme</option>
-								<option value="vitesse">Vitesse</option>
-								<option value="synthwave-84">SynthWave '84</option>
-							</select>
-						</div>
-						<div class="form-group vertical">
-							<label for="provider-sorting">Provider Sorting</label>
-							<select id="provider-sorting">
-								<option value="" selected>Default sorting</option>
-								<option value="throughput">Sort by throughput (:turbo)</option>
-								<option value="latency">Sort by latency (:quick)</option>
-								<option value="price">Sort by price (:cheap)</option>
-							</select>
-						</div>
-
-						<div class="form-group vertical">
-							<label for="model-benchmark">Model Benchmark</label>
-							<select id="model-benchmark">
-								<option value="none">None</option>
-								<option value="intelligence" selected>Intelligence index</option>
-								<option value="coding">Coding index</option>
-								<option value="agentic">Agentic index</option>
-							</select>
-						</div>
-
-						<div class="form-group vertical">
-							<label for="image-resize">Resize Uploaded Images</label>
-							<select id="image-resize">
-								<option value="0">Original Size</option>
-								<option value="512">512 (512x512)</option>
-								<option value="1024">1K (1024x1024)</option>
-								<option value="1536">1.5K (1536x1536)</option>
-								<option value="2048">2K (2048x2048)</option>
-								<option value="4096">4K (4096x4096)</option>
-								<option value="8192" selected>8K (8192x8192)</option>
-							</select>
-						</div>
-
-						<div class="form-group vertical">
-							<label for="time-override" title="Override date/time">Time Override</label>
-							<input id="time-override" type="text" placeholder="Now" />
-						</div>
 					</div>
 				</div>
 
@@ -298,6 +222,133 @@
 				</div>
 				<div class="buttons">
 					<button id="login">Login</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="settings-modal" class="modal">
+			<div class="background"></div>
+			<div class="content settings-content">
+				<div class="header">
+					<span>Settings</span>
+					<button id="settings-close" title="Close settings" aria-label="Close settings"></button>
+				</div>
+
+				<div class="body">
+					<div class="settings-section" id="settings-personalization-section">
+						<div class="settings-section-head">
+							<h4>Personalization</h4>
+							<label class="toggle-switch" title="Enable personalization">
+								<input type="checkbox" id="modal-s-enabled" />
+								<span class="toggle-slider"></span>
+							</label>
+						</div>
+
+						<div class="settings-grid">
+							<div class="form-group span-2">
+								<label for="s-name">What should whiskr call you?</label>
+								<input type="text" id="s-name" placeholder="Your Name" />
+							</div>
+
+							<div class="form-group span-2">
+								<label for="s-prompt">Anything whiskr should know about you?</label>
+								<textarea id="s-prompt" placeholder="Custom instructions, details..."></textarea>
+							</div>
+						</div>
+					</div>
+
+					<div class="settings-section">
+						<div class="settings-section-head">
+							<h4>Appearance & Options</h4>
+						</div>
+
+						<div class="settings-grid">
+							<div class="form-group">
+								<label for="ui-theme">Theme</label>
+								<select id="ui-theme" data-searchable>
+									<option value="catppuccin" selected>Catppuccin</option>
+									<option value="rose-pine">Rosé Pine</option>
+									<option value="gruvbox">Gruvbox</option>
+									<option value="tokyo-night">Tokyo Night</option>
+									<option value="dracula">Dracula</option>
+									<option value="nord">Nord</option>
+									<option value="one-dark">One Dark</option>
+									<option value="kanagawa">Kanagawa</option>
+									<option value="poimandres">Poimandres</option>
+									<option value="everforest">Everforest</option>
+									<option value="night-owl">Night Owl</option>
+									<option value="andromeda">Andromeda</option>
+									<option value="aura">Aura Theme</option>
+									<option value="vitesse">Vitesse</option>
+									<option value="synthwave-84">SynthWave '84</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="provider-sorting">Provider Sorting</label>
+								<select id="provider-sorting">
+									<option value="" selected>Default sorting</option>
+									<option value="throughput">Sort by throughput (:turbo)</option>
+									<option value="latency">Sort by latency (:quick)</option>
+									<option value="price">Sort by price (:cheap)</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="model-benchmark">Model Benchmark</label>
+								<select id="model-benchmark">
+									<option value="none">None</option>
+									<option value="intelligence" selected>Intelligence index</option>
+									<option value="coding">Coding index</option>
+									<option value="agentic">Agentic index</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="image-resize">Resize Uploaded Images</label>
+								<select id="image-resize">
+									<option value="0">Original Size</option>
+									<option value="512">512 (512x512)</option>
+									<option value="1024">1K (1024x1024)</option>
+									<option value="1536">1.5K (1536x1536)</option>
+									<option value="2048">2K (2048x2048)</option>
+									<option value="4096">4K (4096x4096)</option>
+									<option value="8192" selected>8K (8192x8192)</option>
+								</select>
+							</div>
+
+							<div class="form-group span-2">
+								<label for="time-override" title="Override date/time">Time Override</label>
+								<input id="time-override" type="text" placeholder="Now" />
+							</div>
+						</div>
+					</div>
+
+					<div class="settings-section tts-only none">
+						<div class="settings-section-head">
+							<h4>Voice & Speech</h4>
+						</div>
+
+						<div class="settings-grid">
+							<div class="form-group">
+								<label for="tts-model">Voice Model</label>
+								<select id="tts-model">
+									<option value="">None</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="tts-voice">Voice</label>
+								<div class="input-with-button">
+									<select id="tts-voice">
+										<option value="">None</option>
+									</select>
+
+									<button id="tts-preview" title="Preview Voice"></button>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
