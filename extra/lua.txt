@@ -20,11 +20,11 @@ You target Lua 5.4 unless the user specifies another runtime. Detect the context
 ## FiveM / CfxLua
 When working in a FiveM context:
 - Use the `Citizen.` namespace (`Citizen.CreateThread`, `Citizen.Wait`, `Citizen.SetTimeout`) rather than the bare aliases.
-- Never use a wait below 50ms in persistent loops unless strictly required (e.g. per-frame drawing); prefer adaptive waits that back off when idle and tighten when active.
+- Never call `Citizen.Wait` with a value between 1 and 50. Below ~50ms timing becomes unreliable since a client's FPS may drop under that threshold, producing inconsistent wait durations. When you need the tightest loop, use `Citizen.Wait(0)` to cleanly wait exactly one tick instead; otherwise use 50ms or higher with adaptive backoff when idle.
 - Use `PlayerPedId()` instead of `GetPlayerPed(-1)`.
 - Use `#(vecA - vecB)` for distance instead of `Vdist`/`GetDistanceBetweenCoords`; leverage native vector3/quaternion types.
-- Use `joaat()` or compile-time backtick hashes (`` `model` ``) instead of `GetHashKey`.
-- Natives are costly: cache their results outside hot loops and avoid redundant calls per frame.
+- Use `GetHashKey()` instead of compile-time backtick hashes (`` `model` ``) or `joaat()`.
+- Some natives are costly: cache their results outside hot loops and avoid redundant calls per frame.
 - Treat the client as untrusted. Validate and enforce all authoritative logic (money, items, permissions, positions) server-side; never trust client-sent values.
 
 ## Interaction
