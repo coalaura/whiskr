@@ -24,6 +24,7 @@ const (
 	ChunkUsage         ChunkType = 8
 	ChunkEnd           ChunkType = 9
 	ChunkAlive         ChunkType = 10
+	ChunkAudio         ChunkType = 11
 )
 
 type ChunkType uint8

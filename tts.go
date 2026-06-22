@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/revrost/go-openrouter"
 )
@@ -16,6 +18,11 @@ type TTSRequest struct {
 	Model string `json:"model"`
 	Input string `json:"input"`
 	Voice string `json:"voice"`
+}
+
+type TTSResponseChunk struct {
+	Audio       []byte `msgpack:"audio"`
+	ContentType string `msgpack:"content_type"`
 }
 
 const (
@@ -63,6 +70,31 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+
+	stream, err := NewStream(w, ctx)
+	if err != nil {
+		RespondJson(w, http.StatusBadRequest, map[string]any{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				stream.WriteChunk(NewChunk(ChunkAlive, nil))
+			}
+		}
+	}()
+
 	client := OpenRouterClient()
 
 	speechReq := openrouter.SpeechRequest{
@@ -71,11 +103,9 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		Voice: req.Voice,
 	}
 
-	resp, err := client.CreateSpeech(r.Context(), speechReq)
+	resp, err := client.CreateSpeech(ctx, speechReq)
 	if err != nil {
-		RespondJson(w, http.StatusInternalServerError, map[string]any{
-			"error": err.Error(),
-		})
+		stream.WriteChunk(NewChunk(ChunkError, err.Error()))
 
 		return
 	}
@@ -84,20 +114,27 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 
 	isPCM := strings.Contains(strings.ToLower(contentType), "pcm") && !isWAVAudio(resp.Audio)
 
+	audioData := resp.Audio
+
 	if isPCM {
+		var buf bytes.Buffer
+
+		err = writeWAVHeader(&buf, len(resp.Audio), resp.ContentType)
+		if err == nil {
+			buf.Write(resp.Audio)
+
+			audioData = buf.Bytes()
+		}
+
 		contentType = "audio/wav"
 	} else if contentType == "" {
 		contentType = "audio/mpeg"
 	}
 
-	w.Header().Set("Content-Type", contentType)
-	w.WriteHeader(http.StatusOK)
-
-	if isPCM {
-		writeWAVHeader(w, len(resp.Audio), resp.ContentType)
-	}
-
-	w.Write(resp.Audio)
+	stream.WriteChunk(NewChunk(ChunkAudio, TTSResponseChunk{
+		Audio:       audioData,
+		ContentType: contentType,
+	}))
 }
 
 func parseAudioParamInt(params map[string]string, key string, fallback int) int {

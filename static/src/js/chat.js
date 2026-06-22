@@ -47,6 +47,7 @@ const ChunkType = {
 	8: "usage",
 	9: "end",
 	10: "alive",
+	11: "audio",
 };
 
 const $version = document.getElementById("version"),
@@ -2606,25 +2607,8 @@ class Message {
 				throw new Error("Message content is empty.");
 			}
 
-			const response = await fetch("/-/tts", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					model: ttsModel,
-					voice: ttsVoice,
-					input: textToRead,
-				}),
-			});
-
-			if (!response.ok) {
-				const errData = await response.json().catch(() => ({}));
-
-				throw new Error(errData.error || `Server returned code ${response.status}`);
-			}
-
-			const blob = await response.blob();
+			const audioData = await generateTTS(ttsModel, ttsVoice, textToRead),
+				blob = new Blob([audioData.audio], { type: audioData.content_type });
 
 			this.#audioBlob = blob;
 			this.#audioUrl = URL.createObjectURL(blob);
@@ -2818,6 +2802,51 @@ async function stream(url, options, callback) {
 	} finally {
 		callback(aborted ? "aborted" : "done");
 	}
+}
+
+async function generateTTS(model, voice, input) {
+	let audioData = null,
+		errorMsg = null;
+
+	await new Promise((resolve, reject) => {
+		stream(
+			"/-/tts",
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					model,
+					voice,
+					input,
+				}),
+			},
+			chunk => {
+				if (chunk === "done" || chunk === "aborted") {
+					if (errorMsg) {
+						reject(new Error(errorMsg));
+					} else if (!audioData) {
+						reject(new Error("No audio data received."));
+					} else {
+						resolve();
+					}
+
+					return;
+				}
+
+				if (chunk.type === "error") {
+					errorMsg = chunk.data;
+				} else if (chunk.type === "audio") {
+					audioData = chunk.data;
+				}
+			}
+		).catch(err => {
+			reject(err);
+		});
+	});
+
+	return audioData;
 }
 
 let abortCallback;
@@ -3607,42 +3636,55 @@ async function loadData() {
 		const ttsModels = data.audio_models || [];
 
 		$ttsModel.innerHTML = "";
+
 		for (const model of ttsModels) {
 			const opt = document.createElement("option");
+
 			opt.value = model.id;
 			opt.textContent = model.name;
+
 			$ttsModel.appendChild(opt);
 		}
 
 		let restoredTtsModel = load("tts-model", "");
-		if (!restoredTtsModel || !ttsModels.find(m => m.id === restoredTtsModel)) {
+
+		if (!restoredTtsModel || !ttsModels.find(mdl => mdl.id === restoredTtsModel)) {
 			restoredTtsModel = ttsModels[0]?.id || "";
+
 			store("tts-model", restoredTtsModel);
 		}
+
 		$ttsModel.value = restoredTtsModel;
 
 		const updateVoicesList = () => {
-			const selectedModelId = $ttsModel.value;
-			const selectedModel = ttsModels.find(m => m.id === selectedModelId);
+			const selectedModelId = $ttsModel.value,
+				selectedModel = ttsModels.find(mdl => mdl.id === selectedModelId);
+
 			$ttsVoice.innerHTML = "";
 
 			if (selectedModel?.voices) {
 				for (const voice of selectedModel.voices) {
 					const opt = document.createElement("option");
+
 					opt.value = voice;
 					opt.textContent = voice;
+
 					$ttsVoice.appendChild(opt);
 				}
 			}
 
 			let restoredTtsVoice = load("tts-voice", "");
+
 			if (!restoredTtsVoice || !selectedModel?.voices?.includes(restoredTtsVoice)) {
 				restoredTtsVoice = selectedModel?.voices?.[0] || "";
+
 				store("tts-voice", restoredTtsVoice);
 			}
+
 			$ttsVoice.value = restoredTtsVoice;
 
 			const oldVoiceDropdown = $ttsVoice.nextElementSibling;
+
 			if (oldVoiceDropdown?.classList.contains("dropdown")) {
 				oldVoiceDropdown.remove();
 			}
@@ -3656,6 +3698,7 @@ async function loadData() {
 		});
 
 		const oldModelDropdown = $ttsModel.nextElementSibling;
+
 		if (oldModelDropdown?.classList.contains("dropdown")) {
 			oldModelDropdown.remove();
 		}
@@ -3668,12 +3711,12 @@ async function loadData() {
 			store("tts-voice", $ttsVoice.value);
 		});
 
-		let previewAudioElement = null;
-		let previewAudioUrl = null;
+		let previewAudioElement = null,
+			previewAudioUrl = null;
 
 		$ttsPreview?.addEventListener("click", async () => {
-			const model = $ttsModel.value;
-			const voice = $ttsVoice.value;
+			const model = $ttsModel.value,
+				voice = $ttsVoice.value;
 
 			if (!model || !voice) {
 				notify("Please select both a Voice Model and a Voice to preview.", "error");
@@ -3688,16 +3731,19 @@ async function loadData() {
 				if (previewAudioElement) {
 					previewAudioElement.pause();
 				}
+
 				return;
 			}
 
 			if (previewAudioElement) {
 				previewAudioElement.pause();
+
 				previewAudioElement = null;
 			}
 
 			if (previewAudioUrl) {
 				URL.revokeObjectURL(previewAudioUrl);
+
 				previewAudioUrl = null;
 			}
 
@@ -3707,35 +3753,23 @@ async function loadData() {
 			try {
 				const textToRead = "Hello! This is a preview of the selected voice.";
 
-				const response = await fetch("/-/tts", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						model: model,
-						voice: voice,
-						input: textToRead,
-					}),
-				});
+				const audioData = await generateTTS(model, voice, textToRead),
+					blob = new Blob([audioData.audio], { type: audioData.content_type });
 
-				if (!response.ok) {
-					const errData = await response.json().catch(() => ({}));
-					throw new Error(errData.error || `Server returned code ${response.status}`);
-				}
-
-				const blob = await response.blob();
 				previewAudioUrl = URL.createObjectURL(blob);
 
 				previewAudioElement = new Audio();
+
 				previewAudioElement.addEventListener("ended", () => {
 					$ttsPreview.classList.remove("playing");
 					$ttsPreview.title = "Preview Voice";
 				});
+
 				previewAudioElement.addEventListener("pause", () => {
 					$ttsPreview.classList.remove("playing");
 					$ttsPreview.title = "Preview Voice";
 				});
+
 				previewAudioElement.src = previewAudioUrl;
 
 				$ttsPreview.classList.remove("loading");
@@ -3744,14 +3778,18 @@ async function loadData() {
 
 				previewAudioElement.play().catch(err => {
 					console.error(err);
+
 					$ttsPreview.classList.remove("playing");
 					$ttsPreview.title = "Preview Voice";
+
 					notify("Playback failed: browser blocked autoplay or audio format unsupported.", "error");
 				});
 			} catch (err) {
 				console.error(err);
+
 				$ttsPreview.classList.remove("loading");
 				$ttsPreview.title = "Preview Voice";
+
 				notify(`Preview failed: ${err.message}`, "error");
 			}
 		});
