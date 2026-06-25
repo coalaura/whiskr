@@ -7,6 +7,7 @@ import { parse, parseInline, use } from "marked";
 import { formatBytes } from "./lib.js";
 
 const timeouts = new WeakMap(),
+	highlightCache = new Map(),
 	scrollState = {
 		el: null,
 		startX: 0,
@@ -92,27 +93,49 @@ use({
 		}
 
 		if (type === "code") {
-			if (/^§\|FILE\|\d+\|§$/.test(text.trim())) {
+			const rawText = text.trim();
+
+			if (/^§\|FILE\|\d+\|§$/.test(rawText)) {
 				token.type = "text";
 
 				return;
 			}
 
-			const lang = token.lang || "plaintext";
-
-			let code;
+			const lang = token.lang;
 
 			if (lang && hljs.getLanguage(lang)) {
-				code = hljs.highlight(text.trim(), {
+				const cacheKey = lang + ":" + rawText.length + ":" + rawText.slice(-20),
+					cached = highlightCache.get(cacheKey);
+
+				if (cached && cached.raw === rawText) {
+					token.escaped = true;
+					token.lang = cached.lang;
+					token.text = cached.text;
+
+					return;
+				}
+
+				const code = hljs.highlight(rawText, {
 					language: lang,
 				});
-			} else {
-				code = hljs.highlightAuto(text.trim());
-			}
 
-			token.escaped = true;
-			token.lang = code.language || "plaintext";
-			token.text = code.value;
+				token.escaped = true;
+				token.lang = code.language;
+				token.text = code.value;
+
+				highlightCache.set(cacheKey, {
+					raw: rawText,
+					lang: token.lang,
+					text: token.text
+				});
+
+				if (highlightCache.size > 50) {
+					highlightCache.delete(highlightCache.keys().next().value);
+				}
+			} else {
+				token.escaped = false;
+				token.lang = "plaintext";
+			}
 		}
 	},
 
