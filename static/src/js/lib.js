@@ -13,12 +13,12 @@ export function uid() {
 }
 
 export function make(tag, ...classes) {
-	classes = classes.filter(Boolean);
-
 	const el = document.createElement(tag);
 
-	if (classes.length) {
-		el.classList.add(...classes);
+	for (let i = 0; i < classes.length; i++) {
+		if (classes[i]) {
+			el.classList.add(classes[i]);
+		}
 	}
 
 	return el;
@@ -82,10 +82,14 @@ export function round(num, digits, forceDigit = false) {
 	return result;
 }
 
-const trailingZeroRgx = /\.?0+$/m;
-
 export function fixed(num, decimals = 0) {
-	return num.toFixed(decimals).replace(trailingZeroRgx, "");
+	const str = num.toFixed(decimals);
+
+	if (str.indexOf(".") === -1) {
+		return str;
+	}
+
+	return str.replace(/\.?0+$/, "");
 }
 
 const formatter = new Intl.NumberFormat("en-US");

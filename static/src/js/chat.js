@@ -165,6 +165,8 @@ let searchAvailable = false,
 	totalUsage = {},
 	promptOverheads = {};
 
+let scrollButtonRaf;
+
 let modelDropdown, reasoningDropdown, exportRolesDropdown;
 
 const benchmarkLabels = {
@@ -453,10 +455,18 @@ function distanceFromBottom() {
 }
 
 function updateScrollButton() {
-	const bottom = distanceFromBottom();
+	if (scrollButtonRaf) {
+		return;
+	}
 
-	$top.classList.toggle("hidden", $messages.scrollTop < 80);
-	$bottom.classList.toggle("hidden", bottom < 80);
+	scrollButtonRaf = requestAnimationFrame(() => {
+		scrollButtonRaf = null;
+
+		const bottom = distanceFromBottom();
+
+		$top.classList.toggle("hidden", $messages.scrollTop < 80);
+		$bottom.classList.toggle("hidden", bottom < 80);
+	});
 }
 
 function setFollowTail(follow) {
@@ -581,6 +591,10 @@ class Message {
 	#state = false;
 	#loading = false;
 	#inline = {};
+
+	#saveTimeout;
+	#renderTimeout;
+	#renderQueued = new Set();
 
 	#_diff;
 	#pending = {};
@@ -1262,7 +1276,9 @@ class Message {
 				h = img.naturalHeight;
 
 			const maxSize = parseInt($imageResize.value, 10);
+
 			let scale = 1;
+
 			if (maxSize > 0 && (w > maxSize || h > maxSize)) {
 				scale = maxSize / Math.max(w, h);
 			}
@@ -1270,12 +1286,13 @@ class Message {
 			if (scale < 1) {
 				const rw = Math.round(w * scale);
 				const rh = Math.round(h * scale);
+
 				infoBox.textContent = `${rw}×${rh} (${w}×${h})`;
 			} else {
 				infoBox.textContent = `${w}×${h}`;
 			}
 
-			$messages.scrollTop += bHeight(img);
+			$messages.scrollTop += img.offsetHeight;
 		};
 
 		if (img.complete) {
@@ -1326,9 +1343,6 @@ class Message {
 	#morph(from, to) {
 		morphdom(from, to, {
 			childrenOnly: true,
-			onBeforeElUpdated: (fromEl, toEl) => {
-				return !fromEl.isEqualNode?.(toEl);
-			},
 			onBeforeNodeDiscarded: node => {
 				if (node.classList?.contains("image-info")) {
 					return false;
@@ -1520,22 +1534,28 @@ class Message {
 		}
 
 		if (!only || only === "time") {
-			this.#_time.innerHTML = "";
-
 			if (this.#time) {
 				if (this.#ttfr) {
-					const _ttfr = make("span", "ttfr-real");
+					let _ttfr = this.#_time.querySelector(".ttfr-real");
+
+					if (!_ttfr) {
+						_ttfr = make("span", "ttfr-real");
+						this.#_time.appendChild(_ttfr);
+					}
 
 					const time = formatMilliseconds(this.#ttfr * 1000);
 
 					_ttfr.title = `Time to first reasoning token: ${time}`;
 					_ttfr.textContent = time;
-
-					this.#_time.appendChild(_ttfr);
 				}
 
 				if (this.#ttft) {
-					const _ttft = make("span", "ttft-real");
+					let _ttft = this.#_time.querySelector(".ttft-real");
+
+					if (!_ttft) {
+						_ttft = make("span", "ttft-real");
+						this.#_time.appendChild(_ttft);
+					}
 
 					let time = this.#ttft,
 						prefix = "",
@@ -1550,11 +1570,15 @@ class Message {
 
 					_ttft.title = `Time to first completion token: ${formatMilliseconds(this.#ttft * 1000)}${suffix}`;
 					_ttft.textContent = `${prefix}${formatMilliseconds(time * 1000)}`;
-
-					this.#_time.appendChild(_ttft);
 				}
 
-				const _time = make("span", "time-real");
+				let _time = this.#_time.querySelector(".time-real");
+
+				if (!_time) {
+					_time = make("span", "time-real");
+
+					this.#_time.appendChild(_time);
+				}
 
 				let time = this.#time,
 					prefix = "",
@@ -1574,8 +1598,8 @@ class Message {
 
 				_time.title = `Total time taken: ${formatMilliseconds(this.#time * 1000)}${suffix}`;
 				_time.textContent = `${prefix}${formatMilliseconds(time * 1000)}`;
-
-				this.#_time.appendChild(_time);
+			} else {
+				this.#_time.innerHTML = "";
 			}
 		}
 
@@ -1631,7 +1655,26 @@ class Message {
 	}
 
 	save() {
-		store("messages", messages.map(message => message.getData(true)).filter(Boolean));
+		clearTimeout(this.#saveTimeout);
+		this.#saveTimeout = setTimeout(() => {
+			store("messages", messages.map(message => message.getData(true)).filter(Boolean));
+		}, 500);
+	}
+
+	#queueRender(type) {
+		this.#renderQueued.add(type);
+
+		if (!this.#renderTimeout) {
+			this.#renderTimeout = setTimeout(() => {
+				for (const entryType of this.#renderQueued) {
+					this.#render(entryType);
+				}
+
+				this.#renderQueued.clear();
+
+				this.#renderTimeout = null;
+			}, 100);
+		}
 	}
 
 	async calculateTokens() {
@@ -2327,14 +2370,14 @@ class Message {
 	setTool(tool) {
 		this.#tool = tool;
 
-		this.#render("tool");
+		this.#queueRender("tool");
 		this.save();
 	}
 
 	addImage(image) {
 		this.#images.push(image);
 
-		this.#render("images");
+		this.#queueRender("images");
 		this.save();
 	}
 
@@ -2351,14 +2394,14 @@ class Message {
 	addReasoning(chunk) {
 		this.#reasoning += chunk;
 
-		this.#render("reasoning");
+		this.#queueRender("reasoning");
 		this.save();
 	}
 
 	setReasoningType(type) {
 		this.#reasoningType = type;
 
-		this.#render("reasoning");
+		this.#queueRender("reasoning");
 		this.save();
 	}
 
@@ -2383,7 +2426,7 @@ class Message {
 			}
 		}
 
-		this.#render("text");
+		this.#queueRender("text");
 		this.save();
 	}
 
@@ -2504,6 +2547,9 @@ class Message {
 			URL.revokeObjectURL(this.#audioUrl);
 			this.#audioUrl = null;
 		}
+
+		clearTimeout(this.#saveTimeout);
+		clearTimeout(this.#renderTimeout);
 
 		this.#_message.remove();
 

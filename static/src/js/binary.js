@@ -23,7 +23,12 @@ function u32LE(binary, i) {
 }
 
 function parseDimensions(dataUrl) {
-	const binary = atob(dataUrl.split(",")[1]);
+	const b64 = dataUrl.split(",")[1];
+
+	// decode only the first 100KB to find dimensions
+	const maxLen = Math.min(b64.length, 131072),
+		validLen = maxLen - (maxLen % 4),
+		binary = atob(b64.slice(0, validLen));
 
 	let width, height;
 
@@ -63,6 +68,7 @@ function parseDimensions(dataUrl) {
 			height = u16LE(binary, 28) & 0x3fff;
 		} else if (fmt === "VP8L") {
 			const bits = u32LE(binary, 21);
+
 			width = (bits & 0x3fff) + 1;
 			height = ((bits >> 14) & 0x3fff) + 1;
 		} else if (fmt === "VP8X") {

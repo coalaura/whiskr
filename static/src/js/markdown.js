@@ -92,7 +92,7 @@ use({
 		}
 
 		if (type === "code") {
-			if (text.trim().match(/^§\|FILE\|\d+\|§$/gm)) {
+			if (/^§\|FILE\|\d+\|§$/.test(text.trim())) {
 				token.type = "text";
 
 				return;
@@ -121,7 +121,7 @@ use({
 			const title = href.title ? ` title="${escapeHtml(href.title)}"` : "",
 				alt = href.text ? ` alt="${escapeHtml(href.text)}"` : "";
 
-			return `<span class="no-click image-wrapper"><img src="${escapeHtml(href.href)}"${alt}${title} class="image" /></span>`;
+			return `<span class="no-click image-wrapper"><img src="${escapeHtml(href.href)}"${alt}${title} class="image" loading="lazy" /></span>`;
 		},
 
 		code: code => {
