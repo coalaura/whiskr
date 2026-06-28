@@ -133,8 +133,9 @@ use({
 					highlightCache.delete(highlightCache.keys().next().value);
 				}
 			} else {
-				token.escaped = false;
+				token.escaped = true;
 				token.lang = "plaintext";
+				token.text = escapeHtml(token.text);
 			}
 		}
 	},
