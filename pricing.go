@@ -34,6 +34,15 @@ func NewImagePricing(k ...float64) *ImagePricing {
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
+	// https://developers.openai.com/api/docs/guides/image-generation#calculating-costs
+	"openai/gpt-image-2": NewImagePricing(0.211, 0.42), // No 4K
+
+	// https://developers.openai.com/api/docs/guides/image-generation#calculating-costs
+	"openai/gpt-image-1-mini": NewImagePricing(0.036), // No 2K or 4K
+
+	// https://developers.openai.com/api/docs/guides/image-generation#calculating-costs
+	"openai/gpt-image-1": NewImagePricing(0.167), // No 2K or 4K
+
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3.1-flash-image
 	"google/gemini-3.1-flash-image": NewImagePricing(0.067, 0.101, 0.151),
 
