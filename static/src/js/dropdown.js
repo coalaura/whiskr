@@ -966,11 +966,7 @@ class Dropdown {
 		option.favorite = !option.favorite;
 
 		if (!option.favorite) {
-			const idx = this.#favoriteOrder.indexOf(option.value);
-
-			if (idx > -1) {
-				this.#favoriteOrder.splice(idx, 1);
-			}
+			this.#favoriteOrder = this.#favoriteOrder.filter(val => val !== option.value);
 
 			option.el.classList.remove("favorite");
 
@@ -992,7 +988,7 @@ class Dropdown {
 		}
 
 		if (!this.#favoriteOrder.includes(option.value)) {
-			this.#favoriteOrder.unshift(option.value);
+			this.#favoriteOrder = [option.value, ...this.#favoriteOrder];
 		}
 
 		this.#createFavoriteClone(option, true);
