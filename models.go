@@ -112,10 +112,9 @@ func LoadModels() error {
 		}
 
 		canText := slices.Contains(model.OutputModalities, "text")
-		canImage := env.Models.ImageGeneration && slices.Contains(model.OutputModalities, "image")
 		canSpeak := env.Models.TextToSpeech && slices.Contains(model.OutputModalities, "speech")
 
-		if !canText && !canImage && !canSpeak {
+		if !canText && !canSpeak {
 			continue
 		}
 
@@ -162,7 +161,7 @@ func LoadModels() error {
 
 		GetModelTags(model, m)
 
-		if canText || canImage {
+		if canText {
 			if env.Models.filters != nil {
 				matched, err := env.Models.filters.Match(m)
 				if err != nil {
