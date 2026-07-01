@@ -13,7 +13,7 @@ Latest stable: Go 1.26 (Feb 2026). Assume 1.26+ unless go.mod says otherwise, an
 
 Language - use by default where they fit:
 - `new(expr)` (1.26): allocates a `T` initialized to `expr`, returns `*T`. Use for optional/pointer fields: `Config{MaxRetries: new(3)}`. Escape analysis still applies (stack/SROA when non-escaping). `new(nil)` is illegal.
-- `errors.AsType[E error](err) (E, bool)` (1.26): type-safe `errors.As`; prefer in new code (match scoped to the `if`, no reflection): `if pe, ok := errors.AsType[*fs.PathError](err); ok { ... }`.
+- `errors.AsType[E error](err) (E, bool)` (1.26): type-safe `errors.As`; prefer in new code (match scoped to the `if`, no reflection): `if pathErr, ok := errors.AsType[*fs.PathError](err); ok { ... }`.
 - Self-referential type params (1.26): `type Tree[T Ordered[T]]` - prefer over `any` for recursive constraints.
 - `wg.Go(f)` (1.25) over manual `Add(1)`/`defer wg.Done()`.
 - Loop vars are per-iteration (1.22) - no `v := v`. `for i := range n` (1.22). But: ranging by value over elements containing a `sync.Mutex`/Locker copies the lock (vet copylock flags it) - iterate by index or pointer.
@@ -43,13 +43,13 @@ Experimental - never assume, mention only when relevant: `json/v2` + `jsontext` 
 
 # Style matching (highest priority after correctness)
 
-Mirror the user's code conventions exactly: naming, receiver names, error-wrapping, comment density, import grouping, layout, abstraction level. Their style beats your defaults; deviate only to fix a clear bug, and flag it briefly. Greenfield: Effective Go, Google Go Style Guide, stdlib style.
+Mirror the user's code conventions exactly: naming, receiver names, error-wrapping, comment density, import grouping, layout, abstraction level. Their style beats your defaults; deviate only to fix a clear bug, and flag it briefly. Greenfield: Effective Go, Google Go Style Guide, stdlib style. Edits must be indistinguishable from the surrounding file - naming, blank-line rhythm, comment tone, error wording. The diff should read as if the original author wrote it.
 
 # Naming & readability
 
 Names are part of the API. Length proportional to scope, inverse to use count.
 - No bare letters for substantive values: `buf`, `count`, `parsed` - not `b`, `x`, `v2`. No type-encoded names: `users` not `userSlice`, `count` not `numUsers`.
-- Single letters only where universal: `i`/`j`/`k`, `r`/`w`, `ctx`, `err`, `ok`, the receiver, 1-3-line range/closure vars. Two readers/writers in scope: name them (`src`, `dst`).
+- Single letters ONLY for: `i`/`j`/`k` indices, `r`/`w` for the sole Reader/Writer, `ctx`, `err`, `ok`, receivers. A short lifetime never excuses a cryptic name: `uiPtr := uintptr(ptr)`, not `u :=`. Range/closure vars get real names too (`user`, `line`). Two readers/writers in scope: name them (`src`, `dst`).
 - Receivers: consistent 1-2 letter abbreviation of the type on every method; never `this`/`self`; omit if unused.
 - Match param names for identical concepts across functions. Exported names read against their package - no stutter (`http.Server`, not `http.HTTPServer`).
 
