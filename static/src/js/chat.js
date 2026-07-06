@@ -1540,7 +1540,14 @@ class Message {
 
 					if (!_ttfr) {
 						_ttfr = make("span", "ttfr-real");
-						this.#_time.appendChild(_ttfr);
+
+						const _time = this.#_time.querySelector(".time-real");
+
+						if (_time) {
+							this.#_time.insertBefore(_ttfr, _time);
+						} else {
+							this.#_time.appendChild(_ttfr);
+						}
 					}
 
 					const time = formatMilliseconds(this.#ttfr * 1000);
@@ -1554,7 +1561,14 @@ class Message {
 
 					if (!_ttft) {
 						_ttft = make("span", "ttft-real");
-						this.#_time.appendChild(_ttft);
+
+						const _time = this.#_time.querySelector(".time-real");
+
+						if (_time) {
+							this.#_time.insertBefore(_ttft, _time);
+						} else {
+							this.#_time.appendChild(_ttft);
+						}
 					}
 
 					let time = this.#ttft,
