@@ -66,6 +66,13 @@ type EnvAuthentication struct {
 }
 
 // gost:preserve-layout
+type EnvProxy struct {
+	Name string `yaml:"name"`
+	Host string `yaml:"host"`
+	Auth string `yaml:"auth"`
+}
+
+// gost:preserve-layout
 type Environment struct {
 	dmx sync.RWMutex // data mutex
 	fmx sync.Mutex   // file mutex
@@ -77,6 +84,7 @@ type Environment struct {
 	Models         EnvModels         `yaml:"models"`
 	UI             EnvUI             `yaml:"ui"`
 	Authentication EnvAuthentication `yaml:"authentication"`
+	Proxies        []EnvProxy        `yaml:"proxies"`
 }
 
 func LoadEnv() (*Environment, error) {
@@ -208,6 +216,29 @@ func (e *Environment) Init() error {
 		return errors.New("authentication disabled but users defined")
 	}
 
+	// validate proxy entries
+	proxyNames := make(map[string]struct{}, len(e.Proxies))
+
+	for _, proxy := range e.Proxies {
+		if proxy.Name == "" {
+			return errors.New("proxy missing name")
+		}
+
+		if proxy.Host == "" {
+			return fmt.Errorf("proxy %q missing host", proxy.Name)
+		}
+
+		if proxy.Auth == "" {
+			return fmt.Errorf("proxy %q missing auth", proxy.Name)
+		}
+
+		if _, ok := proxyNames[proxy.Name]; ok {
+			return fmt.Errorf("duplicate proxy name %q", proxy.Name)
+		}
+
+		proxyNames[proxy.Name] = struct{}{}
+	}
+
 	// create user lookup map
 	e.Authentication.lookup = make(map[string]*EnvUser)
 
@@ -272,6 +303,8 @@ func (e *Environment) Store() error {
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},
+
+			"$.proxies": {yaml.HeadComment(" optional list of openrouter forwarding proxies (geo-routing)")},
 		}
 	)
 

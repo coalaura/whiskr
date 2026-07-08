@@ -13,21 +13,31 @@ func init() {
 	openrouter.DisableLogs()
 }
 
-func OpenRouterClient() *openrouter.Client {
+func OpenRouterClient(proxy *EnvProxy) *openrouter.Client {
 	cc := openrouter.DefaultConfig(env.Tokens.OpenRouter)
 
 	cc.XTitle = "Whiskr"
 	cc.HttpReferer = "https://github.com/coalaura/whiskr"
 
+	transport := http.DefaultTransport
+	if proxy != nil {
+		transport = &ProxyTransport{
+			Inner: http.DefaultTransport,
+			Host:  proxy.Host,
+			Auth:  proxy.Auth,
+		}
+	}
+
 	cc.HTTPClient = &http.Client{
-		Timeout: time.Duration(env.Settings.Timeout) * time.Second,
+		Timeout:   time.Duration(env.Settings.Timeout) * time.Second,
+		Transport: transport,
 	}
 
 	return openrouter.NewClientWithConfig(*cc)
 }
 
-func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletionRequest) (*openrouter.ChatCompletionStream, error) {
-	client := OpenRouterClient()
+func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletionRequest, proxy *EnvProxy) (*openrouter.ChatCompletionStream, error) {
+	client := OpenRouterClient(proxy)
 
 	stream, err := client.CreateChatCompletionStream(ctx, request)
 	if err != nil {
@@ -39,8 +49,8 @@ func OpenRouterStartStream(ctx context.Context, request openrouter.ChatCompletio
 	return stream, nil
 }
 
-func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest) (openrouter.ChatCompletionResponse, error) {
-	client := OpenRouterClient()
+func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest, proxy *EnvProxy) (openrouter.ChatCompletionResponse, error) {
+	client := OpenRouterClient(proxy)
 
 	response, err := client.CreateChatCompletion(ctx, request)
 	if err != nil {
@@ -57,13 +67,13 @@ func OpenRouterRun(ctx context.Context, request openrouter.ChatCompletionRequest
 }
 
 func OpenRouterGetGeneration(ctx context.Context, id string) (openrouter.Generation, error) {
-	client := OpenRouterClient()
+	client := OpenRouterClient(nil)
 
 	return client.GetGeneration(ctx, id)
 }
 
 func OpenRouterListModels(ctx context.Context) (map[string]openrouter.Model, error) {
-	client := OpenRouterClient()
+	client := OpenRouterClient(nil)
 
 	models, err := client.ListModels(ctx)
 	if err != nil {

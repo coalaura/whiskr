@@ -10,7 +10,7 @@ type Usage struct {
 }
 
 func HandleUsage(w http.ResponseWriter, r *http.Request) {
-	client := OpenRouterClient()
+	client := OpenRouterClient(nil)
 
 	current, err := client.GetCurrentAPIKey(r.Context())
 	if err != nil {

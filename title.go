@@ -11,6 +11,7 @@ import (
 )
 
 type TitleRequest struct {
+	Proxy    *string       `json:"proxy"`
 	Title    *string       `json:"title"`
 	Filename *string       `json:"filename"`
 	Messages []ChatMessage `json:"messages"`
@@ -55,7 +56,14 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	debug("preparing request")
+	proxy, err := ResolveProxy(Nullable(raw.Proxy, ""))
+	if err != nil {
+		RespondJson(w, http.StatusBadRequest, map[string]any{
+			"error": err.Error(),
+		})
+
+		return
+	}
 
 	selected := selectTitleMessages(raw.Messages, raw.Title != nil)
 
@@ -137,7 +145,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 
 	debug("generating title")
 
-	response, err := OpenRouterRun(r.Context(), request)
+	response, err := OpenRouterRun(r.Context(), request, proxy)
 	if err != nil {
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),

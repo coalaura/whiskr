@@ -69,6 +69,9 @@ type ChatSettings struct {
 }
 
 type ChatRequest struct {
+	proxy *EnvProxy
+
+	ProxyName   string        `json:"proxy"`
 	Prompt      string        `json:"prompt"`
 	Model       string        `json:"model"`
 	Provider    string        `json:"provider"`
@@ -205,6 +208,13 @@ func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, i
 
 func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 	var request openrouter.ChatCompletionRequest
+
+	proxy, err := ResolveProxy(r.ProxyName)
+	if err != nil {
+		return nil, err
+	}
+
+	r.proxy = proxy
 
 	model := GetModel(r.Model)
 	if model == nil {
@@ -542,7 +552,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		dump("chat.json", request)
 
-		tool, message, err := RunCompletion(ctx, response, request)
+		tool, message, err := RunCompletion(ctx, response, request, raw.proxy)
 		if err != nil {
 			response.WriteChunk(NewChunk(ChunkError, err))
 
@@ -636,8 +646,8 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest) (*ChatToolCall, string, error) {
-	stream, err := OpenRouterStartStream(ctx, *request)
+func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
+	stream, err := OpenRouterStartStream(ctx, *request, proxy)
 	if err != nil {
 		return nil, "", fmt.Errorf("stream.start: %v", err)
 	}

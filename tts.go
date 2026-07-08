@@ -15,6 +15,7 @@ import (
 )
 
 type TTSRequest struct {
+	Proxy string `json:"proxy"`
 	Model string `json:"model"`
 	Input string `json:"input"`
 	Voice string `json:"voice"`
@@ -70,6 +71,15 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	proxy, err := ResolveProxy(req.Proxy)
+	if err != nil {
+		RespondJson(w, http.StatusBadRequest, map[string]any{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
 	ctx := r.Context()
 
 	stream, err := NewStream(w, ctx)
@@ -95,7 +105,7 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	client := OpenRouterClient()
+	client := OpenRouterClient(proxy)
 
 	speechReq := openrouter.SpeechRequest{
 		Model: req.Model,
