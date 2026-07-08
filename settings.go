@@ -103,15 +103,29 @@ func (s *Settings) Serialize(username string) map[string]any {
 	s.mx.RLock()
 	defer s.mx.RUnlock()
 
+	var favorites []string
+
 	user, ok := s.Settings[username]
-	if !ok {
-		user = &UserSettings{
-			Favorites: make([]string, 0),
+	if ok && len(user.Favorites) > 0 {
+		favorites = make([]string, 0, len(user.Favorites))
+
+		modelMx.RLock()
+
+		for _, favorite := range user.Favorites {
+			if _, ok := ModelMap[favorite]; !ok {
+				continue
+			}
+
+			favorites = append(favorites, favorite)
 		}
+
+		modelMx.RUnlock()
+	} else {
+		favorites = make([]string, 0)
 	}
 
 	return map[string]any{
-		"favorites": user.Favorites,
+		"favorites": favorites,
 	}
 }
 
