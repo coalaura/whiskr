@@ -8,7 +8,7 @@ import (
 type ProxyTransport struct {
 	Inner http.RoundTripper
 	Host  string
-	Auth  string
+	Token string
 }
 
 func (t *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -18,7 +18,7 @@ func (t *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clone.URL.Host = t.Host
 	clone.Host = t.Host
 
-	clone.Header.Set("X-Whiskr-Auth", t.Auth)
+	clone.Header.Set("X-Proxy-Auth", t.Token)
 
 	return t.Inner.RoundTrip(clone)
 }

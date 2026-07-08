@@ -67,9 +67,9 @@ type EnvAuthentication struct {
 
 // gost:preserve-layout
 type EnvProxy struct {
-	Name string `yaml:"name"`
-	Host string `yaml:"host"`
-	Auth string `yaml:"auth"`
+	Name  string `yaml:"name"`
+	Host  string `yaml:"host"`
+	Token string `yaml:"token"`
 }
 
 // gost:preserve-layout
@@ -228,7 +228,7 @@ func (e *Environment) Init() error {
 			return fmt.Errorf("proxy %q missing host", proxy.Name)
 		}
 
-		if proxy.Auth == "" {
+		if proxy.Token == "" {
 			return fmt.Errorf("proxy %q missing auth", proxy.Name)
 		}
 

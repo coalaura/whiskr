@@ -4,37 +4,22 @@ import (
 	"context"
 	"crypto/subtle"
 	"errors"
-	"flag"
 	"io"
-	"log"
+	"maps"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/coalaura/plain"
 )
 
-type FlushingWriter struct {
-	wr http.ResponseWriter
-	fl http.Flusher
-}
-
-func (fw FlushingWriter) Write(p []byte) (int, error) {
-	n, err := fw.wr.Write(p)
-	if fw.fl != nil {
-		fw.fl.Flush()
-	}
-
-	return n, err
-}
+var log = plain.New(plain.WithDate(plain.RFC3339Local))
 
 func main() {
-	listen := flag.String("listen", ":8443", "listen address")
-	auth := flag.String("auth", "", "shared secret required from whiskr (sent as X-Whiskr-Auth)")
+	log.Println("Loading environment...")
 
-	flag.Parse()
-
-	if *auth == "" {
-		log.Fatal("whiskr-proxy: -auth is required")
-	}
+	env, err := LoadEnv()
+	log.MustFail(err)
 
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -45,8 +30,12 @@ func main() {
 		},
 	}
 
+	token := []byte(env.Server.Token)
+
 	handler := http.HandlerFunc(func(wr http.ResponseWriter, r *http.Request) {
-		if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Whiskr-Auth")), []byte(*auth)) == 1 {
+		auth := []byte(r.Header.Get("X-Proxy-Auth"))
+
+		if subtle.ConstantTimeCompare(auth, token) == 1 {
 			http.Error(wr, "unauthorized", http.StatusUnauthorized)
 
 			return
@@ -69,7 +58,7 @@ func main() {
 		req.Host = "openrouter.ai"
 
 		for key, values := range r.Header {
-			if strings.EqualFold(key, "X-Whiskr-Auth") || strings.EqualFold(key, "Host") {
+			if strings.EqualFold(key, "X-Proxy-Auth") || strings.EqualFold(key, "Host") {
 				continue
 			}
 
@@ -79,14 +68,13 @@ func main() {
 		resp, err := client.Do(req)
 		if err != nil {
 			http.Error(wr, err.Error(), http.StatusBadGateway)
+
 			return
 		}
 
 		defer resp.Body.Close()
 
-		for key, values := range resp.Header {
-			wr.Header()[key] = values
-		}
+		maps.Copy(wr.Header(), resp.Header)
 
 		wr.WriteHeader(resp.StatusCode)
 
@@ -94,10 +82,14 @@ func main() {
 
 		_, err = io.Copy(FlushingWriter{wr: wr, fl: flusher}, resp.Body)
 		if err != nil && !errors.Is(err, context.Canceled) {
-			log.Printf("proxy copy: %v", err)
+			log.Warnf("proxy copy: %v\n", err)
 		}
 	})
 
-	log.Printf("whiskr-proxy listening on %s", *listen)
-	log.Fatal(http.ListenAndServe(*listen, handler))
+	addr := env.Addr()
+
+	log.Printf("Listening on %s.\n", addr)
+
+	err = http.ListenAndServe(addr, handler)
+	log.MustFail(err)
 }
