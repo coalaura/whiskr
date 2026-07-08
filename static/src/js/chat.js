@@ -443,10 +443,6 @@ function setupCrossTabSync() {
 				modelDropdown.setFavorites(change.value || []);
 			});
 		}
-
-		if (change.key === "reasoning-effort" && reasoningDropdown) {
-			$reasoningEffort.value = change.value ?? "medium";
-		}
 	});
 }
 
