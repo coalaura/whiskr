@@ -1586,6 +1586,7 @@ body.no-title #title {
 	transform: scaleY(-100%);
 }
 
+#proxy::after,
 #upload::after,
 .message .collapse::after,
 .message .options .file-controls::after {
@@ -1991,7 +1992,8 @@ body.no-title #title {
 	line-height: 12px;
 }
 
-#role {
+#role,
+#proxy {
 	display: flex;
 	align-items: center;
 	gap: 4px;
@@ -2004,12 +2006,33 @@ body.no-title #title {
 	height: 14px;
 }
 
-#role .dropdown .selected {
+#role .dropdown .selected,
+#proxy .dropdown .selected {
 	text-transform: lowercase;
 }
 
 #role .dropdown .selected::after {
 	display: none;
+}
+
+#proxy {
+	position: relative;
+	margin-right: 14px;
+	height: 20px;
+}
+
+#proxy .dropdown {
+	line-height: 14px;
+}
+
+#proxy::before {
+	background-color: var(--c-subtext);
+	mask-image: url(icons/proxy.svg);
+}
+
+#proxy.active::before {
+	background-color: var(--c-green);
+	mask-image: url(icons/proxy.svg);
 }
 
 #message {
@@ -2130,6 +2153,7 @@ input[type="checkbox"]:focus-visible {
 	margin-left: auto;
 }
 
+#proxy::after,
 #upload::after,
 .message .options .collapse::after,
 .message .options .file-controls::after {
@@ -2182,6 +2206,7 @@ body.loading #version,
 .message .statistics .tokens::before,
 .message .statistics .cost::before,
 #role::before,
+#proxy::before,
 #files,
 #json,
 #search,
@@ -2199,6 +2224,7 @@ body.loading #version,
 }
 
 #role::before,
+#proxy::before,
 .message .statistics .provider::before,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,

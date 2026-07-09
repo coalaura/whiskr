@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -67,6 +68,8 @@ type EnvAuthentication struct {
 
 // gost:preserve-layout
 type EnvProxy struct {
+	transport http.RoundTripper
+
 	Name  string `yaml:"name"`
 	Host  string `yaml:"host"`
 	Token string `yaml:"token"`
@@ -80,11 +83,11 @@ type Environment struct {
 	Debug          bool              `yaml:"debug"`
 	Tokens         EnvTokens         `yaml:"tokens"`
 	Server         EnvServer         `yaml:"server"`
+	Proxies        []EnvProxy        `yaml:"proxies"`
 	Settings       EnvSettings       `yaml:"settings"`
 	Models         EnvModels         `yaml:"models"`
 	UI             EnvUI             `yaml:"ui"`
 	Authentication EnvAuthentication `yaml:"authentication"`
-	Proxies        []EnvProxy        `yaml:"proxies"`
 }
 
 func LoadEnv() (*Environment, error) {
@@ -219,7 +222,9 @@ func (e *Environment) Init() error {
 	// validate proxy entries
 	proxyNames := make(map[string]struct{}, len(e.Proxies))
 
-	for _, proxy := range e.Proxies {
+	for i := range e.Proxies {
+		proxy := &e.Proxies[i]
+
 		if proxy.Name == "" {
 			return errors.New("proxy missing name")
 		}
@@ -237,6 +242,8 @@ func (e *Environment) Init() error {
 		}
 
 		proxyNames[proxy.Name] = struct{}{}
+
+		proxy.transport = NewProxyTransport(proxy.Host, proxy.Token)
 	}
 
 	// create user lookup map
@@ -303,8 +310,6 @@ func (e *Environment) Store() error {
 
 			"$.authentication.enabled": {yaml.HeadComment(" require login with username and password")},
 			"$.authentication.users":   {yaml.HeadComment(" list of users with bcrypt password hashes")},
-
-			"$.proxies": {yaml.HeadComment(" optional list of openrouter forwarding proxies (geo-routing)")},
 		}
 	)
 

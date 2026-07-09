@@ -28,8 +28,10 @@ export function bHeight(el) {
 	return el.getBoundingClientRect().height;
 }
 
-export function fillSelect($select, options, callback) {
-	$select.innerHTML = "";
+export function fillSelect($select, options, callback, keepExisting = false) {
+	if (!keepExisting) {
+		$select.innerHTML = "";
+	}
 
 	for (const option of options) {
 		const el = document.createElement("option");

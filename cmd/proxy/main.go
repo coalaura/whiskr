@@ -32,11 +32,11 @@ func main() {
 
 	token := []byte(env.Server.Token)
 
-	handler := http.HandlerFunc(func(wr http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := []byte(r.Header.Get("X-Proxy-Auth"))
 
-		if subtle.ConstantTimeCompare(auth, token) == 1 {
-			http.Error(wr, "unauthorized", http.StatusUnauthorized)
+		if subtle.ConstantTimeCompare(auth, token) != 1 {
+			w.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}
@@ -50,7 +50,9 @@ func main() {
 
 		req, err := http.NewRequestWithContext(r.Context(), r.Method, target.String(), r.Body)
 		if err != nil {
-			http.Error(wr, err.Error(), http.StatusBadRequest)
+			w.WriteHeader(http.StatusBadRequest)
+
+			log.Warnf("new request: %v\n", err)
 
 			return
 		}
@@ -67,20 +69,22 @@ func main() {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			http.Error(wr, err.Error(), http.StatusBadGateway)
+			w.WriteHeader(http.StatusBadGateway)
+
+			log.Warnf("send request: %v\n", err)
 
 			return
 		}
 
 		defer resp.Body.Close()
 
-		maps.Copy(wr.Header(), resp.Header)
+		maps.Copy(w.Header(), resp.Header)
 
-		wr.WriteHeader(resp.StatusCode)
+		w.WriteHeader(resp.StatusCode)
 
-		flusher, _ := wr.(http.Flusher)
+		flusher, _ := w.(http.Flusher)
 
-		_, err = io.Copy(FlushingWriter{wr: wr, fl: flusher}, resp.Body)
+		_, err = io.Copy(FlushingWriter{wr: w, fl: flusher}, resp.Body)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			log.Warnf("proxy copy: %v\n", err)
 		}
@@ -90,6 +94,6 @@ func main() {
 
 	log.Printf("Listening on %s.\n", addr)
 
-	err = http.ListenAndServe(addr, handler)
+	err = http.ListenAndServe(addr, log.Middleware()(handler))
 	log.MustFail(err)
 }

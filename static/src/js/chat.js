@@ -65,6 +65,7 @@ const $version = document.getElementById("version"),
 	$attachments = document.getElementById("attachments"),
 	$role = document.getElementById("role").querySelector("select"),
 	$model = document.getElementById("model"),
+	$proxy = document.getElementById("proxy").querySelector("select"),
 	$providerSorting = document.getElementById("provider-sorting"),
 	$modelBenchmark = document.getElementById("model-benchmark"),
 	$imageResolution = document.getElementById("image-resolution"),
@@ -2663,7 +2664,7 @@ class Message {
 				throw new Error("Message content is empty.");
 			}
 
-			const audioData = await generateTTS(ttsModel, ttsVoice, textToRead),
+			const audioData = await generateTTS($proxy.value, ttsModel, ttsVoice, textToRead),
 				blob = new Blob([audioData.audio], { type: audioData.content_type });
 
 			this.#audioBlob = blob;
@@ -2860,7 +2861,7 @@ async function stream(url, options, callback) {
 	}
 }
 
-async function generateTTS(model, voice, input) {
+async function generateTTS(proxy, model, voice, input) {
 	let audioData = null,
 		errorMsg = null;
 
@@ -2873,9 +2874,10 @@ async function generateTTS(model, voice, input) {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					model,
-					voice,
-					input,
+					proxy: proxy,
+					model: model,
+					voice: voice,
+					input: input,
 				}),
 			},
 			chunk => {
@@ -2952,6 +2954,7 @@ async function buildRequest(noPush = false) {
 	const expandedMessages = await Promise.all(messages.map(message => message.getData(false, true)));
 
 	return {
+		proxy: $proxy.value,
 		prompt: $prompt.value,
 		model: $model.value,
 		provider: $providerSorting.value,
@@ -3447,6 +3450,7 @@ async function loadData() {
 	settings.enabled = load("s-enabled", true);
 	settings.name = load("s-name", "");
 	settings.prompt = load("s-prompt", "");
+
 	modelBenchmarkMode = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
 
 	$modelBenchmark.value = modelBenchmarkMode;
@@ -3529,6 +3533,20 @@ async function loadData() {
 		$authentication.classList.add("open");
 	} else {
 		refreshUsage();
+	}
+
+	// render proxies
+	if (data.config.proxies.length) {
+		$proxy.parentNode.classList.remove("none");
+
+		fillSelect($proxy, data.config.proxies, (el, proxy) => {
+			el.textContent = proxy;
+			el.value = proxy;
+		}, true);
+
+		dropdown($proxy);
+	} else {
+		$proxy.parentNode.classList.remove("add");
 	}
 
 	// render reasoning
@@ -3809,7 +3827,7 @@ async function loadData() {
 			try {
 				const textToRead = "Hello! This is a preview of the selected voice.";
 
-				const audioData = await generateTTS(model, voice, textToRead),
+				const audioData = await generateTTS($proxy.value, model, voice, textToRead),
 					blob = new Blob([audioData.audio], { type: audioData.content_type });
 
 				previewAudioUrl = URL.createObjectURL(blob);
@@ -3916,6 +3934,9 @@ function restore() {
 	$reasoningEffort.value = load("reasoning-effort", "medium");
 	$timeOverride.value = load("time-override", "");
 	$exportFormat.value = load("export-format", "whiskr");
+
+	$proxy.value = load("proxy", "");
+	$proxy.parentNode.classList.toggle("active", !!$proxy.value);
 
 	exportFormat = $exportFormat.value;
 
@@ -4305,6 +4326,7 @@ async function uploadImageInline() {
 
 function getChatData(name) {
 	const data = {
+		proxy: $proxy.value,
 		title: name?.trim?.() || chatTitle,
 		file: chatFilename,
 		message: $message.value,
@@ -4839,6 +4861,12 @@ $resizeBar.addEventListener("mousedown", event => {
 
 $role.addEventListener("change", () => {
 	store("role", $role.value);
+});
+
+$proxy.addEventListener("change", () => {
+	$proxy.parentNode.classList.toggle("active", !!$proxy.value);
+
+	store("proxy", $proxy.value);
 });
 
 $model.addEventListener("change", () => {

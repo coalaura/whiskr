@@ -1,26 +1,50 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 type ProxyTransport struct {
-	Inner http.RoundTripper
-	Host  string
-	Token string
+	scheme string
+	host   string
+	token  string
+}
+
+func NewProxyTransport(host, token string) *ProxyTransport {
+	scheme := "https"
+
+	if idx := strings.Index(host, "://"); idx != -1 {
+		scheme = host[:idx]
+		host = host[idx+3:]
+	}
+
+	return &ProxyTransport{
+		scheme: scheme,
+		host:   host,
+		token:  token,
+	}
 }
 
 func (t *ProxyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clone := req.Clone(req.Context())
 
-	clone.URL.Scheme = "https"
-	clone.URL.Host = t.Host
-	clone.Host = t.Host
+	clone.URL.Scheme = t.scheme
+	clone.URL.Host = t.host
 
-	clone.Header.Set("X-Proxy-Auth", t.Token)
+	clone.Host = t.host
 
-	return t.Inner.RoundTrip(clone)
+	clone.Header.Set("X-Proxy-Auth", t.token)
+
+	resp, err := http.DefaultTransport.RoundTrip(clone)
+	if err != nil {
+		return nil, translateProxyError(err)
+	}
+
+	return resp, nil
 }
 
 func ResolveProxy(name string) (*EnvProxy, error) {
@@ -45,4 +69,27 @@ func ProxyNames() []string {
 	}
 
 	return names
+}
+
+func translateProxyError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var urlErr *url.Error
+
+	if errors.As(err, &urlErr) {
+		err = urlErr.Err
+	}
+
+	msg := err.Error()
+
+	switch {
+	case strings.Contains(msg, "server gave HTTP response to HTTPS client"):
+		return errors.New("proxy scheme mismatch: proxy expects HTTP, but we used HTTPS (set host to http://...)")
+	case strings.Contains(msg, "server gave HTTPS response to HTTP client"):
+		return errors.New("proxy scheme mismatch: proxy expects HTTPS, but we used HTTP (set host to https://...)")
+	}
+
+	return err
 }

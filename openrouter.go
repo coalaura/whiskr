@@ -21,11 +21,7 @@ func OpenRouterClient(proxy *EnvProxy) *openrouter.Client {
 
 	transport := http.DefaultTransport
 	if proxy != nil {
-		transport = &ProxyTransport{
-			Inner: http.DefaultTransport,
-			Host:  proxy.Host,
-			Token: proxy.Token,
-		}
+		transport = proxy.transport
 	}
 
 	cc.HTTPClient = &http.Client{
