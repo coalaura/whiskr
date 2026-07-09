@@ -23,6 +23,8 @@ settings:
   # the interval in which the model list is refreshed in minutes (optional; default: 30m)
   refresh-interval: 30
 
+proxies: []
+
 models:
   # model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)
   title-model: google/gemini-2.5-flash-lite
