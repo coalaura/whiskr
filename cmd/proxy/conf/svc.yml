@@ -1,0 +1,14 @@
+name: whiskr_proxy
+path: /var/proxy.example.com
+network: true
+listening: true
+privileged_ports: false
+exec_memory: false
+writable_files: true
+runtime_dir: false
+devices: false
+full_devices: false
+subprocess: false
+separate_log_dir: false
+localhost_only: false
+private_users: false
