@@ -127,26 +127,7 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentType := resp.ContentType
-
-	isPCM := strings.Contains(strings.ToLower(contentType), "pcm") && !isWAVAudio(resp.Audio)
-
-	audioData := resp.Audio
-
-	if isPCM {
-		var buf bytes.Buffer
-
-		err = writeWAVHeader(&buf, len(resp.Audio), resp.ContentType)
-		if err == nil {
-			buf.Write(resp.Audio)
-
-			audioData = buf.Bytes()
-		}
-
-		contentType = "audio/wav"
-	} else if contentType == "" {
-		contentType = "audio/mpeg"
-	}
+	audioData, contentType := processAudio(speechReq.ResponseFormat, resp.ContentType, resp.Audio)
 
 	stream.WriteChunk(NewChunk(ChunkAudio, TTSResponseChunk{
 		Audio:       audioData,
@@ -171,6 +152,74 @@ func isWAVAudio(audio []byte) bool {
 	}
 
 	return string(audio[0:4]) == "RIFF" && string(audio[8:12]) == "WAVE"
+}
+
+func isMP3Audio(audio []byte) bool {
+	if len(audio) < 3 {
+		return false
+	}
+
+	if audio[0] == 'I' && audio[1] == 'D' && audio[2] == '3' {
+		return true
+	}
+
+	return audio[0] == 0xFF && audio[1]&0xE0 == 0xE0
+}
+
+func detectAudioFormat(requestedFormat openrouter.SpeechResponseFormat, contentType string, audio []byte) string {
+	if isWAVAudio(audio) {
+		return "wav"
+	}
+
+	if isMP3Audio(audio) {
+		return "mp3"
+	}
+
+	switch requestedFormat {
+	case "mp3", "wav", "pcm":
+		return string(requestedFormat)
+	}
+
+	ct := strings.ToLower(contentType)
+
+	switch {
+	case strings.Contains(ct, "mpeg") || strings.Contains(ct, "mp3"):
+		return "mp3"
+	case strings.Contains(ct, "wav"):
+		return "wav"
+	case strings.Contains(ct, "pcm"):
+		return "pcm"
+	}
+
+	return ""
+}
+
+func processAudio(requestedFormat openrouter.SpeechResponseFormat, contentType string, audio []byte) ([]byte, string) {
+	detected := detectAudioFormat(requestedFormat, contentType, audio)
+
+	switch detected {
+	case "mp3":
+		return audio, "audio/mpeg"
+	case "wav":
+		return audio, "audio/wav"
+	case "pcm":
+		var buf bytes.Buffer
+
+		err := writeWAVHeader(&buf, len(audio), contentType)
+		if err == nil {
+			buf.Write(audio)
+
+			return buf.Bytes(), "audio/wav"
+		}
+
+		return audio, "audio/pcm"
+	}
+
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	return audio, contentType
 }
 
 func writeWAVHeader(w io.Writer, dataLen int, contentType string) error {
