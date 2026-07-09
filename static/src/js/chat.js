@@ -385,7 +385,15 @@ async function updateChatTokens() {
 		costStr = formatMoney(costEstimate);
 	}
 
-	$chatTokens.textContent = `~${formatNumber(total)}t (~${costStr})`;
+	let chatCost = 0;
+
+	for (const msg of messages) {
+		chatCost += msg.getCost() || 0;
+	}
+
+	const chatCostStr = chatCost > 0 ? `&nbsp;&nbsp;|&nbsp;&nbsp;<span title="Actual total cost of the entire chat">${formatMoney(chatCost)}</span>` : "";
+
+	$chatTokens.innerHTML = `<span title="Estimated cost of next message">~${formatNumber(total)}t (~${costStr})</span>${chatCostStr}`;
 }
 
 function updateTitle() {
@@ -1775,6 +1783,10 @@ class Message {
 		return total;
 	}
 
+	getCost() {
+		return (this.#statistics?.cost || 0) + (this.#tool?.cost || 0);
+	}
+
 	isAssistant() {
 		return this.#role === "assistant";
 	}
@@ -3144,10 +3156,12 @@ async function generate(cancel = false, noPush = false) {
 					finish();
 
 					break;
-				case "usage":
-					message.setStatistics(chunk.data);
+			case "usage":
+				message.setStatistics(chunk.data);
 
-					break;
+				updateChatTokens();
+
+				break;
 				case "tool":
 					receivedCompletion = true;
 
