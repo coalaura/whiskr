@@ -113,6 +113,13 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		Voice: req.Voice,
 	}
 
+	format, ok := AudioFormats[req.Model]
+	if ok {
+		speechReq.ResponseFormat = format.Optimal
+	}
+
+	debug("requesting %s speech from %q", speechReq.ResponseFormat, speechReq.Model)
+
 	resp, err := client.CreateSpeech(ctx, speechReq)
 	if err != nil {
 		stream.WriteChunk(NewChunk(ChunkError, err.Error()))

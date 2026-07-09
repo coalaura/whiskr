@@ -1,9 +1,40 @@
 package main
 
+import (
+	"slices"
+
+	"github.com/revrost/go-openrouter"
+)
+
+type AudioFormat struct {
+	Optimal   openrouter.SpeechResponseFormat
+	Supported []string
+}
+
 type ImagePricing struct {
 	K1 float64 `json:"k_1,omitzero"`
 	K2 float64 `json:"k_2,omitzero"`
 	K4 float64 `json:"k_4,omitzero"`
+}
+
+// mp3 > wav > pcm
+var optimalAudioFormats = []string{"mp3", "wav", "pcm"}
+
+func NewAudioFormat(supported ...string) *AudioFormat {
+	var optimal string
+
+	for _, format := range optimalAudioFormats {
+		if slices.Contains(supported, format) {
+			optimal = format
+
+			break
+		}
+	}
+
+	return &AudioFormat{
+		Optimal:   openrouter.SpeechResponseFormat(optimal),
+		Supported: supported,
+	}
 }
 
 func NewImagePricing(k ...float64) *ImagePricing {
@@ -30,6 +61,19 @@ func NewImagePricing(k ...float64) *ImagePricing {
 		K2: k2,
 		K4: k4,
 	}
+}
+
+// Since there is no reliable tts output format data :(
+var AudioFormats = map[string]*AudioFormat{
+	"microsoft/mai-voice-2":               NewAudioFormat("mp3", "pcm"),
+	"x-ai/grok-voice-tts-1.0":             NewAudioFormat("mp3", "pcm"),
+	"google/gemini-3.1-flash-tts-preview": NewAudioFormat("pcm"),
+	"zyphra/zonos-v0.1-transformer":       NewAudioFormat("mp3"), // 500 error with "pcm"
+	"zyphra/zonos-v0.1-hybrid":            NewAudioFormat("mp3"), // 500 error with "pcm"
+	"sesame/csm-1b":                       NewAudioFormat("mp3", "pcm"),
+	"canopylabs/orpheus-3b-0.1-ft":        NewAudioFormat("mp3", "pcm"),
+	"hexgrad/kokoro-82m":                  NewAudioFormat("mp3", "pcm"),
+	"mistralai/voxtral-mini-tts-2603":     NewAudioFormat("mp3"),
 }
 
 // Since there is no reliable image output pricing data :(
