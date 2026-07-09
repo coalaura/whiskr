@@ -91,7 +91,7 @@ jobs:
         cp -r prompts build/prompts
         cp example.config.yml build/config.yml
 
-        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" "whiskr-proxy${EXT}" public prompts config.yml
+        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" "whiskr_proxy${EXT}" public prompts config.yml
         rm -rf build/public build/prompts build/config.yml "build/whiskr${EXT}" "build/whiskr_proxy${EXT}"
 
     - name: Upload artifact
