@@ -52,7 +52,7 @@ jobs:
           --file-version "${{ github.ref_name }}" \
           --arch "${{ matrix.goarch }}"
 
-    - name: Build ${{ matrix.goos }}_${{ matrix.goarch }}
+    - name: Build whiskr
       shell: bash
       run: |
         mkdir -p build
@@ -67,12 +67,32 @@ jobs:
           -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}'" \
           -o "build/whiskr${EXT}" .
 
+    - name: Build proxy
+      shell: bash
+      run: |
+        mkdir -p build
+        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+
+        GOOS=${{ matrix.goos }} \
+        GOARCH=${{ matrix.goarch }} \
+        CGO_ENABLED=0 \
+        go build \
+          -trimpath \
+          -buildvcs=false \
+          -ldflags "-s -w" \
+          -o "build/whiskr-proxy${EXT}" ./cmd/proxy
+
+    - name: Package
+      shell: bash
+      run: |
+        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+
         cp -r public build/public
         cp -r prompts build/prompts
         cp example.config.yml build/config.yml
 
-        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" public prompts config.yml
-        rm -rf build/public build/prompts build/config.yml "build/whiskr${EXT}"
+        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" "whiskr-proxy${EXT}" public prompts config.yml
+        rm -rf build/public build/prompts build/config.yml "build/whiskr${EXT}" "build/whiskr-proxy${EXT}"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v6
