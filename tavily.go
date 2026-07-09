@@ -29,17 +29,6 @@ type TavilyResults struct {
 	Usage     TavilyUsage    `json:"usage,omitempty"`
 }
 
-func (t *TavilyResults) String() string {
-	buf := GetFreeBuffer()
-	defer pool.Put(buf)
-
-	json.NewEncoder(buf).Encode(map[string]any{
-		"results": t.Results,
-	})
-
-	return buf.String()
-}
-
 type TavilyExtractRequest struct {
 	Urls            any     `json:"urls"`
 	Query           string  `json:"query,omitempty"`
@@ -129,6 +118,17 @@ type TavilySearchResponse struct {
 type TavilyQueryResult struct {
 	Resp TavilySearchResponse
 	Err  error
+}
+
+func (t *TavilyResults) String() string {
+	buf := GetFreeBuffer()
+	defer pool.Put(buf)
+
+	json.NewEncoder(buf).Encode(map[string]any{
+		"results": t.Results,
+	})
+
+	return buf.String()
 }
 
 func doTavilyRequest(ctx context.Context, path string, data, out any) error {
@@ -223,14 +223,18 @@ func TavilyRunSearch(ctx context.Context, args *SearchWebArguments) (*TavilyResu
 				Query:           query,
 				MaxResults:      args.MaxResults,
 				Topic:           args.Topic,
-				TimeRange:       args.TimeRange,
-				StartDate:       args.StartDate,
-				EndDate:         args.EndDate,
 				IncludeDomains:  args.IncludeDomains,
 				ExcludeDomains:  args.ExcludeDomains,
 				SearchDepth:     searchDepth,
 				ChunksPerSource: chunksPerSource,
 				IncludeUsage:    true,
+			}
+
+			if args.TimeRange != "" {
+				req.TimeRange = args.TimeRange
+			} else {
+				req.StartDate = args.StartDate
+				req.EndDate = args.EndDate
 			}
 
 			resp, err := DoTavilySearch(ctx, req)
