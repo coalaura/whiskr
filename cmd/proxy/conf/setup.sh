@@ -48,7 +48,11 @@ echo "Reloading daemon..."
 systemctl daemon-reload
 systemctl enable whiskr_proxy
 
-echo "Fixing initial permissions..."chown -R whiskr_proxy:whiskr_proxy "/var/proxy.example.com"
+echo "Fixing initial permissions..."
+
+mkdir -p "/var/proxy.example.com/logs"
+
+chown -R whiskr_proxy:whiskr_proxy "/var/proxy.example.com"
 
 find "/var/proxy.example.com" -type d -exec chmod 755 {} +
 find "/var/proxy.example.com" -type f -exec chmod 644 {} +

@@ -13,8 +13,8 @@ Group=whiskr_proxy
 WorkingDirectory=/var/proxy.example.com
 ExecStart=/var/proxy.example.com/whiskr_proxy
 
-StandardOutput=append:/var/proxy.example.com/whiskr_proxy.log
-StandardError=append:/var/proxy.example.com/whiskr_proxy.log
+StandardOutput=append:/var/proxy.example.com/logs/whiskr_proxy.log
+StandardError=append:/var/proxy.example.com/logs/whiskr_proxy.log
 StandardInput=null
 
 # Filesystem Sandboxing
