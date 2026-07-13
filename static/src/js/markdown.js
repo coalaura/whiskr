@@ -225,7 +225,16 @@ function fixProgressiveSvg(raw) {
 	}
 }
 
+function fixCodeBlocks(markdown) {
+	return markdown.replace(/(?<!^|\n|`)(```+)(\w*)\n?(.*?)\n?(\1)/gs, "\n$1$2\n$3\n$4\n");
+}
+
 function parseMd(markdown) {
+	// ensure line endings are normalized
+	markdown = markdown.replace(/\r\n?/g, "\n");
+
+	markdown = fixCodeBlocks(markdown);
+
 	const starts = (markdown.match(/<file\s+name="[^"]+"[^>]*>/gi) || []).length,
 		ends = (markdown.match(/<\/file>/gi) || []).length;
 
