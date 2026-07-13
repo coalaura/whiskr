@@ -226,7 +226,7 @@ function fixProgressiveSvg(raw) {
 }
 
 function fixCodeBlocks(markdown) {
-	return markdown.replace(/(?<!^|\n|`)(```+)(\w*)\n?(.*?)\n?(\1)/gs, "\n$1$2\n$3\n$4\n");
+	return markdown.replace(/\n?(```+)(\w*)\n?(.*?)\n?(\1`*)\n?/gs, "\n$1$2\n$3\n$4\n");
 }
 
 function parseMd(markdown) {
