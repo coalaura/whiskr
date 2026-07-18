@@ -2670,139 +2670,6 @@ input.invalid {
 	box-sizing: border-box;
 }
 
-@keyframes swivel {
-	0%,
-	100% {
-		left: 0px;
-	}
-
-	50% {
-		left: 100%;
-		transform: translateX(-100%);
-	}
-}
-
-@keyframes bounce {
-	0%,
-	75%,
-	100% {
-		transform: translateY(0);
-	}
-
-	25% {
-		transform: translateY(-4px);
-	}
-}
-
-@keyframes wiggling {
-	0% {
-		transform: translate(0px);
-	}
-
-	50% {
-		transform: translate(-10px, 0px);
-	}
-
-	100% {
-		transform: translate(0px);
-	}
-}
-
-@keyframes rotating {
-	from {
-		transform: rotate(0deg);
-	}
-
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-@keyframes rotating-y {
-	from {
-		transform: translateY(-50%) rotate(0deg);
-	}
-
-	to {
-		transform: translateY(-50%) rotate(360deg);
-	}
-}
-
-@keyframes shimmer {
-	0% {
-		transform: translateX(-100%);
-	}
-
-	100% {
-		transform: translateX(100%);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	#floaters {
-		display: none;
-	}
-
-	#sidebar,
-	#page,
-	#sidebar-trigger,
-	.sidebar-section.personalization .section-body,
-	#total,
-	body {
-		transition: none;
-	}
-}
-
-@media (max-width: 745px) {
-	.message,
-	.message.assistant {
-		width: 100%;
-		min-width: auto;
-		max-width: 100%;
-	}
-
-	.statistics {
-		flex-wrap: wrap;
-	}
-}
-
-@media (max-width: 520px) {
-	#sidebar {
-		position: fixed;
-		top: 0;
-		left: 0;
-		bottom: 0;
-		width: 100%;
-		order: 0;
-		z-index: 35;
-	}
-
-	#sidebar:not(.open) {
-		width: 0;
-	}
-
-	#sidebar.open ~ #sidebar-trigger {
-		left: 0;
-		z-index: 36;
-	}
-
-	#sidebar-trigger {
-		display: none;
-	}
-
-	#page {
-		margin-left: 0;
-	}
-
-	body.sidebar-open {
-		padding-left: 10px;
-	}
-
-	body.sidebar-open #total {
-		left: 4px;
-	}
-}
-
 .header-actions {
 	display: flex;
 	align-items: center;
@@ -3064,7 +2931,343 @@ input.invalid {
 	mask-image: url(icons/stop.svg);
 }
 
-@media (max-width: 780px) {
+@keyframes swivel {
+
+	0%,
+	100% {
+		left: 0px;
+	}
+
+	50% {
+		left: 100%;
+		transform: translateX(-100%);
+	}
+}
+
+@keyframes bounce {
+
+	0%,
+	75%,
+	100% {
+		transform: translateY(0);
+	}
+
+	25% {
+		transform: translateY(-4px);
+	}
+}
+
+@keyframes wiggling {
+	0% {
+		transform: translate(0px);
+	}
+
+	50% {
+		transform: translate(-10px, 0px);
+	}
+
+	100% {
+		transform: translate(0px);
+	}
+}
+
+@keyframes rotating {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes rotating-y {
+	from {
+		transform: translateY(-50%) rotate(0deg);
+	}
+
+	to {
+		transform: translateY(-50%) rotate(360deg);
+	}
+}
+
+@keyframes shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#floaters {
+		display: none;
+	}
+
+	#sidebar,
+	#page,
+	#sidebar-trigger,
+	.sidebar-section.personalization .section-body,
+	#total,
+	body {
+		transition: none;
+	}
+}
+
+@media (max-width: 479px) {
+	#sidebar {
+		width: 100%;
+		left: -100%;
+		order: 0;
+		z-index: 35;
+	}
+
+	#sidebar.open {
+		left: 0;
+	}
+
+	#sidebar.open ~ #sidebar-trigger,
+	#sidebar-trigger {
+		display: none;
+	}
+
+	#page {
+		margin-left: 0;
+		border-radius: 0;
+	}
+
+	#title {
+		left: 0;
+		padding-left: 20px;
+		width: calc(100% - 8px);
+	}
+
+	#version,
+	#chat-tokens {
+		display: none;
+	}
+
+	#messages {
+		padding-inline: 8px;
+		padding-bottom: 12px;
+	}
+
+	.message .body {
+		padding: 12px 10px;
+	}
+
+	.message .text {
+		font-size: 14px;
+		line-height: 21px;
+	}
+
+	#chat {
+		height: 236px;
+		padding-inline: 8px;
+		padding-bottom: 36px;
+	}
+
+	#chat::after,
+	#attachments {
+		left: 8px;
+		right: 8px;
+	}
+
+	#chat .options {
+		padding: 7px 6px;
+	}
+
+	#model {
+		width: 148px;
+	}
+
+	#add,
+	#send {
+		bottom: 6px;
+		right: 14px;
+		width: 32px;
+		height: 32px;
+	}
+
+	#add {
+		right: 50px;
+	}
+
+	#top,
+	#bottom {
+		right: 14px;
+	}
+
+	#top:not(.hidden) + #bottom {
+		right: 38px;
+	}
+
+	#notifications {
+		top: 8px;
+		right: 8px;
+		left: 8px;
+	}
+
+	.notification {
+		width: 100%;
+		margin-bottom: 8px;
+	}
+
+	.modal .content {
+		width: calc(100vw - 20px);
+		min-width: 0;
+	}
+}
+
+@media (max-width: 767px) {
+
+	body,
+	body.sidebar-open {
+		padding-left: 0;
+	}
+
+	#sidebar {
+		position: fixed;
+		width: min(86vw, 360px);
+		left: min(-86vw + 1px, -359px);
+		box-shadow: 12px 0 30px rgba(0, 0, 0, 0.3);
+	}
+
+	#sidebar.open {
+		left: 0;
+	}
+
+	#sidebar.open ~ #sidebar-trigger {
+		left: min(86vw, 360px);
+	}
+
+	body.sidebar-open #total,
+	body.sidebar-open #chat-tokens {
+		left: 4px;
+		transform: none;
+	}
+
+	#page {
+		margin-top: 32px;
+		height: calc(100% - 32px);
+	}
+
+	body.no-title #page {
+		margin-top: 18px;
+		height: calc(100% - 18px);
+	}
+
+	#messages {
+		gap: 28px;
+		padding-inline: 10px;
+	}
+
+	.message,
+	.message.assistant {
+		width: 100%;
+		min-width: auto;
+		max-width: 100%;
+	}
+
+	.message textarea.text,
+	.message.assistant textarea.text {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.statistics {
+		flex-wrap: wrap;
+	}
+
+	#chat {
+		height: 260px;
+		padding-inline: 10px;
+	}
+
+	#chat::after,
+	#attachments {
+		left: 10px;
+		right: 10px;
+	}
+
+	#chat .options {
+		gap: 10px;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+	}
+
+	#chat .options::-webkit-scrollbar {
+		display: none;
+	}
+
+	#chat .option {
+		flex: 0 0 auto;
+	}
+
+	#chat .option.right {
+		margin-left: 0;
+	}
+}
+
+@media (max-width: 1023px) {
+	#chat .options {
+		flex-wrap: wrap;
+		gap: 6px 10px;
+	}
+
+	#chat .option {
+		flex: 0 1 auto;
+	}
+
+	#chat .option.right {
+		margin-left: auto;
+	}
+
+	#header {
+		min-width: 0;
+		gap: 6px 10px;
+		flex-wrap: wrap;
+		height: auto;
+		min-height: 28px;
+		flex-shrink: 0;
+	}
+
+	#message {
+		flex: 1 1 0;
+		height: auto;
+		min-height: 72px;
+	}
+
+	#header > * {
+		min-width: 0;
+	}
+
+	#header .option {
+		margin-left: auto;
+		flex: 0 0 auto;
+	}
+
+	#proxy {
+		min-width: 0;
+		max-width: calc(100vw - 150px);
+	}
+
+	#proxy .dropdown,
+	#proxy .dropdown .selected,
+	#proxy .dropdown .label {
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	#proxy .dropdown .label span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	#settings-modal .content.settings-content {
 		width: calc(100vw - 20px);
 	}
