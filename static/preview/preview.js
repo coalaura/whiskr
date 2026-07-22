@@ -86,7 +86,7 @@ function init() {
 
 function addPrintLayout(content, layout) {
 	const script = `<script>addEventListener("message", event => { if (event.data === "whiskr-print") window.print(); });<\/script>`,
-		style = `<style>@page { size: ${layout}; margin: 12mm; }</style>`;
+		style = `<style>@page { size: ${layout} !important; margin: 12mm !important; }</style>`;
 
 	if (!/<head[^>]*>/i.test(content)) {
 		return script + style + content;
@@ -94,7 +94,7 @@ function addPrintLayout(content, layout) {
 
 	content = content.replace(/<head[^>]*>/i, match => match + script);
 
-	return /<\/head\s*>/i.test(content) ? content.replace(/<\/head\s*>/i, `${style}</head>`) : content + style;
+	return /<\/body\s*>/i.test(content) ? content.replace(/<\/body\s*>/i, `${style}</body>`) : content + style;
 }
 
 function guessLanguage(name) {
