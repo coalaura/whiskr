@@ -55,6 +55,24 @@ iframe:not([hidden]) {
 	display: block;
 }
 
+.print {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	width: 38px;
+	height: 38px;
+	border: 1px solid #494d64;
+	border-radius: 6px;
+	background-color: #363a4f;
+	mask: url("../src/css/icons/print.svg") center / 20px no-repeat;
+	cursor: pointer;
+	transition: background-color 150ms ease;
+}
+
+.print:hover {
+	background-color: #494d64;
+}
+
 pre,
 code {
 	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;

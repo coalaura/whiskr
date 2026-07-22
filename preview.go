@@ -16,6 +16,7 @@ var (
 type PreviewRequest struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
+	Layout  string `json:"layout"`
 }
 
 func HandlePreview(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +80,8 @@ func ReadPreviewRequest(r *http.Request) (*PreviewRequest, error) {
 			request.Name, err = ReadMultipartPart(part)
 		} else if part.FormName() == "content" {
 			request.Content, err = ReadMultipartPart(part)
+		} else if part.FormName() == "layout" {
+			request.Layout, err = ReadMultipartPart(part)
 		}
 
 		if err != nil {

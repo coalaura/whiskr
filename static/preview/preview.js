@@ -6,6 +6,7 @@ function init() {
 	const title = document.querySelector("title"),
 		body = document.querySelector("code"),
 		frame = document.querySelector("iframe"),
+		print = document.querySelector(".print"),
 		isHtml = /\.html?$/i.test(data.name.trim());
 
 	title.innerText = data.name;
@@ -13,8 +14,19 @@ function init() {
 	if (isHtml) {
 		title.innerText += " (preview)";
 
-		frame.srcdoc = data.content;
+		const layout = { a4: "A4", letter: "letter", legal: "legal" }[data.layout];
+
+		if (layout) {
+			frame.sandbox.add("allow-modals");
+		}
+
+		frame.srcdoc = layout ? addPrintLayout(data.content, layout) : data.content;
 		frame.hidden = false;
+
+		if (layout) {
+			print.hidden = false;
+			print.addEventListener("click", () => frame.contentWindow.postMessage("whiskr-print", "*"));
+		}
 
 		return;
 	}
@@ -70,6 +82,19 @@ function init() {
 			window.close();
 		}
 	});
+}
+
+function addPrintLayout(content, layout) {
+	const script = `<script>addEventListener("message", event => { if (event.data === "whiskr-print") window.print(); });<\/script>`,
+		style = `<style>@page { size: ${layout}; margin: 12mm; }</style>`;
+
+	if (!/<head[^>]*>/i.test(content)) {
+		return script + style + content;
+	}
+
+	content = content.replace(/<head[^>]*>/i, match => match + script);
+
+	return /<\/head\s*>/i.test(content) ? content.replace(/<\/head\s*>/i, `${style}</head>`) : content + style;
 }
 
 function guessLanguage(name) {

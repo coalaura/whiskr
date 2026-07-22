@@ -8,6 +8,7 @@ import { formatBytes, previewFile } from "./lib.js";
 
 const timeouts = new WeakMap(),
 	highlightCache = new Map(),
+	printLayouts = new Set(["a4", "letter", "legal"]),
 	scrollState = {
 		el: null,
 		startX: 0,
@@ -230,6 +231,12 @@ function fixCodeBlocks(markdown) {
 	return markdown.replace(/\n?(```+)(\w*)\n?(.*?)\n?(\1`*)\n?/gs, "\n$1$2\n$3\n$4\n");
 }
 
+function getFileLayout(tag) {
+	const layout = /\blayout="([^"]+)"/i.exec(tag)?.[1].toLowerCase();
+
+	return printLayouts.has(layout) ? layout : "";
+}
+
 function parseMd(markdown) {
 	// ensure line endings are normalized
 	markdown = markdown.replace(/\r\n?/g, "\n");
@@ -250,9 +257,10 @@ function parseMd(markdown) {
 	const files = [],
 		table = {};
 
-	markdown = markdown.replace(/<file\s+name="([^"]+)"[^>]*>([\s\S]*?)<\/file>/gi, (_match, name, rawContent) => {
+	markdown = markdown.replace(/<file\s+name="([^"]+)"([^>]*)>([\s\S]*?)<\/file>/gi, (_match, name, attributes, rawContent) => {
 		const index = files.length,
-			id = generateID();
+			id = generateID(),
+			layout = getFileLayout(attributes);
 
 		const content = rawContent.replace(/^\r?\n|\r?\n$/g, "").replace(/<\\\/file>/g, "</file>");
 
@@ -268,6 +276,7 @@ function parseMd(markdown) {
 		table[id] = {
 			name: name,
 			content: content,
+			layout: layout,
 		};
 
 		// Pad with newlines so marked doesn't accidentally wrap it inline

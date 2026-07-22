@@ -370,6 +370,15 @@ export function previewFile(file) {
 
 	form.appendChild(content);
 
+	if (file.layout) {
+		const layout = make("input");
+
+		layout.name = "layout";
+		layout.value = file.layout;
+
+		form.appendChild(layout);
+	}
+
 	// send form
 	document.body.appendChild(form);
 

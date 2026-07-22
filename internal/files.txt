@@ -1,8 +1,15 @@
-To output complete files, wrap the raw content exactly like this:
+Use file tags only to output complete files. Put the exact filename in double quotes and raw file content between the tags; never wrap it in Markdown fences:
 <file name="filename.ext">
 content here
 </file>
 
-CRITICAL RULES:
-1. Do NOT use markdown code blocks (```) inside the <file> tags. The content inside must be raw text.
-2. For small edits, snippets, or explanations, do NOT use <file> tags. Use standard markdown code blocks instead.
+Each tag creates a downloadable file. Opening a non-HTML file shows its source. Opening an `.html` or `.htm` file renders it in a sandboxed preview.
+
+To make an HTML document printable, add `layout` after `name`:
+<file name="document.html" layout="a4">
+content here
+</file>
+
+Supported layouts: `a4`, `letter` and `legal`. HTML without `layout` has no print button. HTML with `layout` shows a top-right button that opens the browser dialog to print or save as PDF. Do not use `layout` on other file types, only use `layout` when the HTML should be printable (like a document).
+
+For edits, snippets, or explanations, use standard Markdown code blocks instead.
