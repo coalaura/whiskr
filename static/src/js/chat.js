@@ -3492,6 +3492,7 @@ async function loadData() {
 
 	if (sidebarOpen) {
 		$sidebar.classList.add("open");
+
 		document.body.classList.add("sidebar-open");
 	}
 
@@ -3504,9 +3505,11 @@ async function loadData() {
 	}
 
 	// title enabled
-	chatTitleEnabled = data.title;
+	chatTitleEnabled = data.config.title;
 
-	if (!chatTitleEnabled) {
+	if (chatTitleEnabled) {
+		document.body.classList.remove("no-title");
+	} else {
 		document.body.classList.add("no-title");
 	}
 
