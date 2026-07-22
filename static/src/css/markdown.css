@@ -187,7 +187,19 @@
 	mask-size: 20px;
 }
 
-.markdown pre:hover .pre-copy {
+.markdown .pre-preview {
+	position: sticky;
+	top: 34px;
+	float: right;
+	margin-top: -30px;
+	width: 30px;
+	height: 30px;
+	mask-image: url(icons/screen.svg);
+	mask-size: 20px;
+}
+
+.markdown pre:hover .pre-copy,
+.markdown pre:hover .pre-preview {
 	opacity: 1;
 }
 

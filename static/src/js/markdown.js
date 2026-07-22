@@ -4,7 +4,7 @@ import hljs from "highlight.js";
 import katex from "katex";
 import { parse, parseInline, use } from "marked";
 
-import { formatBytes } from "./lib.js";
+import { formatBytes, previewFile } from "./lib.js";
 
 const timeouts = new WeakMap(),
 	highlightCache = new Map(),
@@ -149,10 +149,11 @@ use({
 		},
 
 		code: code => {
-			const header = `<div class="pre-header no-click">${escapeHtml(code.lang)}</div>`;
-			const button = `<button class="pre-copy" title="Copy code contents"></button>`;
+			const header = `<div class="pre-header no-click">${escapeHtml(code.lang)}</div>`,
+				copy = `<button class="pre-copy" title="Copy code contents"></button>`,
+				preview = code.lang === "html" ? `<button class="pre-preview" title="Preview HTML"></button>` : "";
 
-			return `<pre class="l-${escapeHtml(code.lang)}">${header}${button}<code>${code.text}</code></pre>`;
+			return `<pre class="l-${escapeHtml(code.lang)}">${header}${copy}${preview}<code>${code.text}</code></pre>`;
 		},
 
 		link: link => `<a href="${link.href}" target="_blank" class="no-click">${escapeHtml(link.text || link.href)}</a>`,
@@ -300,6 +301,19 @@ function parseMd(markdown) {
 
 addEventListener("click", event => {
 	const button = event.target;
+
+	if (button.classList.contains("pre-preview")) {
+		const code = button.closest("pre")?.querySelector("code");
+
+		if (code) {
+			previewFile({
+				name: "preview.html",
+				content: code.textContent.trim(),
+			});
+		}
+
+		return;
+	}
 
 	if (!button.classList.contains("pre-copy")) {
 		return;

@@ -43,6 +43,18 @@ body {
 	color: #cad3f5;
 }
 
+iframe {
+	display: none;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	background: white;
+}
+
+iframe:not([hidden]) {
+	display: block;
+}
+
 pre,
 code {
 	font-family: "Comic Code", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Ubuntu Mono", "Roboto Mono", Menlo, Monaco, Consolas, monospace;

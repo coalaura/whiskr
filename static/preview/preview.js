@@ -4,9 +4,20 @@ import hljs from "highlight.js";
 
 function init() {
 	const title = document.querySelector("title"),
-		body = document.querySelector("code");
+		body = document.querySelector("code"),
+		frame = document.querySelector("iframe"),
+		isHtml = /\.html?$/i.test(data.name.trim());
 
 	title.innerText = data.name;
+
+	if (isHtml) {
+		title.innerText += " (preview)";
+
+		frame.srcdoc = data.content;
+		frame.hidden = false;
+
+		return;
+	}
 
 	let language = guessLanguage(data.name);
 
