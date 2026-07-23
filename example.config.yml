@@ -3,17 +3,21 @@ debug: false
 
 tokens:
   # server secret for signing auth tokens; auto-generated if empty
-  secret: ""
+  secret: ...
   # openrouter.ai api token (required)
-  openrouter: ""
+  openrouter: sk-or-v1-...
   # tavily search api token (optional; used by search tools)
-  tavily: ""
+  tavily: tvly-dev-...
   # github api token (optional; used by search tools)
-  github: ""
+  github: gh-...
 
 server:
   # port to serve whiskr on (required; default 3443)
   port: 3443
+proxies:
+- name: us-east
+  host: us-east.example.com
+  token: wsk-...
 
 settings:
   # normalize unicode in assistant output (optional; default: true)
@@ -23,14 +27,12 @@ settings:
   # the interval in which the model list is refreshed in minutes (optional; default: 30m)
   refresh-interval: 30
 
-proxies: []
-
 models:
-  # model used to generate titles (needs to have structured output support; default: google/gemini-2.5-flash-lite)
+  # model used to generate titles (needs to have structured output support; set to "-" to disable title; default: google/gemini-2.5-flash-lite)
   title-model: google/gemini-2.5-flash-lite
   # allow image generation (optional; default: true)
   image-generation: true
-  # allow text-to-speech voice synthesis (optional; default: true)
+  # allow text to speech (optional; default: true)
   text-to-speech: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
   transformation: middle-out
@@ -45,6 +47,4 @@ authentication:
   # require login with username and password
   enabled: false
   # list of users with bcrypt password hashes
-  users:
-  - username: admin
-    password: $2a$12$eH6Du2grC7aOUDmff2SrC.yKPWea/fq0d76c3JsvhGxhGCEOnWTRy
+  users: []

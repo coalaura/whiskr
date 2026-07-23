@@ -303,6 +303,7 @@ func (e *Environment) Store() error {
 
 			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; set to \"-\" to disable title; default: google/gemini-2.5-flash-lite)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
+			"$.models.text-to-speech":   {yaml.HeadComment(" allow text to speech (optional; default: true)")},
 			"$.models.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
 			"$.models.filters":          {yaml.HeadComment(" boolean expression to filter available models (optional; fields: `price`, `slug`, `name`, `tags`, `created`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)")},
 
