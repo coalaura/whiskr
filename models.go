@@ -25,6 +25,12 @@ type ModelBenchmarks struct {
 	Agentic      float64 `json:"agentic,omitempty"`
 }
 
+type ModelContext struct {
+	Total      int  `json:"total"`
+	Prompt     *int `json:"prompt"`
+	Completion int  `json:"completion"`
+}
+
 // gost:preserve-layout
 type Model struct {
 	ID          string           `json:"id"`
@@ -32,6 +38,7 @@ type Model struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Pricing     ModelPricing     `json:"pricing"`
+	Context     ModelContext     `json:"context"`
 	Benchmarks  *ModelBenchmarks `json:"benchmarks,omitempty"`
 	Tags        []string         `json:"tags,omitempty"`
 	Author      string           `json:"author,omitempty"`
@@ -154,6 +161,11 @@ func LoadModels() error {
 				Input:  input * 1000000,
 				Output: output * 1000000,
 				Image:  ImageModelPricing[model.Slug],
+			},
+			Context: ModelContext{
+				Total:      model.Endpoint.ContextLength,
+				Prompt:     model.Endpoint.MaxPromptTokens,
+				Completion: model.Endpoint.MaxCompletionTokens,
 			},
 
 			IsRouter: strings.EqualFold(model.Group, "router"),

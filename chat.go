@@ -223,6 +223,8 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
+	request.MaxTokens = min(max(model.Context.Completion, 0xff), 0xffff)
+
 	if model.Text {
 		request.Modalities = append(request.Modalities, openrouter.ModalityText)
 	}
