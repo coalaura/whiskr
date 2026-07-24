@@ -652,20 +652,25 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
 	started := time.Now()
 
+	inputImages, inputFiles := countMediaInRequest(request)
+
 	var (
-		id            string
-		open          int
-		close         int
-		completing    bool
-		reasoning     bool
-		hasContent    bool
-		receivedToken bool
-		succeeded     bool
-		tool          *ChatToolCall
-		statistics    *Statistics
-		finish        openrouter.FinishReason
-		native        string
-		ttftMs        int64
+		id             string
+		open           int
+		close          int
+		completing     bool
+		reasoning      bool
+		hasContent     bool
+		hasReasoning   bool
+		succeeded      bool
+		tool           *ChatToolCall
+		statistics     *Statistics
+		finish         openrouter.FinishReason
+		native         string
+		ttftMs         int64
+		ttfoMs         int64
+		reasoningStart int64
+		outputImages   int
 	)
 
 	defer func() {
@@ -673,11 +678,32 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			return
 		}
 
+		durationMs := time.Since(started).Milliseconds()
+
 		rec := StatisticRecord{
-			Model:      request.Model,
-			DurationMs: time.Since(started).Milliseconds(),
-			TTFTMs:     ttftMs,
-			Success:    succeeded,
+			Model:        request.Model,
+			DurationMs:   durationMs,
+			TTFTMs:       ttftMs,
+			TTFOMs:       ttfoMs,
+			InputImages:  inputImages,
+			OutputImages: outputImages,
+			InputFiles:   inputFiles,
+			HasReasoning: hasReasoning,
+			FinishReason: string(finish),
+			Success:      succeeded,
+		}
+
+		if hasReasoning && reasoningStart > 0 {
+			if ttfoMs > reasoningStart {
+				rec.ReasoningMs = ttfoMs - reasoningStart
+			} else if ttfoMs == 0 && durationMs > reasoningStart {
+				rec.ReasoningMs = durationMs - reasoningStart
+			}
+		}
+
+		if tool != nil {
+			rec.ToolCall = true
+			rec.ToolName = tool.Name
 		}
 
 		if statistics != nil {
@@ -689,11 +715,26 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			rec.InputTokens = statistics.InputTokens
 			rec.OutputTokens = statistics.OutputTokens
 			rec.ReasoningTokens = statistics.ReasoningTokens
+			rec.CachedTokens = statistics.CachedTokens
 			rec.Cost = statistics.Cost
 		}
 
-		database.AddStatistics(rec)
+		if err := database.AddStatistics(rec); err != nil {
+			log.Warnln("statistics:", err)
+		}
 	}()
+
+	markToken := func(output bool) {
+		elapsed := time.Since(started).Milliseconds()
+
+		if ttftMs == 0 {
+			ttftMs = elapsed
+		}
+
+		if output && ttfoMs == 0 {
+			ttfoMs = elapsed
+		}
+	}
 
 	stream, err := OpenRouterStartStream(ctx, *request, proxy)
 	if err != nil {
@@ -781,7 +822,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			tool.Args += call.Function.Arguments
 
-			receivedToken = true
+			markToken(true)
+
 			hasContent = true
 		}
 
@@ -800,7 +842,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
 
-			receivedToken = true
+			markToken(true)
+
 			hasContent = true
 		} else if delta.Reasoning != nil {
 			if !reasoning && len(delta.ReasoningDetails) != 0 {
@@ -813,7 +856,13 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			response.WriteChunk(NewChunk(ChunkReasoning, *delta.Reasoning))
 
-			receivedToken = true
+			if reasoningStart == 0 {
+				reasoningStart = time.Since(started).Milliseconds()
+			}
+
+			hasReasoning = true
+
+			markToken(false)
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
 				if image.Type != openrouter.StreamImageTypeImageURL {
@@ -822,23 +871,26 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 				response.WriteChunk(NewChunk(ChunkImage, image.ImageURL.URL))
 
-				receivedToken = true
+				outputImages++
+
+				markToken(true)
+
 				hasContent = true
 			}
 		}
-
-		if receivedToken && ttftMs == 0 {
-			ttftMs = time.Since(started).Milliseconds()
-		}
 	}
 
-	if reason := GetBadStopReason(finish, native); reason != "" {
-		response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", reason)))
+	badStop := GetBadStopReason(finish, native)
+	if badStop != "" {
+		response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("stopped due to: %s", badStop)))
 	}
 
-	if buf.Len() == 0 && finish == "" && !hasContent {
+	noContent := buf.Len() == 0 && finish == "" && !hasContent
+	if noContent {
 		response.WriteChunk(NewChunk(ChunkError, errors.New("no content returned")))
 	}
+
+	succeeded = badStop == "" && !noContent
 
 	if statistics != nil {
 		response.WriteChunk(NewChunk(ChunkUsage, *statistics))

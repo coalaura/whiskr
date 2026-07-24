@@ -11,6 +11,7 @@ type Statistics struct {
 	InputTokens     int     `msgpack:"input"`
 	OutputTokens    int     `msgpack:"output"`
 	ReasoningTokens int     `msgpack:"reasoning"`
+	CachedTokens    int     `msgpack:"-"`
 }
 
 func CreateStatistics(model, provider string, usage *openrouter.Usage) *Statistics {
@@ -21,6 +22,7 @@ func CreateStatistics(model, provider string, usage *openrouter.Usage) *Statisti
 		InputTokens:     usage.PromptTokens,
 		OutputTokens:    usage.CompletionTokens,
 		ReasoningTokens: usage.CompletionTokenDetails.ReasoningTokens,
+		CachedTokens:    usage.PromptTokenDetails.CachedTokens,
 	}
 
 	if usage.IsBYOK {
