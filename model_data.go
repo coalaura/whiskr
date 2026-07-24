@@ -78,7 +78,7 @@ var AudioFormats = map[string]*AudioFormat{
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
-	// https://openrouter.ai/microsoft/mai-image-2.5-pro
+	// No reliable pricing, only by million tokens, determined by testing
 	"microsoft/mai-image-2.5-pro": NewImagePricing(0.111), // No 2K or 4K
 
 	// https://openrouter.ai/krea/krea-2-large
