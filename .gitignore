@@ -4,6 +4,9 @@ settings.yml
 chat.db
 chat.db-shm
 chat.db-wal
+whiskr.db
+whiskr.db-shm
+whiskr.db-wal
 chat.exe
 chat
 vocabulary.tiktoken

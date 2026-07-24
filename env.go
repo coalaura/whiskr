@@ -34,6 +34,7 @@ type EnvSettings struct {
 	CleanContent    bool  `yaml:"cleanup"`
 	Timeout         int64 `yaml:"timeout"`
 	RefreshInterval int64 `yaml:"refresh-interval"`
+	Statistics      bool  `yaml:"statistics"`
 }
 
 // gost:preserve-layout
@@ -100,6 +101,7 @@ func LoadEnv() (*Environment, error) {
 			CleanContent:    true,
 			Timeout:         1200,
 			RefreshInterval: 30,
+			Statistics:      true,
 		},
 		Models: EnvModels{
 			ImageGeneration: true,
@@ -300,6 +302,7 @@ func (e *Environment) Store() error {
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
+			"$.settings.statistics":       {yaml.HeadComment(" track non-identifying completion stats in sqlite (optional; default: true)")},
 
 			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; set to \"-\" to disable title; default: google/gemini-2.5-flash-lite)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},

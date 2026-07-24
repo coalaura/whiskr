@@ -26,6 +26,8 @@ settings:
   timeout: 1200
   # the interval in which the model list is refreshed in minutes (optional; default: 30m)
   refresh-interval: 30
+  # track non-identifying completion stats in sqlite (optional; default: true)
+  statistics: true
 
 models:
   # model used to generate titles (needs to have structured output support; set to "-" to disable title; default: google/gemini-2.5-flash-lite)

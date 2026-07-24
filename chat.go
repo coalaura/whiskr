@@ -648,25 +648,57 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 }
 
 func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
+	started := time.Now()
+
+	var (
+		id            string
+		open          int
+		close         int
+		completing    bool
+		reasoning     bool
+		hasContent    bool
+		receivedToken bool
+		succeeded     bool
+		tool          *ChatToolCall
+		statistics    *Statistics
+		finish        openrouter.FinishReason
+		native        string
+		ttftMs        int64
+	)
+
+	defer func() {
+		if database == nil {
+			return
+		}
+
+		rec := StatisticRecord{
+			Model:      request.Model,
+			DurationMs: time.Since(started).Milliseconds(),
+			TTFTMs:     ttftMs,
+			Success:    succeeded,
+		}
+
+		if statistics != nil {
+			if statistics.Model != "" {
+				rec.Model = statistics.Model
+			}
+
+			rec.Provider = statistics.Provider
+			rec.InputTokens = statistics.InputTokens
+			rec.OutputTokens = statistics.OutputTokens
+			rec.ReasoningTokens = statistics.ReasoningTokens
+			rec.Cost = statistics.Cost
+		}
+
+		database.AddStatistics(rec)
+	}()
+
 	stream, err := OpenRouterStartStream(ctx, *request, proxy)
 	if err != nil {
-		return nil, "", fmt.Errorf("stream.start: %v", err)
+		return nil, "", err
 	}
 
 	defer stream.Close()
-
-	var (
-		id         string
-		open       int
-		close      int
-		completing bool
-		reasoning  bool
-		hasContent bool
-		tool       *ChatToolCall
-		statistics *Statistics
-		finish     openrouter.FinishReason
-		native     string
-	)
 
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
@@ -678,7 +710,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 				break
 			}
 
-			return nil, "", fmt.Errorf("stream.receive: %v", err)
+			return nil, "", err
 		}
 
 		if id == "" {
@@ -747,6 +779,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			tool.Args += call.Function.Arguments
 
+			receivedToken = true
 			hasContent = true
 		}
 
@@ -765,6 +798,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 			response.WriteChunk(NewChunk(ChunkText, delta.Content))
 
+			receivedToken = true
 			hasContent = true
 		} else if delta.Reasoning != nil {
 			if !reasoning && len(delta.ReasoningDetails) != 0 {
@@ -776,6 +810,8 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			}
 
 			response.WriteChunk(NewChunk(ChunkReasoning, *delta.Reasoning))
+
+			receivedToken = true
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
 				if image.Type != openrouter.StreamImageTypeImageURL {
@@ -784,8 +820,13 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 				response.WriteChunk(NewChunk(ChunkImage, image.ImageURL.URL))
 
+				receivedToken = true
 				hasContent = true
 			}
+		}
+
+		if receivedToken && ttftMs == 0 {
+			ttftMs = time.Since(started).Milliseconds()
 		}
 	}
 
