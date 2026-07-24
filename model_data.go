@@ -78,6 +78,18 @@ var AudioFormats = map[string]*AudioFormat{
 
 // Since there is no reliable image output pricing data :(
 var ImageModelPricing = map[string]*ImagePricing{
+	// https://openrouter.ai/microsoft/mai-image-2.5-pro
+	"microsoft/mai-image-2.5-pro": NewImagePricing(0.111), // No 2K or 4K
+
+	// https://openrouter.ai/krea/krea-2-large
+	"krea/krea-2-large": NewImagePricing(0.065), // No 2K or 4K
+
+	// https://openrouter.ai/krea/krea-2-medium
+	"krea/krea-2-medium": NewImagePricing(0.035), // No 2K or 4K
+
+	// https://openrouter.ai/krea/krea-2-medium-turbo
+	"krea/krea-2-medium-turbo": NewImagePricing(0.0175), // No 2K or 4K
+
 	// google forgot to add it to their pricing page, determined by testing
 	"google/gemini-3.1-flash-lite-image": NewImagePricing(0.034), // No 2K or 4K
 
