@@ -8,7 +8,7 @@ import (
 
 	"github.com/coalaura/schgo"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 const DatabasePath = "whiskr.db"
@@ -146,7 +146,7 @@ func nullableInt64(val int64) sql.NullInt64 {
 	return sql.NullInt64{Int64: val, Valid: true}
 }
 
-func countMediaInRequest(request *openrouter.ChatCompletionRequest) (int, int) {
+func countMediaInRequest(request *openingrouter.ChatCompletionRequest) (int, int) {
 	var (
 		images int
 		files  int
@@ -155,13 +155,13 @@ func countMediaInRequest(request *openrouter.ChatCompletionRequest) (int, int) {
 	for _, message := range request.Messages {
 		images += len(message.Images)
 
-		for _, part := range message.Content.Multi {
+		for _, part := range message.Content.Parts {
 			switch part.Type {
-			case openrouter.ChatMessagePartTypeImageURL:
+			case openingrouter.ChatContentPartTypeImageURL:
 				images++
-			case openrouter.ChatMessagePartTypeFile:
+			case openingrouter.ChatContentPartTypeFile:
 				files++
-			case openrouter.ChatMessagePartTypeText:
+			case openingrouter.ChatContentPartTypeText:
 				files += strings.Count(part.Text, "<file name=")
 			}
 		}

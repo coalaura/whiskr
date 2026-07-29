@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type ChatToolReasoning struct {
@@ -108,22 +108,22 @@ var (
 	}
 )
 
-func (t *ChatToolCall) AsAssistantToolCall(content string) openrouter.ChatCompletionMessage {
+func (t *ChatToolCall) AsAssistantToolCall(content string) openingrouter.ChatMessage {
 	// Some models require there to be content
 	if content == "" {
 		content = " "
 	}
 
-	call := openrouter.ChatCompletionMessage{
-		Role: openrouter.ChatMessageRoleAssistant,
-		Content: openrouter.Content{
+	call := openingrouter.ChatMessage{
+		Role: openingrouter.ChatRoleAssistant,
+		Content: openingrouter.ChatContent{
 			Text: content,
 		},
-		ToolCalls: []openrouter.ToolCall{
+		ToolCalls: []openingrouter.ChatToolCall{
 			{
 				ID:   t.ID,
-				Type: openrouter.ToolTypeFunction,
-				Function: openrouter.FunctionCall{
+				Type: openingrouter.ChatToolTypeFunction,
+				Function: openingrouter.ChatToolCallFunction{
 					Name:      t.Name,
 					Arguments: t.Args,
 				},
@@ -132,12 +132,12 @@ func (t *ChatToolCall) AsAssistantToolCall(content string) openrouter.ChatComple
 	}
 
 	if t.Reasoning != nil {
-		call.ReasoningDetails = []openrouter.ChatCompletionReasoningDetails{
+		call.ReasoningDetails = []openingrouter.ChatReasoningDetail{
 			{
-				Type:   openrouter.ReasoningDetailsTypeEncrypted,
+				Type:   openingrouter.ChatReasoningDetailTypeEncrypted,
 				Data:   t.Reasoning.Encrypted,
 				ID:     t.ID,
-				Format: t.Reasoning.Format,
+				Format: openingrouter.ChatReasoningFormat(t.Reasoning.Format),
 				Index:  0,
 			},
 		}
@@ -146,17 +146,17 @@ func (t *ChatToolCall) AsAssistantToolCall(content string) openrouter.ChatComple
 	return call
 }
 
-func (t *ChatToolCall) AsToolMessage() openrouter.ChatCompletionMessage {
-	return openrouter.ChatCompletionMessage{
-		Role:       openrouter.ChatMessageRoleTool,
+func (t *ChatToolCall) AsToolMessage() openingrouter.ChatMessage {
+	return openingrouter.ChatMessage{
+		Role:       openingrouter.ChatRoleTool,
 		ToolCallID: t.ID,
-		Content: openrouter.Content{
+		Content: openingrouter.ChatContent{
 			Text: t.Result,
 		},
 	}
 }
 
-func hasToolCallHistory(messages []openrouter.ChatCompletionMessage) bool {
+func hasToolCallHistory(messages []openingrouter.ChatMessage) bool {
 	for _, msg := range messages {
 		if len(msg.ToolCalls) > 0 {
 			return true
@@ -166,13 +166,13 @@ func hasToolCallHistory(messages []openrouter.ChatCompletionMessage) bool {
 	return false
 }
 
-func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, iteration int64) bool {
+func (r *ChatRequest) AddToolPrompt(request *openingrouter.ChatCompletionRequest, iteration int64) bool {
 	hasHistory := hasToolCallHistory(request.Messages)
 	needExplicitStop := hasHistory && r.Prompt != ""
 
 	if len(request.Tools) == 0 {
 		if needExplicitStop {
-			request.Messages = append(request.Messages, openrouter.SystemMessage("Do not perform any more search tool calls."))
+			request.Messages = append(request.Messages, openingrouter.SystemMessage("Do not perform any more search tool calls."))
 		}
 
 		return false
@@ -184,7 +184,7 @@ func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, i
 		debug("no more tool calls")
 
 		request.Tools = nil
-		request.ToolChoice = ""
+		request.ToolChoice = nil
 	}
 
 	// iterations - 1
@@ -197,17 +197,17 @@ func (r *ChatRequest) AddToolPrompt(request *openrouter.ChatCompletionRequest, i
 		"remaining": total - 1,
 	})
 
-	request.Messages = append(request.Messages, openrouter.SystemMessage(tools.String()))
+	request.Messages = append(request.Messages, openingrouter.SystemMessage(tools.String()))
 
 	if isLastIteration && needExplicitStop {
-		request.Messages = append(request.Messages, openrouter.SystemMessage("Do not perform any more search tool calls."))
+		request.Messages = append(request.Messages, openingrouter.SystemMessage("Do not perform any more search tool calls."))
 	}
 
 	return true
 }
 
-func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
-	var request openrouter.ChatCompletionRequest
+func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
+	var request openingrouter.ChatCompletionRequest
 
 	proxy, err := ResolveProxy(r.ProxyName)
 	if err != nil {
@@ -223,51 +223,42 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
-	request.MaxTokens = min(max(model.Context.Completion, 0xff), 0xffff)
+	maxTokens := min(max(model.Context.Completion, 0xff), 0xffff)
+	request.MaxTokens = &maxTokens
 
 	if model.Text {
-		request.Modalities = append(request.Modalities, openrouter.ModalityText)
+		request.Modalities = append(request.Modalities, openingrouter.OutputModalityText)
 	}
 
 	if env.Models.ImageGeneration && model.Images {
-		request.Modalities = append(request.Modalities, openrouter.ModalityImage)
+		request.Modalities = append(request.Modalities, openingrouter.OutputModalityImage)
 
-		request.ImageConfig = &openrouter.ChatCompletionImageConfig{
-			ImageSize: openrouter.ImageSize1K,
+		imageConfig := openingrouter.ChatImageConfig{
+			"image_size": "1K",
 		}
 
 		switch r.Image.Resolution {
 		case "2K":
-			request.ImageConfig.ImageSize = openrouter.ImageSize2K
+			imageConfig["image_size"] = "2K"
 		case "4K":
-			request.ImageConfig.ImageSize = openrouter.ImageSize4K
+			imageConfig["image_size"] = "4K"
 		}
 
 		switch r.Image.Aspect {
-		case "1:1":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio1x1
-		case "2:3":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio2x3
-		case "3:2":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio3x2
-		case "3:4":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio3x4
-		case "4:3":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio4x3
-		case "4:5":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio4x5
-		case "5:4":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio5x4
-		case "9:16":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio9x16
-		case "16:9":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio16x9
-		case "21:9":
-			request.ImageConfig.AspectRatio = openrouter.AspectRatio21x9
+		case "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9":
+			imageConfig["aspect_ratio"] = r.Image.Aspect
 		}
+
+		request.ImageConfig = imageConfig
 	}
 
-	request.Transforms = append(request.Transforms, env.Models.Transformation)
+	if env.Models.Transformation != "" {
+		engine := openingrouter.ChatContextCompressionEngine(env.Models.Transformation)
+		request.Plugins = append(request.Plugins, openingrouter.ChatContextCompressionPlugin{
+			ID:     openingrouter.ChatPluginIDContextCompression,
+			Engine: engine,
+		})
+	}
 
 	if r.Iterations < 1 || r.Iterations > 50 {
 		return nil, fmt.Errorf("invalid iterations (1-50): %d", r.Iterations)
@@ -277,14 +268,15 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		return nil, fmt.Errorf("invalid temperature (0-2): %f", r.Temperature)
 	}
 
-	request.Temperature = float32(r.Temperature)
+	temperature := r.Temperature
+	request.Temperature = &temperature
 
 	if model.Reasoning {
-		request.Reasoning = &openrouter.ChatCompletionReasoning{}
+		request.Reasoning = &openingrouter.ChatReasoningConfig{}
 
 		switch r.Reasoning {
 		case "xhigh", "high", "medium", "low", "minimal", "none":
-			request.Reasoning.Effort = &r.Reasoning
+			request.Reasoning.Effort = openingrouter.ReasoningEffort(r.Reasoning)
 		}
 
 		if len(model.ReasoningLevels) > 0 && !slices.Contains(model.ReasoningLevels, r.Reasoning) {
@@ -294,22 +286,22 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 	switch r.Provider {
 	case "throughput":
-		request.Provider = &openrouter.ChatProvider{
-			Sort: openrouter.ProviderSortingThroughput,
+		request.Provider = &openingrouter.ProviderPreferences{
+			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortThroughput},
 		}
 	case "latency":
-		request.Provider = &openrouter.ChatProvider{
-			Sort: openrouter.ProviderSortingLatency,
+		request.Provider = &openingrouter.ProviderPreferences{
+			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortLatency},
 		}
 	case "price":
-		request.Provider = &openrouter.ChatProvider{
-			Sort: openrouter.ProviderSortingPrice,
+		request.Provider = &openingrouter.ProviderPreferences{
+			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortPrice},
 		}
 	}
 
 	if model.JSON && r.Tools.JSON {
-		request.ResponseFormat = &openrouter.ChatCompletionResponseFormat{
-			Type: openrouter.ChatCompletionResponseFormatTypeJSONObject,
+		request.ResponseFormat = &openingrouter.ChatResponseFormat{
+			Type: openingrouter.ChatResponseFormatTypeJSONObject,
 		}
 	}
 
@@ -345,13 +337,15 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 	}
 
 	if prompt != "" {
-		request.Messages = append(request.Messages, openrouter.SystemMessage(prompt))
+		request.Messages = append(request.Messages, openingrouter.SystemMessage(prompt))
 	}
 
 	if model.Tools && r.Tools.Search && env.Tokens.Tavily != "" {
 		if r.Iterations > 1 {
 			request.Tools = GetSearchTools()
-			request.ToolChoice = "auto"
+			request.ToolChoice = &openingrouter.ChatToolChoice{
+				Mode: openingrouter.ChatToolChoiceModeAuto,
+			}
 		}
 	} else {
 		r.Iterations = 1
@@ -362,26 +356,26 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 		switch message.Role {
 		case "system":
-			request.Messages = append(request.Messages, openrouter.ChatCompletionMessage{
-				Role: message.Role,
-				Content: openrouter.Content{
+			request.Messages = append(request.Messages, openingrouter.ChatMessage{
+				Role: openingrouter.ChatRoleSystem,
+				Content: openingrouter.ChatContent{
 					Text: message.Text,
 				},
 			})
 		case "user":
 			var (
-				content openrouter.Content
+				content openingrouter.ChatContent
 				multi   bool
 				last    = -1
 			)
 
 			if strings.Contains(message.Text, "![") {
-				content.Multi = SplitImagePairs(message.Text, !model.Vision)
+				content.Parts = SplitImagePairs(message.Text, !model.Vision)
 
 				multi = true
 
-				if content.Multi[len(content.Multi)-1].Type == openrouter.ChatMessagePartTypeText {
-					last = len(content.Multi) - 1
+				if content.Parts[len(content.Parts)-1].Type == openingrouter.ChatContentPartTypeText {
+					last = len(content.Parts) - 1
 				}
 			} else {
 				content.Text = message.Text
@@ -405,14 +399,14 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 
 					if multi {
 						if last != -1 {
-							if content.Multi[last].Text != "" {
-								content.Multi[last].Text += "\n\n"
+							if content.Parts[last].Text != "" {
+								content.Parts[last].Text += "\n\n"
 							}
 
-							content.Multi[last].Text += entry
+							content.Parts[last].Text += entry
 						} else {
-							content.Multi = append(content.Multi, openrouter.ChatMessagePart{
-								Type: openrouter.ChatMessagePartTypeText,
+							content.Parts = append(content.Parts, openingrouter.ChatContentPart{
+								Type: openingrouter.ChatContentPartTypeText,
 								Text: entry,
 							})
 						}
@@ -426,23 +420,21 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 				}
 			}
 
-			request.Messages = append(request.Messages, openrouter.ChatCompletionMessage{
-				Role:    message.Role,
+			request.Messages = append(request.Messages, openingrouter.ChatMessage{
+				Role:    openingrouter.ChatRoleUser,
 				Content: content,
 			})
 		case "assistant":
-			msg := openrouter.ChatCompletionMessage{
-				Role: openrouter.ChatMessageRoleAssistant,
-				Content: openrouter.Content{
+			msg := openingrouter.ChatMessage{
+				Role: openingrouter.ChatRoleAssistant,
+				Content: openingrouter.ChatContent{
 					Text: message.Text,
 				},
 			}
 
-			for index, image := range message.Images {
-				msg.Images = append(msg.Images, openrouter.ChatCompletionImage{
-					Index: index,
-					Type:  openrouter.StreamImageTypeImageURL,
-					ImageURL: openrouter.ChatCompletionImageURL{
+			for _, image := range message.Images {
+				msg.Images = append(msg.Images, openingrouter.ChatAssistantImage{
+					ImageURL: openingrouter.ContentPartImageURL{
 						URL: image,
 					},
 				})
@@ -461,14 +453,14 @@ func (r *ChatRequest) Parse() (*openrouter.ChatCompletionRequest, error) {
 		}
 	}
 
-	request.Stream = true
-
-	request.Usage = &openrouter.IncludeUsage{Include: true}
+	request.StreamOptions = &openingrouter.ChatStreamOptions{
+		IncludeUsage: new(true),
+	}
 
 	return &request, nil
 }
 
-func ParseChatRequest(r *http.Request) (*ChatRequest, *openrouter.ChatCompletionRequest, error) {
+func ParseChatRequest(r *http.Request) (*ChatRequest, *openingrouter.ChatCompletionRequest, error) {
 	var raw ChatRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
@@ -649,7 +641,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RunCompletion(ctx context.Context, response *Stream, request *openrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
+func RunCompletion(ctx context.Context, response *Stream, request *openingrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
 	started := time.Now()
 
 	inputImages, inputFiles := countMediaInRequest(request)
@@ -665,7 +657,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		succeeded      bool
 		tool           *ChatToolCall
 		statistics     *Statistics
-		finish         openrouter.FinishReason
+		finish         openingrouter.ChatFinishReason
 		native         string
 		ttftMs         int64
 		ttfoMs         int64
@@ -763,9 +755,11 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 		}
 
 		if chunk.Usage != nil {
-			debug("usage chunk: model=%q provider=%q prompt=%d completion=%d cost=%f", chunk.Model, chunk.Provider, chunk.Usage.PromptTokens, chunk.Usage.CompletionTokens, chunk.Usage.Cost)
+			provider := streamProvider(chunk.OpenRouterMetadata)
 
-			statistics = CreateStatistics(chunk.Model, chunk.Provider, chunk.Usage)
+			debug("usage chunk: model=%q provider=%q prompt=%d completion=%d cost=%v", chunk.Model, provider, chunk.Usage.PromptTokens, chunk.Usage.CompletionTokens, chunk.Usage.Cost)
+
+			statistics = CreateStatistics(chunk.Model, provider, chunk.Usage)
 		}
 
 		if len(chunk.Choices) == 0 {
@@ -777,10 +771,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 
 		if choice.FinishReason != "" {
 			finish = choice.FinishReason
-		}
-
-		if choice.NativeFinishReason != "" {
-			native = choice.NativeFinishReason
 		}
 
 		calls := delta.ToolCalls
@@ -800,27 +790,29 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 				tool.ID += call.ID
 			}
 
-			if call.Function.Name != "" && !strings.HasSuffix(tool.Name, call.Function.Name) {
-				tool.Name += call.Function.Name
+			if call.Function != nil {
+				if call.Function.Name != "" && !strings.HasSuffix(tool.Name, call.Function.Name) {
+					tool.Name += call.Function.Name
+				}
+
+				open += strings.Count(call.Function.Arguments, "{")
+				close += strings.Count(call.Function.Arguments, "}")
+
+				tool.Args += call.Function.Arguments
 			}
 
 			if len(delta.ReasoningDetails) != 0 && tool.Reasoning == nil {
 				for _, details := range delta.ReasoningDetails {
-					if details.Type != openrouter.ReasoningDetailsTypeEncrypted {
+					if details.Type != openingrouter.ChatReasoningDetailTypeEncrypted {
 						continue
 					}
 
 					tool.Reasoning = &ChatToolReasoning{
-						Format:    details.Format,
+						Format:    string(details.Format),
 						Encrypted: details.Data,
 					}
 				}
 			}
-
-			open += strings.Count(call.Function.Arguments, "{")
-			close += strings.Count(call.Function.Arguments, "}")
-
-			tool.Args += call.Function.Arguments
 
 			markToken(true)
 
@@ -845,16 +837,18 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			markToken(true)
 
 			hasContent = true
-		} else if delta.Reasoning != nil {
+		} else if delta.Reasoning != "" {
+			reasoningText := delta.Reasoning
+
 			if !reasoning && len(delta.ReasoningDetails) != 0 {
-				*delta.Reasoning = strings.TrimLeft(*delta.Reasoning, " \t\n\r")
+				reasoningText = strings.TrimLeft(reasoningText, " \t\n\r")
 
 				reasoning = true
 
 				response.WriteChunk(NewChunk(ChunkReasoningType, delta.ReasoningDetails[0].Type))
 			}
 
-			response.WriteChunk(NewChunk(ChunkReasoning, *delta.Reasoning))
+			response.WriteChunk(NewChunk(ChunkReasoning, reasoningText))
 
 			if reasoningStart == 0 {
 				reasoningStart = time.Since(started).Milliseconds()
@@ -865,7 +859,7 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 			markToken(false)
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
-				if image.Type != openrouter.StreamImageTypeImageURL {
+				if image.ImageURL.URL == "" {
 					continue
 				}
 
@@ -899,15 +893,15 @@ func RunCompletion(ctx context.Context, response *Stream, request *openrouter.Ch
 	return tool, buf.String(), nil
 }
 
-func GetBadStopReason(finish openrouter.FinishReason, native string) string {
+func GetBadStopReason(finish openingrouter.ChatFinishReason, native string) string {
 	if finish == "" {
 		return ""
 	}
 
 	switch finish {
-	case openrouter.FinishReasonLength:
+	case openingrouter.ChatFinishReasonLength:
 		return "token limit reached"
-	case openrouter.FinishReasonContentFilter:
+	case openingrouter.ChatFinishReasonContentFilter:
 		return "content filter"
 	}
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type SearchWebArguments struct {
@@ -32,11 +32,13 @@ type GitHubRepositoryArguments struct {
 	Repo  string `json:"repo"`
 }
 
-func GetSearchTools() []openrouter.Tool {
-	return []openrouter.Tool{
-		{
-			Type: openrouter.ToolTypeFunction,
-			Function: &openrouter.FunctionDefinition{
+func GetSearchTools() []openingrouter.ChatTool {
+	strict := true
+
+	return []openingrouter.ChatTool{
+		openingrouter.ChatFunctionTool{
+			Type: openingrouter.ChatToolTypeFunction,
+			Function: openingrouter.ChatFunction{
 				Name:        "search_web",
 				Description: "Search the live web via Tavily to discover relevant pages. Returns titles, URLs, and relevant content snippets ranked by relevance. Use this to find sources; use fetch_contents to read the full text of a specific URL.",
 				Parameters: map[string]any{
@@ -100,9 +102,9 @@ func GetSearchTools() []openrouter.Tool {
 				},
 			},
 		},
-		{
-			Type: openrouter.ToolTypeFunction,
-			Function: &openrouter.FunctionDefinition{
+		openingrouter.ChatFunctionTool{
+			Type: openingrouter.ChatToolTypeFunction,
+			Function: openingrouter.ChatFunction{
 				Name:        "fetch_contents",
 				Description: "Fetch the full text content of one or more specific URLs via Tavily. Use this to read pages in depth, including links found via search_web or provided by the user.",
 				Parameters: map[string]any{
@@ -121,12 +123,12 @@ func GetSearchTools() []openrouter.Tool {
 					},
 					"additionalProperties": false,
 				},
-				Strict: true,
+				Strict: &strict,
 			},
 		},
-		{
-			Type: openrouter.ToolTypeFunction,
-			Function: &openrouter.FunctionDefinition{
+		openingrouter.ChatFunctionTool{
+			Type: openingrouter.ChatToolTypeFunction,
+			Function: openingrouter.ChatFunction{
 				Name:        "github_repository",
 				Description: "Fetch repository metadata and README from GitHub.",
 				Parameters: map[string]any{
@@ -144,7 +146,7 @@ func GetSearchTools() []openrouter.Tool {
 					},
 					"additionalProperties": false,
 				},
-				Strict: true,
+				Strict: &strict,
 			},
 		},
 	}

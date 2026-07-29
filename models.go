@@ -4,13 +4,11 @@ import (
 	"context"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/coalaura/openingrouter"
-	"github.com/revrost/go-openrouter"
 )
 
 type ModelPricing struct {
@@ -138,8 +136,8 @@ func LoadModels() error {
 		}
 
 		if full, ok := base[model.Slug]; ok {
-			input, _ = strconv.ParseFloat(full.Pricing.Prompt, 64)
-			output, _ = strconv.ParseFloat(full.Pricing.Completion, 64)
+			input = full.Pricing.Prompt.Float64()
+			output = full.Pricing.Completion.Float64()
 
 			benchmarks = GetModelBenchmarks(full)
 		} else {
@@ -208,13 +206,16 @@ func LoadModels() error {
 	return nil
 }
 
-func GetModelBenchmarks(model openrouter.Model) *ModelBenchmarks {
+func GetModelBenchmarks(model openingrouter.Model) *ModelBenchmarks {
 	benchmarks := model.Benchmarks
 	if benchmarks == nil {
 		return nil
 	}
 
 	artificial := benchmarks.ArtificialAnalysis
+	if artificial == nil {
+		return nil
+	}
 
 	intelligence := artificial.IntelligenceIndex
 	coding := artificial.CodingIndex

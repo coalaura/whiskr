@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/revrost/go-openrouter"
-	"github.com/revrost/go-openrouter/jsonschema"
+	"github.com/coalaura/openingrouter"
 )
 
 type TitleRequest struct {
@@ -34,7 +33,19 @@ var (
 		"\t", "\\t",
 	)
 
-	titleSchema, _ = jsonschema.GenerateSchema[TitleResponse]()
+	titleSchema = map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"title": map[string]any{
+				"type": "string",
+			},
+			"filename": map[string]any{
+				"type": "string",
+			},
+		},
+		"required":             []string{"title", "filename"},
+		"additionalProperties": false,
+	}
 )
 
 func HandleTitle(w http.ResponseWriter, r *http.Request) {
@@ -116,29 +127,29 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := openrouter.ChatCompletionRequest{
+	request := openingrouter.ChatCompletionRequest{
 		Model: env.Models.TitleModel,
-		Messages: []openrouter.ChatCompletionMessage{
-			openrouter.SystemMessage(buf.String()),
-			openrouter.UserMessage(strings.Join(messages, "\n")),
+		Messages: []openingrouter.ChatMessage{
+			openingrouter.SystemMessage(buf.String()),
+			openingrouter.UserMessage(strings.Join(messages, "\n")),
 		},
-		Temperature: 0.25,
-		MaxTokens:   100,
-		ResponseFormat: &openrouter.ChatCompletionResponseFormat{
-			Type: openrouter.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openrouter.ChatCompletionResponseFormatJSONSchema{
+		Temperature: new(0.25),
+		MaxTokens:   new(100),
+		ResponseFormat: &openingrouter.ChatResponseFormat{
+			Type: openingrouter.ChatResponseFormatTypeJSONSchema,
+			JSONSchema: &openingrouter.ChatJSONSchema{
 				Name:   "chat_title",
 				Schema: titleSchema,
-				Strict: true,
+				Strict: new(true),
 			},
 		},
-		Usage: &openrouter.IncludeUsage{
-			Include: true,
+		StreamOptions: &openingrouter.ChatStreamOptions{
+			IncludeUsage: new(true),
 		},
 	}
 
 	if raw.Title != nil {
-		request.Temperature = 0.4
+		request.Temperature = new(0.4)
 	}
 
 	dump("title.json", request)
@@ -154,8 +165,14 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	choice := response.Choices[0].Message.Content.Text
-	cost := response.Usage.Cost + response.Usage.CostDetails.UpstreamInferenceCost
+	choice := response.Choices[0].Message.Content.String()
+	var cost float64
+	if response.Usage != nil {
+		cost = Nullable(response.Usage.Cost, 0)
+		if response.Usage.CostDetails != nil {
+			cost += Nullable(response.Usage.CostDetails.UpstreamInferenceCost, 0)
+		}
+	}
 
 	var result TitleResponse
 

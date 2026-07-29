@@ -12,7 +12,7 @@ type Usage struct {
 func HandleUsage(w http.ResponseWriter, r *http.Request) {
 	client := OpenRouterClient(nil)
 
-	current, err := client.GetCurrentAPIKey(r.Context())
+	current, err := client.GetCurrentApiKey(r.Context())
 	if err != nil {
 		log.Warnln(err)
 
@@ -24,9 +24,9 @@ func HandleUsage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJson(w, http.StatusOK, Usage{
-		Total:   current.Data.Usage,
-		Daily:   current.Data.UsageDaily,
-		Weekly:  current.Data.UsageWeekly,
-		Monthly: current.Data.UsageMonthly,
+		Total:   current.Usage,
+		Daily:   current.UsageDaily,
+		Weekly:  current.UsageWeekly,
+		Monthly: current.UsageMonthly,
 	})
 }

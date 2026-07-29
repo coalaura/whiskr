@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type TTSRequest struct {
@@ -107,7 +107,7 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 
 	client := OpenRouterClient(proxy)
 
-	speechReq := openrouter.SpeechRequest{
+	speechReq := openingrouter.SpeechRequest{
 		Model: req.Model,
 		Input: req.Input,
 		Voice: req.Voice,
@@ -126,8 +126,16 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	defer resp.Body.Close()
 
-	audioData, contentType := processAudio(speechReq.ResponseFormat, resp.ContentType, resp.Audio)
+	audio, err := io.ReadAll(resp.Body)
+	if err != nil {
+		stream.WriteChunk(NewChunk(ChunkError, err.Error()))
+
+		return
+	}
+
+	audioData, contentType := processAudio(speechReq.ResponseFormat, resp.ContentType, audio)
 
 	stream.WriteChunk(NewChunk(ChunkAudio, TTSResponseChunk{
 		Audio:       audioData,
@@ -166,7 +174,7 @@ func isMP3Audio(audio []byte) bool {
 	return audio[0] == 0xFF && audio[1]&0xE0 == 0xE0
 }
 
-func detectAudioFormat(requestedFormat openrouter.SpeechResponseFormat, contentType string, audio []byte) string {
+func detectAudioFormat(requestedFormat openingrouter.SpeechResponseFormat, contentType string, audio []byte) string {
 	if isWAVAudio(audio) {
 		return "wav"
 	}
@@ -194,7 +202,7 @@ func detectAudioFormat(requestedFormat openrouter.SpeechResponseFormat, contentT
 	return ""
 }
 
-func processAudio(requestedFormat openrouter.SpeechResponseFormat, contentType string, audio []byte) ([]byte, string) {
+func processAudio(requestedFormat openingrouter.SpeechResponseFormat, contentType string, audio []byte) ([]byte, string) {
 	detected := detectAudioFormat(requestedFormat, contentType, audio)
 
 	switch detected {

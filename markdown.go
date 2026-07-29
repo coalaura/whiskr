@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type CodeRegion struct {
@@ -47,14 +47,14 @@ func IsInsideCodeBlock(pos int, regions []CodeRegion) bool {
 	return false
 }
 
-func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart {
+func SplitImagePairs(text string, stripImages bool) []openingrouter.ChatContentPart {
 	code := FindMarkdownCodeRegions(text)
 
 	rgx := regexp.MustCompile(`(?m)!\[([^\]]*)\]\((\S+?)\)`)
 
 	var (
 		index int
-		parts []openrouter.ChatMessagePart
+		parts []openingrouter.ChatContentPart
 	)
 
 	push := func(str, end int, suffix string) {
@@ -66,7 +66,7 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 
 		total := len(parts)
 
-		if total > 0 && parts[total-1].Type == openrouter.ChatMessagePartTypeText {
+		if total > 0 && parts[total-1].Type == openingrouter.ChatContentPartTypeText {
 			parts[total-1].Text += rest
 
 			return
@@ -78,8 +78,8 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 			return
 		}
 
-		parts = append(parts, openrouter.ChatMessagePart{
-			Type: openrouter.ChatMessagePartTypeText,
+		parts = append(parts, openingrouter.ChatContentPart{
+			Type: openingrouter.ChatContentPartTypeText,
 			Text: rest,
 		})
 	}
@@ -138,10 +138,10 @@ func SplitImagePairs(text string, stripImages bool) []openrouter.ChatMessagePart
 		}
 
 		if !stripImages {
-			parts = append(parts, openrouter.ChatMessagePart{
-				Type: openrouter.ChatMessagePartTypeImageURL,
-				ImageURL: &openrouter.ChatMessageImageURL{
-					Detail: openrouter.ImageURLDetailAuto,
+			parts = append(parts, openingrouter.ChatContentPart{
+				Type: openingrouter.ChatContentPartTypeImageURL,
+				ImageURL: &openingrouter.ChatContentImageURL{
+					Detail: openingrouter.ChatImageDetailAuto,
 					URL:    url,
 				},
 			})

@@ -3,11 +3,11 @@ package main
 import (
 	"slices"
 
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type AudioFormat struct {
-	Optimal   openrouter.SpeechResponseFormat
+	Optimal   openingrouter.SpeechResponseFormat
 	Supported []string
 }
 
@@ -32,7 +32,7 @@ func NewAudioFormat(supported ...string) *AudioFormat {
 	}
 
 	return &AudioFormat{
-		Optimal:   openrouter.SpeechResponseFormat(optimal),
+		Optimal:   openingrouter.SpeechResponseFormat(optimal),
 		Supported: supported,
 	}
 }
@@ -81,13 +81,13 @@ var ImageModelPricing = map[string]*ImagePricing{
 	// No reliable pricing, only by million tokens, determined by testing
 	"microsoft/mai-image-2.5-pro": NewImagePricing(0.111), // No 2K or 4K
 
-	// https://openrouter.ai/krea/krea-2-large
+	// https://openingrouter.ai/krea/krea-2-large
 	"krea/krea-2-large": NewImagePricing(0.065), // No 2K or 4K
 
-	// https://openrouter.ai/krea/krea-2-medium
+	// https://openingrouter.ai/krea/krea-2-medium
 	"krea/krea-2-medium": NewImagePricing(0.035), // No 2K or 4K
 
-	// https://openrouter.ai/krea/krea-2-medium-turbo
+	// https://openingrouter.ai/krea/krea-2-medium-turbo
 	"krea/krea-2-medium-turbo": NewImagePricing(0.0175), // No 2K or 4K
 
 	// google forgot to add it to their pricing page, determined by testing
@@ -108,49 +108,49 @@ var ImageModelPricing = map[string]*ImagePricing{
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3-pro-image
 	"google/gemini-3-pro-image": NewImagePricing(0.134, 0.134, 0.24),
 
-	// https://openrouter.ai/sourceful/riverflow-v2.5-pro
+	// https://openingrouter.ai/sourceful/riverflow-v2.5-pro
 	"sourceful/riverflow-v2.5-pro": NewImagePricing(0.13, 0.15, 0.17),
 
-	// https://openrouter.ai/sourceful/riverflow-v2.5-fast
+	// https://openingrouter.ai/sourceful/riverflow-v2.5-fast
 	"sourceful/riverflow-v2.5-fast": NewImagePricing(0.019, 0.021), // No 4K
 
 	// No reliable pricing, only by million tokens, determined by testing
 	"microsoft/mai-image-2.5": NewImagePricing(0.048), // No 2K or 4K
 
-	// https://openrouter.ai/x-ai/grok-imagine-image-quality
+	// https://openingrouter.ai/x-ai/grok-imagine-image-quality
 	"x-ai/grok-imagine-image-quality": NewImagePricing(0.05, 0.07), // No 4K
 
-	// https://openrouter.ai/recraft/recraft-v4.1-pro-vector
+	// https://openingrouter.ai/recraft/recraft-v4.1-pro-vector
 	"recraft/recraft-v4.1-pro-vector": NewImagePricing(0.3), // svg (no 2K or 4K)
 
-	// https://openrouter.ai/recraft/recraft-v4.1-vector
+	// https://openingrouter.ai/recraft/recraft-v4.1-vector
 	"recraft/recraft-v4.1-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
 
-	// https://openrouter.ai/recraft/recraft-v4.1-utility-pro
+	// https://openingrouter.ai/recraft/recraft-v4.1-utility-pro
 	"recraft/recraft-v4.1-utility-pro": NewImagePricing(0, 0.25), // 2K by default?
 
-	// https://openrouter.ai/recraft/recraft-v4.1-utility
+	// https://openingrouter.ai/recraft/recraft-v4.1-utility
 	"recraft/recraft-v4.1-utility": NewImagePricing(0.04), // 1K by default?
 
-	// https://openrouter.ai/recraft/recraft-v4.1-pro
+	// https://openingrouter.ai/recraft/recraft-v4.1-pro
 	"recraft/recraft-v4.1-pro": NewImagePricing(0, 0.25), // 2K by default?
 
-	// https://openrouter.ai/recraft/recraft-v4.1
+	// https://openingrouter.ai/recraft/recraft-v4.1
 	"recraft/recraft-v4.1": NewImagePricing(0.04), // 1K by default?
 
-	// https://openrouter.ai/recraft/recraft-v4-pro-vector
+	// https://openingrouter.ai/recraft/recraft-v4-pro-vector
 	"recraft/recraft-v4-pro-vector": NewImagePricing(0.3), // svg (no 2K or 4K)
 
-	// https://openrouter.ai/recraft/recraft-v4-vector
+	// https://openingrouter.ai/recraft/recraft-v4-vector
 	"recraft/recraft-v4-vector": NewImagePricing(0.08), // svg (no 2K or 4K)
 
-	// https://openrouter.ai/recraft/recraft-v4-pro
+	// https://openingrouter.ai/recraft/recraft-v4-pro
 	"recraft/recraft-v4-pro": NewImagePricing(0, 0.25), // 2K by default?
 
-	// https://openrouter.ai/recraft/recraft-v4
+	// https://openingrouter.ai/recraft/recraft-v4
 	"recraft/recraft-v4": NewImagePricing(0.04), // 1K by default?
 
-	// https://openrouter.ai/recraft/recraft-v3
+	// https://openingrouter.ai/recraft/recraft-v3
 	"recraft/recraft-v3": NewImagePricing(0.04), // 1K by default?
 
 	// https://developers.openai.com/api/docs/guides/image-generation#cost-and-latency
@@ -159,34 +159,34 @@ var ImageModelPricing = map[string]*ImagePricing{
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3.1-flash-image-preview
 	"google/gemini-3.1-flash-image-preview": NewImagePricing(0.067, 0.101, 0.151),
 
-	// https://openrouter.ai/sourceful/riverflow-v2-pro
+	// https://openingrouter.ai/sourceful/riverflow-v2-pro
 	"sourceful/riverflow-v2-pro": NewImagePricing(0.15, 0.15, 0.33),
 
-	// https://openrouter.ai/sourceful/riverflow-v2-fast
+	// https://openingrouter.ai/sourceful/riverflow-v2-fast
 	"sourceful/riverflow-v2-fast": NewImagePricing(0.02, 0.04), // No 4K
 
-	// https://openrouter.ai/black-forest-labs/flux.2-klein-4b
+	// https://openingrouter.ai/black-forest-labs/flux.2-klein-4b
 	"black-forest-labs/flux.2-klein-4b": NewImagePricing(0.014, 0.015, 0.016),
 
-	// https://openrouter.ai/bytedance-seed/seedream-4.5
+	// https://openingrouter.ai/bytedance-seed/seedream-4.5
 	"bytedance-seed/seedream-4.5": NewImagePricing(0.04, 0.04, 0.04),
 
-	// https://openrouter.ai/black-forest-labs/flux.2-max
+	// https://openingrouter.ai/black-forest-labs/flux.2-max
 	"black-forest-labs/flux.2-max": NewImagePricing(0.07, 0.1, 0.13),
 
-	// https://openrouter.ai/sourceful/riverflow-v2-max-preview
+	// https://openingrouter.ai/sourceful/riverflow-v2-max-preview
 	"sourceful/riverflow-v2-max-preview": NewImagePricing(0.075, 0.075, 0.075),
 
-	// https://openrouter.ai/sourceful/riverflow-v2-standard-preview
+	// https://openingrouter.ai/sourceful/riverflow-v2-standard-preview
 	"sourceful/riverflow-v2-standard-preview": NewImagePricing(0.035, 0.035, 0.035),
 
-	// https://openrouter.ai/sourceful/riverflow-v2-fast-preview
+	// https://openingrouter.ai/sourceful/riverflow-v2-fast-preview
 	"sourceful/riverflow-v2-fast-preview": NewImagePricing(0.03, 0.03, 0.03),
 
-	// https://openrouter.ai/black-forest-labs/flux.2-flex
+	// https://openingrouter.ai/black-forest-labs/flux.2-flex
 	"black-forest-labs/flux.2-flex": NewImagePricing(0.06, 0.12, 0.18),
 
-	// https://openrouter.ai/black-forest-labs/flux.2-pro
+	// https://openingrouter.ai/black-forest-labs/flux.2-pro
 	"black-forest-labs/flux.2-pro": NewImagePricing(0.03, 0.045, 0.06),
 
 	// https://ai.google.dev/gemini-api/docs/pricing#gemini-3-pro-image-preview

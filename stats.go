@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/revrost/go-openrouter"
+	"github.com/coalaura/openingrouter"
 )
 
 type Statistics struct {
@@ -14,19 +14,25 @@ type Statistics struct {
 	CachedTokens    int     `msgpack:"-"`
 }
 
-func CreateStatistics(model, provider string, usage *openrouter.Usage) *Statistics {
+func CreateStatistics(model, provider string, usage *openingrouter.ChatUsage) *Statistics {
 	statistics := Statistics{
-		Provider:        provider,
-		Model:           model,
-		Cost:            usage.Cost,
-		InputTokens:     usage.PromptTokens,
-		OutputTokens:    usage.CompletionTokens,
-		ReasoningTokens: usage.CompletionTokenDetails.ReasoningTokens,
-		CachedTokens:    usage.PromptTokenDetails.CachedTokens,
+		Provider:     provider,
+		Model:        model,
+		Cost:         Nullable(usage.Cost, 0),
+		InputTokens:  usage.PromptTokens,
+		OutputTokens: usage.CompletionTokens,
 	}
 
-	if usage.IsBYOK {
-		statistics.Cost += usage.CostDetails.UpstreamInferenceCost
+	if usage.CompletionTokensDetails != nil {
+		statistics.ReasoningTokens = Nullable(usage.CompletionTokensDetails.ReasoningTokens, 0)
+	}
+
+	if usage.PromptTokensDetails != nil {
+		statistics.CachedTokens = Nullable(usage.PromptTokensDetails.CachedTokens, 0)
+	}
+
+	if usage.IsBYOK && usage.CostDetails != nil {
+		statistics.Cost += Nullable(usage.CostDetails.UpstreamInferenceCost, 0)
 	}
 
 	return &statistics
