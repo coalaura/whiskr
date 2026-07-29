@@ -3125,7 +3125,7 @@ input.invalid {
 
 	body,
 	body.sidebar-open {
-		padding-left: 0;
+		padding: 0;
 	}
 
 	#sidebar {
@@ -3206,7 +3206,37 @@ input.invalid {
 
 	#chat .options:has(.dropdown.open) {
 		overflow: visible;
-		z-index: 11;
+		z-index: 15;
+	}
+
+	#chat .dropdown.open {
+		z-index: 15;
+	}
+
+	#chat .dropdown.open::before {
+		content: "";
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.45);
+		backdrop-filter: blur(2px);
+		z-index: -1;
+	}
+
+	#chat .dropdown.open .cont {
+		position: fixed;
+		top: max(16px, env(safe-area-inset-top));
+		right: 10px;
+		bottom: max(16px, env(safe-area-inset-bottom));
+		left: 10px;
+		width: auto !important;
+		height: auto !important;
+		max-height: none;
+		border-radius: 6px;
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+	}
+
+	#chat .dropdown.open .opts {
+		min-height: 0;
 	}
 
 	#chat .option {
