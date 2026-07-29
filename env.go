@@ -31,6 +31,7 @@ type EnvServer struct {
 
 // gost:preserve-layout
 type EnvSettings struct {
+	MaxTokens       int   `yaml:"max-tokens"`
 	CleanContent    bool  `yaml:"cleanup"`
 	Timeout         int64 `yaml:"timeout"`
 	RefreshInterval int64 `yaml:"refresh-interval"`
@@ -98,6 +99,7 @@ func LoadEnv() (*Environment, error) {
 			Port: 3443,
 		},
 		Settings: EnvSettings{
+			MaxTokens:       0xfffff,
 			CleanContent:    true,
 			Timeout:         1200,
 			RefreshInterval: 30,
@@ -299,6 +301,7 @@ func (e *Environment) Store() error {
 
 			"$.server.port": {yaml.HeadComment(" port to serve whiskr on (required; default 3443)")},
 
+			"$.settings.max-tokens":       {yaml.HeadComment(" maximum amount of output tokens per response (optional; default: 1,048,575)")},
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},

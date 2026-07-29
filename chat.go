@@ -223,7 +223,7 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
-	maxTokens := min(max(model.Context.Completion, 0xff), 0xffff)
+	maxTokens := min(max(model.Context.Completion, 0xff), env.Settings.MaxTokens)
 	request.MaxTokens = &maxTokens
 
 	if model.Text {
