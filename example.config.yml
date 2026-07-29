@@ -20,6 +20,8 @@ proxies:
   token: wsk-...
 
 settings:
+  # maximum amount of output tokens per response (optional; default: 1,048,575)
+  max-tokens: 1048575
   # normalize unicode in assistant output (optional; default: true)
   cleanup: true
   # the http timeout to use for completion requests in seconds (optional; default: 300s)
