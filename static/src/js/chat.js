@@ -611,6 +611,7 @@ class Message {
 	#_files;
 	#_reasoning;
 	#_text;
+	#_error;
 	#_edit;
 	#_images;
 	#_tool;
@@ -1377,13 +1378,13 @@ class Message {
 				this.#setupImage(img);
 			});
 
-			return;
+			return true;
 		}
 
 		this.#pending[name] = md;
 
 		if (this.#patching[name]) {
-			return;
+			return false;
 		}
 
 		this.#patching[name] = true;
@@ -1403,6 +1404,8 @@ class Message {
 
 			this.#_diff.innerHTML = "";
 		});
+
+		return true;
 	}
 
 	async #render(only = false, noScroll = false) {
@@ -1622,14 +1625,6 @@ class Message {
 			}
 		}
 
-		if (this.#error) {
-			noScroll || scroll();
-
-			updateScrollButton();
-
-			return;
-		}
-
 		if (!only || only === "reasoning") {
 			let reasoning = this.#reasoning || "";
 
@@ -1663,9 +1658,17 @@ class Message {
 				text = `\`\`\`json\n${text}\n\`\`\``;
 			}
 
-			this.#patch("text", this.#_text, text, noScroll);
+			const patched = this.#patch("text", this.#_text, text, noScroll, () => {
+				this.#renderError();
+			});
 
 			this.#_message.classList.toggle("has-text", !!this.#text);
+
+			if (!patched) {
+				this.#renderError();
+			}
+		} else if (this.#error) {
+			this.#renderError();
 		}
 
 		noScroll || scroll();
@@ -2480,15 +2483,31 @@ class Message {
 
 		this.#error = error || "Something went wrong";
 
-		this.#_message.classList.add("errored", "has-text");
-
-		const _err = make("div", "error");
-
-		_err.innerHTML = renderInline(this.#error);
-
-		this.#_text.appendChild(_err);
+		this.#_message.classList.add("errored");
+		this.#renderError();
 
 		this.save();
+	}
+
+	#renderError() {
+		if (!this.#error) {
+			this.#_error?.remove();
+			this.#_error = null;
+			this.#_message.classList.remove("errored");
+
+			return;
+		}
+
+		if (!this.#_error) {
+			this.#_error = make("div", "error");
+		}
+
+		this.#_error.innerHTML = renderInline(this.#error);
+		this.#_message.classList.add("errored");
+
+		if (this.#_error.parentNode !== this.#_text.parentNode || this.#_error.previousElementSibling !== this.#_text) {
+			this.#_text.after(this.#_error);
+		}
 	}
 
 	stopEdit() {

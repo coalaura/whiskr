@@ -1203,11 +1203,18 @@ body.no-title #title {
 	border-bottom-right-radius: 0px;
 }
 
-.message .text .error {
+.message .error {
 	color: var(--c-red);
+	margin-top: 8px;
+	white-space: pre-wrap;
+	word-break: break-word;
 }
 
-.message .text .error a {
+.message .text + .error {
+	margin-top: 8px;
+}
+
+.message .error a {
 	color: var(--c-maroon);
 }
 
