@@ -3496,6 +3496,10 @@ async function loadData() {
 		document.body.classList.add("sidebar-open");
 	}
 
+	$sidebarTrigger.setAttribute("aria-expanded", sidebarOpen);
+	$sidebarTrigger.setAttribute("aria-label", `${sidebarOpen ? "Close" : "Open"} configuration sidebar`);
+	$sidebarTrigger.title = `${sidebarOpen ? "Close" : "Open"} configuration sidebar`;
+
 	updatePersonalizationVisualState();
 
 	if (!data) {
@@ -4577,6 +4581,9 @@ function closeSidebar() {
 	$sidebar.classList.remove("open");
 
 	document.body.classList.remove("sidebar-open");
+	$sidebarTrigger.setAttribute("aria-expanded", "false");
+	$sidebarTrigger.setAttribute("aria-label", "Open configuration sidebar");
+	$sidebarTrigger.title = "Open configuration sidebar";
 
 	store("sidebar-open", false);
 }
@@ -4586,7 +4593,13 @@ function toggleSidebar() {
 
 	document.body.classList.toggle("sidebar-open");
 
-	store("sidebar-open", $sidebar.classList.contains("open"));
+	const sidebarOpen = $sidebar.classList.contains("open");
+
+	$sidebarTrigger.setAttribute("aria-expanded", sidebarOpen);
+	$sidebarTrigger.setAttribute("aria-label", `${sidebarOpen ? "Close" : "Open"} configuration sidebar`);
+	$sidebarTrigger.title = `${sidebarOpen ? "Close" : "Open"} configuration sidebar`;
+
+	store("sidebar-open", sidebarOpen);
 }
 
 function getSavedChats() {

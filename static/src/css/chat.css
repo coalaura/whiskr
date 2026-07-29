@@ -3028,9 +3028,22 @@ input.invalid {
 		left: 0;
 	}
 
-	#sidebar.open ~ #sidebar-trigger,
+	body #sidebar.open ~ #sidebar-trigger,
 	#sidebar-trigger {
-		display: none;
+		display: flex;
+		top: 4px;
+		right: 4px;
+		left: auto;
+		transform: none;
+		width: 30px;
+		height: 30px;
+		border: 1px solid var(--c-surface1);
+		border-radius: 6px;
+	}
+
+	#sidebar-trigger::before {
+		width: 18px;
+		height: 18px;
 	}
 
 	#page {
@@ -3137,10 +3150,6 @@ input.invalid {
 
 	#sidebar.open {
 		left: 0;
-	}
-
-	#sidebar.open ~ #sidebar-trigger {
-		left: min(86vw, 360px);
 	}
 
 	body.sidebar-open #total,
