@@ -93,7 +93,7 @@ jobs:
 
         GOOS=${{ matrix.goos }} \
         GOARCH=${{ matrix.goarch }} \
-        CGO_ENABLED=0 \
+        CGO_ENABLED=1 \
         go build \
           -trimpath \
           -buildvcs=false \
