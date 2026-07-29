@@ -3204,6 +3204,11 @@ input.invalid {
 		display: none;
 	}
 
+	#chat .options:has(.dropdown.open) {
+		overflow: visible;
+		z-index: 11;
+	}
+
 	#chat .option {
 		flex: 0 0 auto;
 	}
