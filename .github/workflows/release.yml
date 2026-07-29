@@ -14,13 +14,34 @@ jobs:
 
     strategy:
       matrix:
-        goos:   [windows, linux]
-        goarch: [amd64, arm64]
+        include:
+          - goos: linux
+            goarch: amd64
+            zig_target: x86_64-linux-musl
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            zig_target: aarch64-linux-musl
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            zig_target: x86_64-windows-gnu
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            zig_target: aarch64-windows-gnu
+            runner: ubuntu-latest
       fail-fast: false
 
     steps:
     - name: Checkout
       uses: actions/checkout@v6
+
+    - name: Set up Zig
+      if: matrix.zig_target != ''
+      uses: goto-bus-stop/setup-zig@v2
+      with:
+        version: 0.15.2
 
     - name: Set up Go
       uses: actions/setup-go@v6
@@ -47,7 +68,7 @@ jobs:
           --product-name whiskr \
           --original-filename whiskr.exe \
           --icon public/favicon.ico \
-          --copyright "(c) 2025 coalaura" \
+          --copyright "(c) 2026 coalaura" \
           --file-description "Minimal LLM chat UI using OpenRouter giving you control over your context." \
           --file-version "${{ github.ref_name }}" \
           --arch "${{ matrix.goarch }}"
@@ -56,7 +77,19 @@ jobs:
       shell: bash
       run: |
         mkdir -p build
+        EXT=""
+        LDFLAGS=""
+
         [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+
+        if [[ -n "${{ matrix.zig_target }}" ]]; then
+          export CC="zig cc -target ${{ matrix.zig_target }}"
+          export CXX="zig c++ -target ${{ matrix.zig_target }}"
+
+          if [[ "${{ matrix.zig_target }}" == *"musl"* ]]; then
+            LDFLAGS="-linkmode external -extldflags '-static'"
+          fi
+        fi
 
         GOOS=${{ matrix.goos }} \
         GOARCH=${{ matrix.goarch }} \
@@ -64,7 +97,7 @@ jobs:
         go build \
           -trimpath \
           -buildvcs=false \
-          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}'" \
+          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS" \
           -o "build/whiskr${EXT}" .
 
     - name: Build proxy
