@@ -54,7 +54,7 @@ export function wrapJSON(txt) {
 	try {
 		const data = JSON.parse(txt);
 
-		return `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+		return `\`\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\`\``;
 	} catch {}
 
 	return txt;
