@@ -29,6 +29,7 @@ type Prompt struct {
 	Tokens      int    `json:"tokens"`
 
 	Text string `json:"-"`
+	Body string `json:"-"`
 }
 
 var (
@@ -51,8 +52,9 @@ var (
 
 	InternalTitleTmpl *template.Template
 
-	Prompts   []Prompt
-	Templates = make(map[string]*template.Template)
+	Prompts       []Prompt
+	Templates     = make(map[string]*template.Template)
+	BareTemplates = make(map[string]*template.Template)
 )
 
 func init() {
@@ -107,16 +109,20 @@ func LoadPrompts() ([]Prompt, error) {
 			return nil
 		}
 
+		bodyText := strings.TrimSpace(string(body[index+3:]))
+
 		prompt := Prompt{
 			Key:         strings.Replace(filepath.Base(path), ".txt", "", 1),
 			Name:        strings.TrimSpace(string(body[:nl])),
 			Description: strings.TrimSpace(string(body[nl+1 : index])),
-			Text:        strings.TrimSpace(string(body[index+3:])) + "\n\n" + InternalGeneralPrompt,
+			Body:        bodyText,
+			Text:        bodyText + "\n\n" + InternalGeneralPrompt,
 		}
 
 		prompts = append(prompts, prompt)
 
 		Templates[prompt.Key] = NewTemplate(prompt.Key, prompt.Text)
+		BareTemplates[prompt.Key] = NewTemplate(prompt.Key+"-bare", prompt.Body)
 
 		return nil
 	})
@@ -134,12 +140,17 @@ func LoadPrompts() ([]Prompt, error) {
 	return prompts, nil
 }
 
-func BuildPrompt(name string, metadata ChatMetadata, model *Model) (string, error) {
+func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (string, error) {
 	if name == "" {
 		return "", nil
 	}
 
-	tmpl, ok := Templates[name]
+	templates := Templates
+	if bare {
+		templates = BareTemplates
+	}
+
+	tmpl, ok := templates[name]
 	if !ok {
 		return "", fmt.Errorf("unknown prompt: %q", name)
 	}
@@ -165,6 +176,11 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model) (string, erro
 		now = time.Now()
 	}
 
+	settings := metadata.Settings
+	if bare {
+		settings = ChatSettings{}
+	}
+
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
@@ -173,7 +189,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model) (string, erro
 		Slug:     model.ID,
 		Date:     now.In(tz).Format(time.RFC1123),
 		Platform: metadata.Platform,
-		Settings: metadata.Settings,
+		Settings: settings,
 	})
 
 	if err != nil {

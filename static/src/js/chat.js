@@ -78,6 +78,7 @@ const $version = document.getElementById("version"),
 	$files = document.getElementById("files"),
 	$json = document.getElementById("json"),
 	$search = document.getElementById("search"),
+	$bare = document.getElementById("bare"),
 	$add = document.getElementById("add"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
@@ -149,6 +150,7 @@ let autoScrolling = false,
 	allowFiles = true,
 	jsonMode = false,
 	searchTool = false,
+	bareMode = false,
 	exportFormat = "whiskr",
 	exportRoles = ["user", "assistant"],
 	chatTitle = false,
@@ -357,20 +359,21 @@ async function updateChatTokens() {
 		total += selectedPrompt.tokens;
 	}
 
-	if (allowFiles) {
-		total += promptOverheads?.files || 45;
-	} else if (attachments.length > 0 || pendingText.length > 0 || messages.some(msg => (msg.isUser() && msg.getData().files?.length > 0) || msg.getData().text?.length > 0)) {
-		total += promptOverheads?.no_files || 40;
-	}
+	if (!bareMode) {
+		if (allowFiles) {
+			total += promptOverheads?.files || 45;
+		} else if (attachments.length > 0 || pendingText.length > 0 || messages.some(msg => (msg.isUser() && msg.getData().files?.length > 0) || msg.getData().text?.length > 0)) {
+			total += promptOverheads?.no_files || 40;
+		}
 
-	if (searchTool) {
-		total += promptOverheads?.search || 300;
+		if (searchTool) {
+			total += promptOverheads?.search || 300;
+		}
 	}
 
 	if (jsonMode) {
 		total += 10;
 	}
-
 	if (messages.length > 0 || pendingText.length > 0 || attachments.length > 0 || usedImages.size > 0) {
 		total += 5;
 	}
@@ -2996,6 +2999,7 @@ async function buildRequest(noPush = false) {
 			files: allowFiles,
 			json: jsonMode,
 			search: searchTool,
+			bare: bareMode,
 		},
 		image: {
 			resolution: $imageResolution.value,
@@ -3106,6 +3110,10 @@ async function generate(cancel = false, noPush = false) {
 		});
 
 		message.setState("waiting");
+
+		if (bareMode) {
+			message.addTag("bare");
+		}
 
 		if (jsonMode) {
 			message.addTag("json");
@@ -4010,7 +4018,8 @@ function restore() {
 
 	const shouldAllowFiles = !!load("allow-files"),
 		shouldJsonMode = !!load("json"),
-		shouldSearch = !!load("search");
+		shouldSearch = !!load("search"),
+		shouldBare = !!load("bare");
 
 	if (allowFiles !== shouldAllowFiles) {
 		$files.click();
@@ -4022,6 +4031,10 @@ function restore() {
 
 	if (searchTool !== shouldSearch) {
 		$search.click();
+	}
+
+	if (bareMode !== shouldBare) {
+		$bare.click();
 	}
 
 	$iterations.parentNode.classList.toggle("none", !shouldSearch);
@@ -4385,6 +4398,7 @@ function getChatData(name) {
 		reasoning: $reasoningEffort.value,
 		json: jsonMode,
 		search: searchTool,
+		bare: bareMode,
 		time: $timeOverride.value,
 		messages: messages.map(message => message.getData(true)).filter(Boolean),
 		savedAt: Date.now(),
@@ -4699,6 +4713,7 @@ function loadChatFromStorage(name) {
 	store("time-override", data.time || "");
 	store("json", data.json);
 	store("search", data.search);
+	store("bare", data.bare);
 	store("messages", data.messages);
 
 	restore();
@@ -5091,6 +5106,23 @@ $search.addEventListener("click", () => {
 	updateChatTokens();
 });
 
+$bare.addEventListener("click", () => {
+	bareMode = !bareMode;
+
+	store("bare", bareMode);
+
+	$bare.classList.toggle("on", bareMode);
+
+	$bare.title = `Turn ${bareMode ? "off" : "on"} bare-bones mode (no dynamic system prompts)`;
+
+	const model = $model.value,
+		data = model ? models[model] : null,
+		tags = data?.tags || [],
+		hasSearch = searchAvailable && tags.includes("tools");
+
+	updateChatTokens();
+});
+
 let tokenUpdateTimeout;
 
 $message.addEventListener("input", () => {
@@ -5244,6 +5276,7 @@ $import?.addEventListener("click", async () => {
 		store("time-override", data.time || ""),
 		store("json", data.json),
 		store("search", data.search),
+		store("bare", data.bare),
 		store("messages", data.messages),
 	]);
 

@@ -54,6 +54,7 @@ type ChatTools struct {
 	Files  bool `json:"files"`
 	JSON   bool `json:"json"`
 	Search bool `json:"search"`
+	Bare   bool `json:"bare"`
 }
 
 type ChatMetadata struct {
@@ -167,6 +168,10 @@ func hasToolCallHistory(messages []openingrouter.ChatMessage) bool {
 }
 
 func (r *ChatRequest) AddToolPrompt(request *openingrouter.ChatCompletionRequest, iteration int64) bool {
+	if r.Tools.Bare {
+		return false
+	}
+
 	hasHistory := hasToolCallHistory(request.Messages)
 	needExplicitStop := hasHistory && r.Prompt != ""
 
@@ -312,34 +317,36 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 		}
 	}
 
-	prompt, err := BuildPrompt(r.Prompt, r.Metadata, model)
+	prompt, err := BuildPrompt(r.Prompt, r.Metadata, model, r.Tools.Bare)
 	if err != nil {
 		return nil, err
 	}
 
-	if r.Tools.Files {
-		if prompt != "" {
-			prompt += "\n\n"
-		}
-
-		prompt += InternalFilesPrompt
-	} else {
-		var hasFiles bool
-
-		for _, message := range r.Messages {
-			if message.Role == "user" && len(message.Files) > 0 {
-				hasFiles = true
-
-				break
-			}
-		}
-
-		if hasFiles {
+	if !r.Tools.Bare {
+		if r.Tools.Files {
 			if prompt != "" {
 				prompt += "\n\n"
 			}
 
-			prompt += InternalNoFilesPrompt
+			prompt += InternalFilesPrompt
+		} else {
+			var hasFiles bool
+
+			for _, message := range r.Messages {
+				if message.Role == "user" && len(message.Files) > 0 {
+					hasFiles = true
+
+					break
+				}
+			}
+
+			if hasFiles {
+				if prompt != "" {
+					prompt += "\n\n"
+				}
+
+				prompt += InternalNoFilesPrompt
+			}
 		}
 	}
 

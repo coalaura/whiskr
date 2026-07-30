@@ -1128,6 +1128,11 @@ body.no-title #title {
 	mask-image: url(icons/search-tool.svg);
 }
 
+.message .tag-bare {
+	background-color: var(--c-text);
+	mask-image: url(icons/bare-on.svg);
+}
+
 #role::before,
 .message.user .role::before {
 	background-color: var(--c-text);
@@ -2189,6 +2194,7 @@ body.loading #version,
 .message .role::before,
 .message .tag-json,
 .message .tag-search,
+.message .tag-bare,
 .message .collapse,
 .message .collapse::before,
 .message .copy,
@@ -2217,6 +2223,7 @@ body.loading #version,
 #files,
 #json,
 #search,
+#bare,
 #scrolling,
 #clear,
 #add,
@@ -2239,6 +2246,7 @@ body.loading #version,
 .message .statistics .cost::before,
 .message .tag-json,
 .message .tag-search,
+.message .tag-bare,
 .message .role::before {
 	content: "";
 	width: 16px;
@@ -2459,6 +2467,7 @@ input.invalid {
 #files,
 #json,
 #search,
+#bare,
 #scrolling,
 #clear {
 	position: unset !important;
@@ -2506,6 +2515,16 @@ input.invalid {
 #search.on {
 	background-color: var(--c-green);
 	mask-image: url(icons/search-on.svg);
+}
+
+#bare {
+	background-color: var(--c-subtext);
+	mask-image: url(icons/bare-off.svg);
+}
+
+#bare.on {
+	background-color: var(--c-yellow);
+	mask-image: url(icons/bare-on.svg);
 }
 
 #clear {
