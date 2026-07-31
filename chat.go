@@ -228,16 +228,6 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 
 	request.Model = r.Model
 
-	if model.Context.Completion > 0 {
-		maxTokens := model.Context.Completion
-
-		if env.Settings.MaxTokens > 0 {
-			maxTokens = min(maxTokens, env.Settings.MaxTokens)
-		}
-
-		request.MaxTokens = &maxTokens
-	}
-
 	if model.Text {
 		request.Modalities = append(request.Modalities, openingrouter.OutputModalityText)
 	}
