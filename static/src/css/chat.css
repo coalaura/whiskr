@@ -2224,6 +2224,7 @@ body.loading #version,
 #json,
 #search,
 #bare,
+#offline,
 #scrolling,
 #clear,
 #add,
@@ -2468,6 +2469,7 @@ input.invalid {
 #json,
 #search,
 #bare,
+#offline,
 #scrolling,
 #clear {
 	position: unset !important;
@@ -2525,6 +2527,15 @@ input.invalid {
 #bare.on {
 	background-color: var(--c-yellow);
 	mask-image: url(icons/bare-on.svg);
+}
+
+#offline {
+	background-color: var(--c-subtext);
+	mask-image: url(icons/offline.svg);
+}
+
+#offline.on {
+	background-color: var(--c-yellow);
 }
 
 #clear {
@@ -2827,6 +2838,7 @@ input.invalid {
 }
 
 #settings-modal .form-group input[type="text"],
+#settings-modal .form-group input[type="number"],
 #settings-modal .form-group textarea,
 #settings-modal .form-group select,
 #settings-modal .dropdown {
@@ -2842,6 +2854,7 @@ input.invalid {
 }
 
 #settings-modal .form-group input[type="text"],
+#settings-modal .form-group input[type="number"],
 #settings-modal .form-group textarea {
 	padding: 10px 12px;
 }
@@ -2854,6 +2867,7 @@ input.invalid {
 }
 
 #settings-modal .form-group input[type="text"]:hover,
+#settings-modal .form-group input[type="number"]:hover,
 #settings-modal .form-group textarea:hover,
 #settings-modal .form-group select:hover,
 #settings-modal .dropdown:hover {
@@ -2861,6 +2875,7 @@ input.invalid {
 }
 
 #settings-modal .form-group input[type="text"]:focus,
+#settings-modal .form-group input[type="number"]:focus,
 #settings-modal .form-group textarea:focus,
 #settings-modal .form-group select:focus,
 #settings-modal .dropdown.open {

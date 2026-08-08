@@ -47,14 +47,16 @@ type ChatMessage struct {
 type ChatImage struct {
 	Resolution string `json:"resolution"`
 	Aspect     string `json:"aspect"`
+	MaxImages  int    `json:"max_images"`
 }
 
 type ChatTools struct {
-	Images bool `json:"images"`
-	Files  bool `json:"files"`
-	JSON   bool `json:"json"`
-	Search bool `json:"search"`
-	Bare   bool `json:"bare"`
+	Images  bool `json:"images"`
+	Files   bool `json:"files"`
+	JSON    bool `json:"json"`
+	Search  bool `json:"search"`
+	Bare    bool `json:"bare"`
+	Offline bool `json:"offline"`
 }
 
 type ChatMetadata struct {
@@ -457,6 +459,14 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 		}
 	}
 
+	maxImages := r.Image.MaxImages
+
+	if maxImages < 0 {
+		return nil, fmt.Errorf("invalid maximum images: %d", maxImages)
+	}
+
+	LimitChatRequestImages(&request, maxImages)
+
 	request.StreamOptions = &openingrouter.ChatStreamOptions{
 		IncludeUsage: new(true),
 	}
@@ -572,58 +582,63 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		switch tool.Name {
-		case "search_web":
-			arguments, err := ParseAndUpdateArgs[SearchWebArguments](tool)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
+		if raw.Tools.Offline {
+			tool.Result = "error: tool unavailable: network is offline"
+		} else {
 
-				return
+			switch tool.Name {
+			case "search_web":
+				arguments, err := ParseAndUpdateArgs[SearchWebArguments](tool)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+
+				response.WriteChunk(NewChunk(ChunkTool, tool))
+
+				err = HandleSearchWebTool(ctx, tool, arguments)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+			case "fetch_contents":
+				arguments, err := ParseAndUpdateArgs[FetchContentsArguments](tool)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+
+				response.WriteChunk(NewChunk(ChunkTool, tool))
+
+				err = HandleFetchContentsTool(ctx, tool, arguments)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+			case "github_repository":
+				arguments, err := ParseAndUpdateArgs[GitHubRepositoryArguments](tool)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+
+				response.WriteChunk(NewChunk(ChunkTool, tool))
+
+				err = HandleGitHubRepositoryTool(ctx, tool, arguments)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+			default:
+				tool.Invalid = true
+				tool.Result = "error: invalid tool call"
 			}
-
-			response.WriteChunk(NewChunk(ChunkTool, tool))
-
-			err = HandleSearchWebTool(ctx, tool, arguments)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
-
-				return
-			}
-		case "fetch_contents":
-			arguments, err := ParseAndUpdateArgs[FetchContentsArguments](tool)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
-
-				return
-			}
-
-			response.WriteChunk(NewChunk(ChunkTool, tool))
-
-			err = HandleFetchContentsTool(ctx, tool, arguments)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
-
-				return
-			}
-		case "github_repository":
-			arguments, err := ParseAndUpdateArgs[GitHubRepositoryArguments](tool)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
-
-				return
-			}
-
-			response.WriteChunk(NewChunk(ChunkTool, tool))
-
-			err = HandleGitHubRepositoryTool(ctx, tool, arguments)
-			if err != nil {
-				response.WriteChunk(NewChunk(ChunkError, err))
-
-				return
-			}
-		default:
-			tool.Invalid = true
-			tool.Result = "error: invalid tool call"
 		}
 
 		tool.Done = true
@@ -923,4 +938,42 @@ func GetBadStopReason(finish openingrouter.ChatFinishReason, native string) stri
 	debug("unknown native finish reason: %q", native)
 
 	return ""
+}
+
+func LimitChatRequestImages(request *openingrouter.ChatCompletionRequest, maxImages int) {
+	images, _ := countMediaInRequest(request)
+	toRemove := images - maxImages
+
+	if toRemove <= 0 {
+		return
+	}
+
+	for i := range request.Messages {
+		message := &request.Messages[i]
+		parts := message.Content.Parts[:0]
+
+		for _, part := range message.Content.Parts {
+			if toRemove > 0 && part.Type == openingrouter.ChatContentPartTypeImageURL {
+				toRemove--
+
+				continue
+			}
+
+			parts = append(parts, part)
+		}
+
+		message.Content.Parts = parts
+
+		if toRemove == 0 || len(message.Images) == 0 {
+			continue
+		}
+
+		remove := min(toRemove, len(message.Images))
+		message.Images = message.Images[remove:]
+		toRemove -= remove
+
+		if toRemove == 0 {
+			return
+		}
+	}
 }

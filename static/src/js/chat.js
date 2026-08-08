@@ -70,6 +70,7 @@ const $version = document.getElementById("version"),
 	$modelBenchmark = document.getElementById("model-benchmark"),
 	$imageResolution = document.getElementById("image-resolution"),
 	$imageResize = document.getElementById("image-resize"),
+	$maxImages = document.getElementById("max-images"),
 	$imageAspect = document.getElementById("image-aspect"),
 	$reasoningEffort = document.getElementById("reasoning-effort"),
 	$prompt = document.getElementById("prompt"),
@@ -79,6 +80,7 @@ const $version = document.getElementById("version"),
 	$json = document.getElementById("json"),
 	$search = document.getElementById("search"),
 	$bare = document.getElementById("bare"),
+	$offline = document.getElementById("offline"),
 	$add = document.getElementById("add"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
@@ -151,6 +153,7 @@ let autoScrolling = false,
 	jsonMode = false,
 	searchTool = false,
 	bareMode = false,
+	offlineMode = false,
 	exportFormat = "whiskr",
 	exportRoles = ["user", "assistant"],
 	chatTitle = false,
@@ -2972,6 +2975,15 @@ async function buildRequest(noPush = false) {
 		$iterations.classList.remove("invalid");
 	}
 
+	let maxImages = parseInt($maxImages.value, 10);
+
+	if (Number.isNaN(maxImages) || maxImages < 0) {
+		maxImages = 8;
+
+		$maxImages.value = maxImages;
+		$maxImages.classList.remove("invalid");
+	}
+
 	if (!noPush) {
 		pushMessage();
 	}
@@ -3000,11 +3012,13 @@ async function buildRequest(noPush = false) {
 			json: jsonMode,
 			search: searchTool,
 			bare: bareMode,
+			offline: offlineMode,
 		},
 		image: {
 			resolution: $imageResolution.value,
 			resize: $imageResize.value,
 			aspect: $imageAspect.value,
+			max_images: maxImages,
 		},
 		reasoning: $reasoningEffort.value,
 		metadata: {
@@ -3256,6 +3270,15 @@ async function generate(cancel = false, noPush = false) {
 		}
 	);
 }
+
+window.addEventListener("beforeunload", event => {
+	if (!$chat.classList.contains("completing")) {
+		return;
+	}
+
+	event.preventDefault();
+	event.returnValue = "";
+});
 
 let titleController;
 
@@ -3978,6 +4001,7 @@ function restore() {
 	$modelBenchmark.value = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
 	$imageResolution.value = load("image-resolution", "1K");
 	$imageResize.value = load("image-resize", "8192");
+	$maxImages.value = load("max-images", 8);
 	$imageAspect.value = load("image-aspect", "");
 	$reasoningEffort.value = load("reasoning-effort", "medium");
 	$timeOverride.value = load("time-override", "");
@@ -4019,7 +4043,8 @@ function restore() {
 	const shouldAllowFiles = !!load("allow-files"),
 		shouldJsonMode = !!load("json"),
 		shouldSearch = !!load("search"),
-		shouldBare = !!load("bare");
+		shouldBare = !!load("bare"),
+		shouldOffline = !!load("offline");
 
 	if (allowFiles !== shouldAllowFiles) {
 		$files.click();
@@ -4035,6 +4060,10 @@ function restore() {
 
 	if (bareMode !== shouldBare) {
 		$bare.click();
+	}
+
+	if (offlineMode !== shouldOffline) {
+		$offline.click();
 	}
 
 	$iterations.parentNode.classList.toggle("none", !shouldSearch);
@@ -4394,11 +4423,13 @@ function getChatData(name) {
 			resolution: $imageResolution.value,
 			resize: $imageResize.value,
 			aspect: $imageAspect.value,
+			maxImages: $maxImages.value,
 		},
 		reasoning: $reasoningEffort.value,
 		json: jsonMode,
 		search: searchTool,
 		bare: bareMode,
+		offline: offlineMode,
 		time: $timeOverride.value,
 		messages: messages.map(message => message.getData(true)).filter(Boolean),
 		savedAt: Date.now(),
@@ -4707,6 +4738,7 @@ function loadChatFromStorage(name) {
 	store("provider", data.provider);
 	store("image-resolution", data.image?.resolution);
 	store("image-resize", data.image?.resize);
+	store("max-images", data.image?.maxImages);
 	store("image-aspect", data.image?.aspect);
 	store("reasoning-effort", data.reasoning?.effort);
 	store("reasoning-tokens", data.reasoning?.tokens);
@@ -4714,6 +4746,7 @@ function loadChatFromStorage(name) {
 	store("json", data.json);
 	store("search", data.search);
 	store("bare", data.bare);
+	store("offline", data.offline);
 	store("messages", data.messages);
 
 	restore();
@@ -5019,6 +5052,15 @@ $imageResolution.addEventListener("change", () => {
 	store("image-resolution", $imageResolution.value);
 });
 
+$maxImages.addEventListener("input", () => {
+	const value = $maxImages.value,
+		maxImages = parseInt(value, 10);
+
+	store("max-images", value);
+
+	$maxImages.classList.toggle("invalid", Number.isNaN(maxImages) || maxImages < 0);
+});
+
 function updateAllImageSizes() {
 	const maxSize = parseInt($imageResize.value, 10);
 
@@ -5121,6 +5163,16 @@ $bare.addEventListener("click", () => {
 		hasSearch = searchAvailable && tags.includes("tools");
 
 	updateChatTokens();
+});
+
+$offline.addEventListener("click", () => {
+	offlineMode = !offlineMode;
+
+	store("offline", offlineMode);
+
+	$offline.classList.toggle("on", offlineMode);
+
+	$offline.title = `Turn ${offlineMode ? "off" : "on"} offline simulation (tool calls will be unavailable)`;
 });
 
 let tokenUpdateTimeout;
@@ -5270,6 +5322,7 @@ $import?.addEventListener("click", async () => {
 		store("iterations", data.iterations),
 		store("image-resolution", data.image?.resolution),
 		store("image-resize", data.image?.resize),
+		store("max-images", data.image?.maxImages),
 		store("image-aspect", data.image?.aspect),
 		store("reasoning-effort", data.reasoning?.effort),
 		store("reasoning-tokens", data.reasoning?.tokens),
@@ -5277,6 +5330,7 @@ $import?.addEventListener("click", async () => {
 		store("json", data.json),
 		store("search", data.search),
 		store("bare", data.bare),
+		store("offline", data.offline),
 		store("messages", data.messages),
 	]);
 

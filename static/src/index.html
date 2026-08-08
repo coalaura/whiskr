@@ -206,6 +206,7 @@
 						<button id="json" title="Turn on structured json output"></button>
 						<button id="search" title="Turn on search tools (search_web and fetch_contents)"></button>
 						<button id="bare" title="Turn on bare-bones mode (no dynamic system prompts)"></button>
+						<button id="offline" title="Turn on offline simulation (tool calls will be unavailable)"></button>
 					</div>
 					<div class="option">
 						<label for="iterations" title="Maximum number of iterations (turns) per response"></label>
@@ -334,6 +335,11 @@
 									<option value="4096">4K (4096x4096)</option>
 									<option value="8192" selected>8K (8192x8192)</option>
 								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="max-images">Maximum Images Per Request</label>
+								<input id="max-images" type="number" min="0" value="8" />
 							</div>
 
 							<div class="form-group span-2">
