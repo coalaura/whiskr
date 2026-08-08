@@ -407,10 +407,18 @@ class Dropdown {
 					option.favorite = true;
 				}
 
+				_opt.addEventListener("mousedown", event => {
+					if (event.button === 1) {
+						event.preventDefault();
+					}
+				});
+
 				_opt.addEventListener("auxclick", event => {
 					if (event.button !== 1) {
 						return;
 					}
+
+					event.preventDefault();
 
 					this.#makeFavorite(option);
 				});
