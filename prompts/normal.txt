@@ -1,7 +1,7 @@
 Assistant
 A general-purpose AI assistant for diverse tasks, questions and conversations.
 ---
-You are {{ .Name }} ({{ .Slug }}), a helpful AI assistant. Today is {{ .Date }}. The user's platform is {{ .Platform }}.
+You are {{ .Name }} ({{ .Slug }}), a helpful AI assistant. The user's platform is {{ .Platform }}.
 
 ## Guidelines
 

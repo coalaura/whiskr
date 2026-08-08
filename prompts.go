@@ -155,25 +155,8 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 		return "", fmt.Errorf("unknown prompt: %q", name)
 	}
 
-	tz := time.UTC
-
-	if metadata.Timezone != "" {
-		parsed, err := time.LoadLocation(metadata.Timezone)
-		if err == nil {
-			tz = parsed
-		}
-	}
-
 	if metadata.Platform == "" {
 		metadata.Platform = "Unknown"
-	}
-
-	var now time.Time
-
-	if metadata.Time != nil {
-		now = time.Unix(*metadata.Time, 0)
-	} else {
-		now = time.Now()
 	}
 
 	settings := metadata.Settings
@@ -187,7 +170,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 	err := tmpl.Execute(buf, PromptData{
 		Name:     model.Name,
 		Slug:     model.ID,
-		Date:     now.In(tz).Format(time.RFC1123),
+		Date:     FormatPromptDate(metadata),
 		Platform: metadata.Platform,
 		Settings: settings,
 	})
@@ -197,4 +180,21 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 	}
 
 	return buf.String(), nil
+}
+
+func FormatPromptDate(metadata ChatMetadata) string {
+	tz := time.UTC
+
+	if metadata.Timezone != "" {
+		if parsed, err := time.LoadLocation(metadata.Timezone); err == nil {
+			tz = parsed
+		}
+	}
+
+	now := time.Now()
+	if metadata.Time != nil {
+		now = time.Unix(*metadata.Time, 0)
+	}
+
+	return now.In(tz).Format(time.RFC1123)
 }

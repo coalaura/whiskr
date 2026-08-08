@@ -1252,7 +1252,7 @@ class Message {
 					url = URL.createObjectURL(blob);
 
 				this.#inlineImagesBlobs.set(key, url);
-			} catch {}
+			} catch { }
 		}
 	}
 
@@ -1334,7 +1334,7 @@ class Message {
 				const url = dataUrlToBlobUrl(image);
 
 				this.#imageBlobs.set(image, url);
-			} catch {}
+			} catch { }
 		}
 	}
 
@@ -2276,7 +2276,7 @@ class Message {
 
 			try {
 				event.dataTransfer.setData("text/plain", fileId);
-			} catch {}
+			} catch { }
 		});
 
 		this.#_files.addEventListener("dragover", event => {
@@ -2992,9 +2992,9 @@ async function buildRequest(noPush = false) {
 
 	const opts = settings.enabled
 		? {
-				name: settings.name,
-				prompt: settings.prompt,
-			}
+			name: settings.name,
+			prompt: settings.prompt,
+		}
 		: null;
 
 	const expandedMessages = await Promise.all(messages.map(message => message.getData(false, true)));
@@ -3197,12 +3197,12 @@ async function generate(cancel = false, noPush = false) {
 					finish();
 
 					break;
-			case "usage":
-				message.setStatistics(chunk.data);
+				case "usage":
+					message.setStatistics(chunk.data);
 
-				updateChatTokens();
+					updateChatTokens();
 
-				break;
+					break;
 				case "tool":
 					receivedCompletion = true;
 
@@ -3312,13 +3312,13 @@ async function refreshTitle() {
 
 	try {
 		const response = await fetch("/-/title", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(body),
-				signal: titleController.signal,
-			}),
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(body),
+			signal: titleController.signal,
+		}),
 			result = await response.json();
 
 		if (!response.ok || !result?.title) {
@@ -3445,8 +3445,8 @@ async function refreshUsage() {
 
 	try {
 		const response = await fetch("/-/usage", {
-				signal: controller.signal,
-			}),
+			signal: controller.signal,
+		}),
 			data = await response.json();
 
 		if (!data || data.error) {
@@ -4089,14 +4089,14 @@ function restore() {
 async function resolveTokenCount(str) {
 	try {
 		const response = await fetch("/-/tokenize", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					string: str,
-				}),
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				string: str,
 			}),
+		}),
 			data = await response.json();
 
 		if (!response.ok) {
@@ -4441,6 +4441,178 @@ function getChatData(name) {
 	}
 
 	return data;
+}
+
+function importString(value, fallback = "", maxLength = 4 * 1024 * 1024) {
+	if (typeof value === "string") {
+		return value.slice(0, maxLength);
+	}
+
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value).slice(0, maxLength);
+	}
+
+	return fallback;
+}
+
+function importBoolean(value, fallback = false) {
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	if (value === 1 || value === "1" || value === "true") {
+		return true;
+	}
+
+	if (value === 0 || value === "0" || value === "false") {
+		return false;
+	}
+
+	return fallback;
+}
+
+function importNumber(value, fallback, min, max) {
+	const number = typeof value === "number" ? value : Number(value);
+
+	return Number.isFinite(number) && number >= min && number <= max ? number : fallback;
+}
+
+function importContent(content) {
+	if (typeof content === "string" || typeof content === "number" || typeof content === "boolean") {
+		return importString(content);
+	}
+
+	if (!Array.isArray(content)) {
+		return "";
+	}
+
+	return content
+		.map(part => {
+			if (!part || typeof part !== "object") {
+				return "";
+			}
+
+			if (part.type === "text" || part.type === "input_text" || part.type === "output_text") {
+				return importString(part.text ?? part.content);
+			}
+
+			if (part.type === "image_url") {
+				const url = typeof part.image_url === "object" ? part.image_url?.url : part.image_url;
+
+				return typeof url === "string" ? `![](${url})` : "";
+			}
+
+			return "";
+		})
+		.join("\n")
+		.slice(0, 4 * 1024 * 1024);
+}
+
+function importMessage(message) {
+	if (!message || typeof message !== "object") {
+		return null;
+	}
+
+	let role = importString(message.role).toLowerCase(),
+		text = importString(message.text) || importContent(message.content);
+
+	if (role === "developer" || role === "tool") {
+		role = "system";
+	}
+
+	if (!new Set(["user", "assistant", "system"]).has(role)) {
+		return null;
+	}
+
+	const data = { role: role, text: text },
+		tool = message.tool || message.tool_calls?.[0];
+
+	if (tool && typeof tool === "object") {
+		const functionCall = tool.function && typeof tool.function === "object" ? tool.function : tool,
+			name = importString(functionCall.name, "", 256);
+
+		if (name) {
+			data.tool = {
+				id: importString(tool.id, "", 256),
+				name: name,
+				args: importString(functionCall.arguments ?? functionCall.args),
+				result: importString(tool.result),
+				done: importBoolean(tool.done),
+				invalid: importBoolean(tool.invalid),
+			};
+		}
+	}
+
+	if (Array.isArray(message.files)) {
+		data.files = message.files
+			.filter(file => file && typeof file === "object")
+			.map(file => ({
+				name: importString(file.name, "Attachment", 512),
+				content: importString(file.content, "", 4 * 1024 * 1024),
+			}))
+			.filter(file => file.content);
+	}
+
+	if (Array.isArray(message.images)) {
+		data.images = message.images.filter(image => typeof image === "string" && image.length <= 4 * 1024 * 1024).slice(0, 32);
+	}
+
+	if (Array.isArray(message.inlineImages)) {
+		data.inlineImages = message.inlineImages
+			.filter(entry => Array.isArray(entry) && typeof entry[0] === "string" && typeof entry[1] === "string" && entry[1].length <= 4 * 1024 * 1024)
+			.slice(0, 32);
+	}
+
+	if (!data.text && !data.files?.length && !data.images?.length && !data.tool) {
+		return null;
+	}
+
+	return data;
+}
+
+function normalizeImport(data) {
+	if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.messages)) {
+		throw new Error("Expected a Whiskr chat or OpenRouter request with a messages array");
+	}
+
+	const isOpenRouter = !Object.hasOwn(data, "savedAt") && !Object.hasOwn(data, "attachments"),
+		defaultModel = modelList.length ? modelList[0].id : "",
+		defaultPrompt = promptList.length ? promptList[0].key : "",
+		model = importString(data.model, defaultModel, 256),
+		prompt = importString(data.prompt, defaultPrompt, 128),
+		image = data.image && typeof data.image === "object" ? data.image : {},
+		reasoning = typeof data.reasoning === "object" ? data.reasoning?.effort : data.reasoning;
+
+	return {
+		title: importString(data.title, "", 256),
+		file: importString(data.file, "", 128),
+		message: importString(data.message),
+		attachments: Array.isArray(data.attachments)
+			? data.attachments
+				.filter(file => file && typeof file === "object")
+				.map(file => ({ name: importString(file.name, "Attachment", 512), content: importString(file.content) }))
+				.filter(file => file.content)
+			: [],
+		role: ["user", "assistant", "system"].includes(data.role) ? data.role : "user",
+		model: modelList.some(item => item.id === model) ? model : defaultModel,
+		provider: ["throughput", "latency", "price"].includes(data.provider) ? data.provider : "",
+		prompt: promptList.some(item => item.key === prompt) ? prompt : defaultPrompt,
+		temperature: importNumber(data.temperature, 0.85, 0, 2),
+		iterations: importNumber(data.iterations, 3, 1, 50),
+		image: {
+			resolution: ["1K", "2K", "4K"].includes(image.resolution) ? image.resolution : "1K",
+			resize: ["0", "512", "1024", "1536", "2048", "4096", "8192"].includes(String(image.resize)) ? String(image.resize) : "8192",
+			aspect: Array.from($imageAspect.options).some(option => option.value === image.aspect) ? image.aspect : "",
+			maxImages: importNumber(image.maxImages ?? image.max_images, 8, 0, 32),
+		},
+		reasoning: importString(reasoning, "medium", 16),
+		json: importBoolean(data.json ?? data.response_format?.type === "json_object"),
+		search: importBoolean(data.search),
+		bare: isOpenRouter ? true : importBoolean(data.bare),
+		offline: importBoolean(data.offline),
+		time: importString(data.time, "", 32),
+		messages: data.messages.map(importMessage).filter(Boolean),
+	};
 }
 
 function getExportMessages(roles = exportRoles) {
@@ -5296,13 +5468,13 @@ $import?.addEventListener("click", async () => {
 	}
 
 	const file = await selectFile(
-			"application/json",
-			false,
-			selected => {
-				selected.content = JSON.parse(selected.content);
-			},
-			msg => notify(msg, "error")
-		),
+		"application/json",
+		false,
+		selected => {
+			selected.content = normalizeImport(JSON.parse(selected.content));
+		},
+		msg => notify(msg, "error")
+	),
 		data = file?.content;
 
 	if (!data) {
@@ -5317,6 +5489,7 @@ $import?.addEventListener("click", async () => {
 		store("attachments", data.attachments),
 		store("role", data.role),
 		store("model", data.model),
+		store("provider", data.provider),
 		store("prompt", data.prompt),
 		store("temperature", data.temperature),
 		store("iterations", data.iterations),
@@ -5324,8 +5497,7 @@ $import?.addEventListener("click", async () => {
 		store("image-resize", data.image?.resize),
 		store("max-images", data.image?.maxImages),
 		store("image-aspect", data.image?.aspect),
-		store("reasoning-effort", data.reasoning?.effort),
-		store("reasoning-tokens", data.reasoning?.tokens),
+		store("reasoning-effort", data.reasoning),
 		store("time-override", data.time || ""),
 		store("json", data.json),
 		store("search", data.search),

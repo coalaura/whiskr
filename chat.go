@@ -342,6 +342,11 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 		}
 	}
 
+	if prompt != "" && !r.Tools.Bare {
+		// volatile context after the cacheable system-prompt prefix.
+		prompt += "\n\nCurrent date and time: " + FormatPromptDate(r.Metadata)
+	}
+
 	if prompt != "" {
 		request.Messages = append(request.Messages, openingrouter.SystemMessage(prompt))
 	}
