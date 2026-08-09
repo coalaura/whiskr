@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"slices"
 	"sort"
 	"strings"
@@ -32,6 +34,7 @@ type ModelContext struct {
 // gost:preserve-layout
 type Model struct {
 	ID          string           `json:"id"`
+	Slug        string           `json:"slug"`
 	Created     int64            `json:"created"`
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
@@ -54,6 +57,8 @@ type Model struct {
 	Audio  bool `json:"-"`
 	Text   bool `json:"-"`
 }
+
+const ModelShortIDPrefix = "ws-"
 
 var (
 	modelMx sync.RWMutex
@@ -146,7 +151,8 @@ func LoadModels() error {
 		}
 
 		m := &Model{
-			ID:          model.Slug,
+			ID:          GetModelShortID(model.Endpoint.ID),
+			Slug:        model.Slug,
 			Created:     model.CreatedAt.Unix(),
 			Name:        CleanModelName(model.Author, model.ShortName),
 			Description: model.Description,
@@ -190,7 +196,7 @@ func LoadModels() error {
 			newAudioList = append(newAudioList, m)
 		}
 
-		newModelMap[m.ID] = m
+		newModelMap[m.Slug] = m
 	}
 
 	log.Printf("Loaded %d models\n", len(newModelList))
@@ -204,6 +210,26 @@ func LoadModels() error {
 	modelMx.Unlock()
 
 	return nil
+}
+
+func GetModelShortID(endpointID string) string {
+	input := make([]byte, 0, 14+len(endpointID))
+
+	input = append(input, "whiskr-id/v01\x00"...)
+	input = append(input, endpointID...)
+
+	sum := sha256.Sum256(input)
+
+	return ModelShortIDPrefix + base64.RawURLEncoding.EncodeToString(sum[:8])
+}
+
+func IsModelShortID(id string) bool {
+	if !strings.HasPrefix(id, ModelShortIDPrefix) {
+		return false
+	}
+
+	data, err := base64.RawURLEncoding.DecodeString(id[len(ModelShortIDPrefix):])
+	return err == nil && len(data) == 8
 }
 
 func GetModelBenchmarks(model openingrouter.Model) *ModelBenchmarks {
@@ -322,7 +348,7 @@ func HasModelListChanged(list []openingrouter.FrontendModel) bool {
 	}
 
 	for i, model := range list {
-		if ModelList[i].ID != model.Slug {
+		if ModelList[i].Slug != model.Slug {
 			return true
 		}
 	}
