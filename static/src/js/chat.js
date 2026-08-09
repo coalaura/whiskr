@@ -141,6 +141,7 @@ const settings = {
 
 const messages = [],
 	models = {},
+	audioModels = {},
 	modelList = [],
 	disabledModels = [],
 	promptList = [],
@@ -2899,6 +2900,12 @@ async function stream(url, options, callback) {
 }
 
 async function generateTTS(proxy, model, voice, input) {
+	const modelData = audioModels[model];
+
+	if (!modelData) {
+		throw new Error("Unknown voice model.");
+	}
+
 	let audioData = null,
 		errorMsg = null;
 
@@ -2912,7 +2919,7 @@ async function generateTTS(proxy, model, voice, input) {
 				},
 				body: JSON.stringify({
 					proxy: proxy,
-					model: model,
+					model: modelData.slug,
 					voice: voice,
 					input: input,
 				}),
@@ -2999,10 +3006,16 @@ async function buildRequest(noPush = false) {
 
 	const expandedMessages = await Promise.all(messages.map(message => message.getData(false, true)));
 
+	const model = models[$model.value];
+
+	if (!model) {
+		throw new Error("Unknown model.");
+	}
+
 	return {
 		proxy: $proxy.value,
 		prompt: $prompt.value,
-		model: $model.value,
+		model: model.slug,
 		provider: $providerSorting.value,
 		temperature: temperature,
 		iterations: iterations,
@@ -3787,6 +3800,7 @@ async function loadData() {
 
 			opt.value = model.id;
 			opt.textContent = model.name;
+			audioModels[model.id] = model;
 
 			$ttsModel.appendChild(opt);
 		}

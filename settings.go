@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"slices"
 	"sync"
 	"time"
 
@@ -100,6 +101,16 @@ func (s *Settings) CancelSchedule() bool {
 }
 
 func (s *Settings) Serialize(username string) map[string]any {
+	modelMx.RLock()
+
+	validFavorites := make(map[string]struct{}, len(ModelIDMap))
+
+	for id := range ModelIDMap {
+		validFavorites[id] = struct{}{}
+	}
+
+	modelMx.RUnlock()
+
 	s.mx.RLock()
 	defer s.mx.RUnlock()
 
@@ -109,17 +120,13 @@ func (s *Settings) Serialize(username string) map[string]any {
 	if ok && len(user.Favorites) > 0 {
 		favorites = make([]string, 0, len(user.Favorites))
 
-		modelMx.RLock()
-
 		for _, favorite := range user.Favorites {
-			if _, ok := ModelMap[favorite]; !ok {
+			if _, ok := validFavorites[favorite]; !ok {
 				continue
 			}
 
 			favorites = append(favorites, favorite)
 		}
-
-		modelMx.RUnlock()
 	} else {
 		favorites = make([]string, 0)
 	}
@@ -127,6 +134,49 @@ func (s *Settings) Serialize(username string) map[string]any {
 	return map[string]any{
 		"favorites": favorites,
 	}
+}
+
+func (s *Settings) MigrateFavoriteModelIDs(models []*Model) bool {
+	idsBySlug := make(map[string][]string, len(models))
+
+	for _, model := range models {
+		idsBySlug[model.Slug] = append(idsBySlug[model.Slug], model.ID)
+	}
+
+	var changed bool
+
+	s.mx.Lock()
+	defer s.mx.Unlock()
+
+	for _, user := range s.Settings {
+		favorites := make([]string, 0, len(user.Favorites))
+		seen := make(map[string]struct{}, len(user.Favorites))
+
+		for _, favorite := range user.Favorites {
+			ids := []string{favorite}
+			if !IsModelShortID(favorite) {
+				if migrated := idsBySlug[favorite]; len(migrated) > 0 {
+					ids = migrated
+				}
+			}
+
+			for _, id := range ids {
+				if _, ok := seen[id]; ok {
+					continue
+				}
+
+				seen[id] = struct{}{}
+				favorites = append(favorites, id)
+			}
+		}
+
+		if !slices.Equal(user.Favorites, favorites) {
+			user.Favorites = favorites
+			changed = true
+		}
+	}
+
+	return changed
 }
 
 func (s *Settings) SetFavorites(username string, favorites []string) {

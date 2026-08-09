@@ -24,7 +24,7 @@ type FilterModel struct {
 
 func (f *Filters) Match(md *Model) (bool, error) {
 	match, err := expr.Run(f.program, FilterModel{
-		Slug:    md.ID,
+		Slug:    md.Slug,
 		Name:    md.Name,
 		Price:   max(md.Pricing.Input, md.Pricing.Output),
 		Tags:    md.Tags,

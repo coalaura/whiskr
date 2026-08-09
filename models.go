@@ -63,9 +63,10 @@ const ModelShortIDPrefix = "ws-"
 var (
 	modelMx sync.RWMutex
 
-	AudioList []*Model
-	ModelList []*Model
-	ModelMap  map[string]*Model
+	AudioList  []*Model
+	ModelList  []*Model
+	ModelMap   map[string]*Model
+	ModelIDMap map[string]*Model
 )
 
 func GetModel(name string) *Model {
@@ -111,9 +112,10 @@ func LoadModels() error {
 	})
 
 	var (
-		newModelList = make([]*Model, 0, len(list))
-		newAudioList = make([]*Model, 0, len(list))
-		newModelMap  = make(map[string]*Model, len(list))
+		newModelList  = make([]*Model, 0, len(list))
+		newAudioList  = make([]*Model, 0, len(list))
+		newModelMap   = make(map[string]*Model, len(list))
+		newModelIDMap = make(map[string]*Model, len(list))
 	)
 
 	for _, model := range list {
@@ -190,6 +192,7 @@ func LoadModels() error {
 			}
 
 			newModelList = append(newModelList, m)
+			newModelIDMap[m.ID] = m
 		}
 
 		if canSpeak && len(m.Voices) > 0 {
@@ -206,8 +209,13 @@ func LoadModels() error {
 	AudioList = newAudioList
 	ModelList = newModelList
 	ModelMap = newModelMap
+	ModelIDMap = newModelIDMap
 
 	modelMx.Unlock()
+
+	if settings != nil && settings.MigrateFavoriteModelIDs(newModelList) {
+		settings.ScheduleStore()
+	}
 
 	return nil
 }

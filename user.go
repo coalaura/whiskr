@@ -33,7 +33,7 @@ func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
 		modelMx.RLock()
 
 		for _, favorite := range favorites {
-			if _, ok := ModelMap[favorite]; !ok {
+			if _, ok := ModelIDMap[favorite]; !IsModelShortID(favorite) || !ok {
 				valid = false
 
 				debug("invalid favorite model %q", favorite)

@@ -169,7 +169,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 
 	err := tmpl.Execute(buf, PromptData{
 		Name:     model.Name,
-		Slug:     model.ID,
+		Slug:     model.Slug,
 		Date:     FormatPromptDate(metadata),
 		Platform: metadata.Platform,
 		Settings: settings,
