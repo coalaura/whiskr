@@ -71,6 +71,7 @@ type ChatSettings struct {
 	Prompt string `json:"prompt"`
 }
 
+// gost:preserve-layout
 type ChatRequest struct {
 	proxy *EnvProxy
 
@@ -230,6 +231,8 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 	}
 
 	request.Model = r.Model
+
+	request.MetadataLevel = openingrouter.ChatMetadataLevelEnabled
 
 	if model.Text {
 		request.Modalities = append(request.Modalities, openingrouter.OutputModalityText)
