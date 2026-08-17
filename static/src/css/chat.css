@@ -1349,7 +1349,7 @@ body.no-title #title {
 	background: var(--c-mantle-dark);
 }
 
-.tool .result pre.l-json .pre-header {
+.tool .result pre.l-json .pre-lang {
 	display: none;
 }
 
@@ -2541,7 +2541,7 @@ input.invalid {
 }
 
 #offline.on {
-	background-color: var(--c-yellow);
+	background-color: var(--c-red);
 }
 
 #compression {

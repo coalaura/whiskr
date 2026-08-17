@@ -22,6 +22,7 @@ function init() {
 
 		frame.srcdoc = layout ? addPrintLayout(data.content, layout) : data.content;
 		frame.hidden = false;
+		body.parentElement.hidden = true;
 
 		if (layout) {
 			print.hidden = false;
@@ -30,6 +31,9 @@ function init() {
 
 		return;
 	}
+
+	frame.hidden = true;
+	body.parentElement.hidden = false;
 
 	let language = guessLanguage(data.name);
 

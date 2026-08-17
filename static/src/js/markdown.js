@@ -150,11 +150,11 @@ use({
 		},
 
 		code: code => {
-			const header = `<div class="pre-header no-click">${escapeHtml(code.lang)}</div>`,
-				copy = `<button class="pre-copy" title="Copy code contents"></button>`,
-				preview = code.lang === "html" ? `<button class="pre-preview" title="Preview HTML"></button>` : "";
+			const copy = `<button class="pre-copy" title="Copy code contents"></button>`,
+				preview = code.lang === "html" ? `<button class="pre-preview" title="Preview HTML"></button>` : "",
+				header = `<div class="pre-header no-click"><span class="pre-lang">${escapeHtml(code.lang)}</span><span class="pre-actions">${copy}${preview}</span></div>`;
 
-			return `<pre class="l-${escapeHtml(code.lang)}">${header}${copy}${preview}<code>${code.text}</code></pre>`;
+			return `<pre class="l-${escapeHtml(code.lang)}">${header}<code>${code.text}</code></pre>`;
 		},
 
 		link: link => `<a href="${link.href}" target="_blank" class="no-click">${escapeHtml(link.text || link.href)}</a>`,

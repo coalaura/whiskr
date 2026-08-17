@@ -168,39 +168,42 @@
 }
 
 .markdown .pre-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	background: var(--c-surface0);
-	padding: 8px 12px;
+	padding: 4px 6px 4px 12px;
 	margin: 0;
 	font-size: 13px;
 	line-height: 15px;
 	border-top-left-radius: 6px;
 	border-top-right-radius: 6px;
+	z-index: 1;
+}
+
+.markdown .pre-actions {
+	display: flex;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.markdown .pre-copy,
+.markdown .pre-preview {
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	background-color: var(--c-lavender);
+	mask-position: center;
+	mask-size: 20px;
+	mask-repeat: no-repeat;
 }
 
 .markdown .pre-copy {
-	position: sticky;
-	top: 34px;
-	float: right;
-	margin-top: -30px;
-	width: 30px;
-	height: 30px;
-	mask-size: 20px;
+	mask-image: url(icons/copy.svg);
 }
 
 .markdown .pre-preview {
-	position: sticky;
-	top: 34px;
-	float: right;
-	margin-top: -30px;
-	width: 30px;
-	height: 30px;
-	mask-image: url(icons/screen.svg);
-	mask-size: 20px;
-}
-
-.markdown pre:hover .pre-copy,
-.markdown pre:hover .pre-preview {
-	opacity: 1;
+	mask-image: url(icons/preview.svg);
 }
 
 .markdown hr {
