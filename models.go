@@ -123,6 +123,10 @@ func LoadModels() error {
 			continue
 		}
 
+		if IsBatchModel(model.Slug, model.Name) {
+			continue
+		}
+
 		canText := slices.Contains(model.OutputModalities, "text")
 		canSpeak := env.Models.TextToSpeech && slices.Contains(model.OutputModalities, "speech")
 
@@ -152,9 +156,11 @@ func LoadModels() error {
 			output = model.Endpoint.Pricing.Completion.Float64()
 		}
 
+		slug := GetFullModelSlug(model.Slug, model.Name)
+
 		m := &Model{
-			ID:          GetModelShortID(model.Endpoint.ID),
-			Slug:        model.Slug,
+			ID:          GetModelShortID(slug),
+			Slug:        slug,
 			Created:     model.CreatedAt.Unix(),
 			Name:        CleanModelName(model.Author, model.ShortName),
 			Description: model.Description,
@@ -166,7 +172,7 @@ func LoadModels() error {
 			Pricing: ModelPricing{
 				Input:  input * 1000000,
 				Output: output * 1000000,
-				Image:  ImageModelPricing[model.Slug],
+				Image:  ImageModelPricing[slug],
 			},
 			Context: ModelContext{
 				Total:      model.Endpoint.ContextLength,
@@ -199,7 +205,7 @@ func LoadModels() error {
 			newAudioList = append(newAudioList, m)
 		}
 
-		newModelMap[m.Slug] = m
+		newModelMap[slug] = m
 	}
 
 	log.Printf("Loaded %d models\n", len(newModelList))
@@ -220,11 +226,11 @@ func LoadModels() error {
 	return nil
 }
 
-func GetModelShortID(endpointID string) string {
-	input := make([]byte, 0, 14+len(endpointID))
+func GetModelShortID(slug string) string {
+	input := make([]byte, 0, 14+len(slug))
 
-	input = append(input, "whiskr-id/v01\x00"...)
-	input = append(input, endpointID...)
+	input = append(input, "whiskr-id/v02\x00"...)
+	input = append(input, slug...)
 
 	sum := sha256.Sum256(input)
 
@@ -379,6 +385,30 @@ func HasVersionPrefix(str string) bool {
 
 	// "1.2"
 	return ln > 0 && isDigit(str[0])
+}
+
+func IsBatchModel(slug, name string) bool {
+	if strings.HasSuffix(slug, ":batch") {
+		return true
+	}
+
+	return strings.HasSuffix(strings.ToLower(name), " (batch)")
+}
+
+func GetFullModelSlug(slug, name string) string {
+	if strings.HasSuffix(slug, ":free") {
+		return slug
+	} else if strings.HasSuffix(strings.ToLower(name), " (free)") {
+		return slug + ":free"
+	}
+
+	if strings.HasSuffix(slug, ":thinking") {
+		return slug
+	} else if strings.HasSuffix(strings.ToLower(name), " (thinking)") {
+		return slug + ":thinking"
+	}
+
+	return slug
 }
 
 func isDigit(ch byte) bool {
