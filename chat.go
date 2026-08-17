@@ -83,6 +83,7 @@ type ChatRequest struct {
 	Tools       ChatTools     `json:"tools"`
 	Image       ChatImage     `json:"image"`
 	Reasoning   string        `json:"reasoning"`
+	Compression bool          `json:"compression"`
 	Metadata    ChatMetadata  `json:"metadata"`
 	Messages    []ChatMessage `json:"messages"`
 }
@@ -362,7 +363,15 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 		r.Iterations = 1
 	}
 
-	for _, message := range r.Messages {
+	lastUser := -1
+
+	for i, message := range r.Messages {
+		if message.Role == "user" {
+			lastUser = i
+		}
+	}
+
+	for i, message := range r.Messages {
 		message.Text = strings.ReplaceAll(message.Text, "\r", "")
 
 		switch message.Role {
@@ -458,6 +467,12 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 				request.Messages = append(request.Messages, msg)
 
 				msg = tool.AsToolMessage()
+
+				if r.Compression && i < lastUser {
+					msg.Content = openingrouter.ChatContent{
+						Text: "(result omitted)",
+					}
+				}
 			}
 
 			request.Messages = append(request.Messages, msg)

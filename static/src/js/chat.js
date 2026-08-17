@@ -81,6 +81,7 @@ const $version = document.getElementById("version"),
 	$search = document.getElementById("search"),
 	$bare = document.getElementById("bare"),
 	$offline = document.getElementById("offline"),
+	$compression = document.getElementById("compression"),
 	$add = document.getElementById("add"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
@@ -155,6 +156,7 @@ let autoScrolling = false,
 	searchTool = false,
 	bareMode = false,
 	offlineMode = false,
+	compressionMode = false,
 	exportFormat = "whiskr",
 	exportRoles = ["user", "assistant"],
 	chatTitle = false,
@@ -310,6 +312,20 @@ function estimateDataUrlTokens(dataUrl) {
 	return 85;
 }
 
+function lastUserIndex() {
+	if (($message.value.trim() || attachments.length) && $role.value === "user") {
+		return messages.length;
+	}
+
+	for (let i = messages.length - 1; i >= 0; i--) {
+		if (messages[i].isUser()) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 async function updateChatTokens() {
 	if (!$chatTokens) {
 		return;
@@ -317,8 +333,15 @@ async function updateChatTokens() {
 
 	let total = 0;
 
-	for (const msg of messages) {
-		total += msg.getTokens() || 0;
+	const lastUser = lastUserIndex();
+
+	for (let i = 0; i < messages.length; i++) {
+		const msg = messages[i],
+			compressed = compressionMode && msg.hasTool() && i < lastUser;
+
+		msg.markCompressed(compressed);
+
+		total += compressed ? (await msg.getCompressedTokens()) || 0 : msg.getTokens() || 0;
 	}
 
 	const pendingText = $message.value.trim();
@@ -630,6 +653,7 @@ class Message {
 	#tokens = 0;
 	#textTokens = 0;
 	#toolTokens = 0;
+	#compressedToolTokens;
 	#reasoningTokens = 0;
 
 	constructor(data) {
@@ -1775,8 +1799,8 @@ class Message {
 		return total;
 	}
 
-	getTokens() {
-		let total = (this.#textTokens || 0) + (this.#toolTokens || 0) + (this.#reasoningTokens || 0);
+	#tokenTotal(toolTokens) {
+		let total = (this.#textTokens || 0) + toolTokens + (this.#reasoningTokens || 0);
 
 		for (const file of this.#files) {
 			if (file.tokens) {
@@ -1788,9 +1812,29 @@ class Message {
 
 		total += 5;
 
+		return total;
+	}
+
+	getTokens() {
+		const total = this.#tokenTotal(this.#toolTokens || 0);
+
 		this.#tokens = total;
 
 		return total;
+	}
+
+	async getCompressedTokens() {
+		if (this.#compressedToolTokens === undefined) {
+			this.#compressedToolTokens =
+				(await resolveTokenCount(
+					JSON.stringify({
+						...this.#tool,
+						result: "(result omitted)",
+					})
+				)) || 0;
+		}
+
+		return this.#tokenTotal(this.#compressedToolTokens || 0);
 	}
 
 	getCost() {
@@ -1805,6 +1849,10 @@ class Message {
 		return this.#role === "user";
 	}
 
+	hasTool() {
+		return !!this.#tool;
+	}
+
 	index(offset = 0) {
 		const index = messages.findIndex(message => message.#id === this.#id);
 
@@ -1817,6 +1865,12 @@ class Message {
 
 	mark(state = false) {
 		this.#_message.classList.toggle("marked", state);
+	}
+
+	markCompressed(state = false) {
+		this.#_message.classList.toggle("compressed", state);
+
+		this.#_message.title = state ? "Tool result will be omitted in the next request (compression is on)" : "";
 	}
 
 	countImages() {
@@ -2402,6 +2456,8 @@ class Message {
 
 	setTool(tool) {
 		this.#tool = tool;
+
+		this.#compressedToolTokens = undefined;
 
 		this.#queueRender("tool");
 		this.save();
@@ -3034,6 +3090,7 @@ async function buildRequest(noPush = false) {
 			max_images: maxImages,
 		},
 		reasoning: $reasoningEffort.value,
+		compression: compressionMode,
 		metadata: {
 			timezone: timezone,
 			platform: platform,
@@ -4058,7 +4115,8 @@ function restore() {
 		shouldJsonMode = !!load("json"),
 		shouldSearch = !!load("search"),
 		shouldBare = !!load("bare"),
-		shouldOffline = !!load("offline");
+		shouldOffline = !!load("offline"),
+		shouldCompression = !!load("compression");
 
 	if (allowFiles !== shouldAllowFiles) {
 		$files.click();
@@ -4078,6 +4136,10 @@ function restore() {
 
 	if (offlineMode !== shouldOffline) {
 		$offline.click();
+	}
+
+	if (compressionMode !== shouldCompression) {
+		$compression.click();
 	}
 
 	$iterations.parentNode.classList.toggle("none", !shouldSearch);
@@ -4444,6 +4506,7 @@ function getChatData(name) {
 		search: searchTool,
 		bare: bareMode,
 		offline: offlineMode,
+		compression: compressionMode,
 		time: $timeOverride.value,
 		messages: messages.map(message => message.getData(true)).filter(Boolean),
 		savedAt: Date.now(),
@@ -4624,6 +4687,7 @@ function normalizeImport(data) {
 		search: importBoolean(data.search),
 		bare: isOpenRouter ? true : importBoolean(data.bare),
 		offline: importBoolean(data.offline),
+		compression: importBoolean(data.compression),
 		time: importString(data.time, "", 32),
 		messages: data.messages.map(importMessage).filter(Boolean),
 	};
@@ -4933,6 +4997,7 @@ function loadChatFromStorage(name) {
 	store("search", data.search);
 	store("bare", data.bare);
 	store("offline", data.offline);
+	store("compression", data.compression);
 	store("messages", data.messages);
 
 	restore();
@@ -5361,6 +5426,18 @@ $offline.addEventListener("click", () => {
 	$offline.title = `Turn ${offlineMode ? "off" : "on"} offline simulation (tool calls will be unavailable)`;
 });
 
+$compression.addEventListener("click", () => {
+	compressionMode = !compressionMode;
+
+	store("compression", compressionMode);
+
+	$compression.classList.toggle("on", compressionMode);
+
+	$compression.title = `Turn ${compressionMode ? "off" : "on"} context compression (omit tool call results before the last user message)`;
+
+	updateChatTokens();
+});
+
 let tokenUpdateTimeout;
 
 $message.addEventListener("input", () => {
@@ -5517,6 +5594,7 @@ $import?.addEventListener("click", async () => {
 		store("search", data.search),
 		store("bare", data.bare),
 		store("offline", data.offline),
+		store("compression", data.compression),
 		store("messages", data.messages),
 	]);
 

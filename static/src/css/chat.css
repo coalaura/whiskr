@@ -1227,6 +1227,10 @@ body.no-title #title {
 	border: 2px solid var(--c-red);
 }
 
+.message.compressed {
+	opacity: 0.6;
+}
+
 .message.busy .images .image-wrapper:last-child::before {
 	content: "";
 	position: absolute;
@@ -2225,6 +2229,7 @@ body.loading #version,
 #search,
 #bare,
 #offline,
+#compression,
 #scrolling,
 #clear,
 #add,
@@ -2470,6 +2475,7 @@ input.invalid {
 #search,
 #bare,
 #offline,
+#compression,
 #scrolling,
 #clear {
 	position: unset !important;
@@ -2535,6 +2541,15 @@ input.invalid {
 }
 
 #offline.on {
+	background-color: var(--c-yellow);
+}
+
+#compression {
+	background-color: var(--c-subtext);
+	mask-image: url(icons/compression.svg);
+}
+
+#compression.on {
 	background-color: var(--c-yellow);
 }
 
