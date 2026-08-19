@@ -250,7 +250,7 @@ jobs:
           fi
 
           if [[ "${{ matrix.goos }}" == "windows" ]]; then
-            LDFLAGS="$LDFLAGS -H=windowsgui -linkmode=external -extldflags=-mwindows"
+            LDFLAGS="$LDFLAGS -H=windowsgui -linkmode=external -extldflags=-Wl,--subsystem,windows"
           fi
 
           echo "CC=$CC"
