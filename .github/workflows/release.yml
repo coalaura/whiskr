@@ -151,13 +151,17 @@ jobs:
         tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}_desktop.tar.gz" \
           -C build/desktop "whiskr_desktop${EXT}" prompts config.yml
 
-        rm -rf build/server build/desktop
+        rm -rf build/server build/desktop \
+          "build/whiskr${EXT}" \
+          "build/whiskr_desktop${EXT}" \
+          "build/whiskr_proxy${EXT}"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v6
       with:
         name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}
-        path: build/*
+        path: build/*.tar.gz
+        if-no-files-found: error
 
   release:
     needs: build
@@ -169,12 +173,19 @@ jobs:
     - name: Download all build artifacts
       uses: actions/download-artifact@v8
       with:
-        path: ./build
+        path: ./artifacts
+
+    - name: Collect release archives
+      run: |
+        mkdir -p dist
+        find artifacts -type f -name '*.tar.gz' -exec cp -v {} dist/ \;
+        ls -la dist
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v2
       with:
-        files: ./build/**
+        files: dist/*.tar.gz
+        fail_on_unmatched_files: true
         name: "Release ${{ github.ref_name }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
