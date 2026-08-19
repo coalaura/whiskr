@@ -241,19 +241,16 @@ jobs:
           [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe"
 
           if [[ -n "${{ matrix.zig_target }}" ]]; then
-            ZIG_FLAGS="-target ${{ matrix.zig_target }}"
-            [[ "${{ matrix.goos }}" == "windows" ]] && ZIG_FLAGS="$ZIG_FLAGS -mwindows"
-            export CC="zig cc $ZIG_FLAGS"
-            export CXX="zig c++ $ZIG_FLAGS"
+            export CC="zig cc -target ${{ matrix.zig_target }}"
+            export CXX="zig c++ -target ${{ matrix.zig_target }}"
 
             if [[ "${{ matrix.zig_target }}" == *"musl"* ]]; then
-              LDFLAGS="-linkmode external -extldflags '-static'"
+              LDFLAGS="-linkmode external -extldflags=-static"
             fi
           fi
 
           if [[ "${{ matrix.goos }}" == "windows" ]]; then
-            LDFLAGS="$LDFLAGS -H=windowsgui"
-            export CGO_LDFLAGS="${CGO_LDFLAGS:+$CGO_LDFLAGS }-mwindows"
+            LDFLAGS="$LDFLAGS -H=windowsgui -linkmode=external -extldflags=-mwindows"
           fi
 
           echo "CC=$CC"
