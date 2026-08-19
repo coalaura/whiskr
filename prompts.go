@@ -12,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/coalaura/whiskr/internal/desktop"
 )
 
 type PromptData struct {
@@ -55,6 +57,8 @@ var (
 	Prompts       []Prompt
 	Templates     = make(map[string]*template.Template)
 	BareTemplates = make(map[string]*template.Template)
+
+	PromptsPath = desktop.ResolveRelativePath("prompts")
 )
 
 func init() {
@@ -78,7 +82,7 @@ func LoadPrompts() ([]Prompt, error) {
 
 	log.Println("Loading prompts...")
 
-	err := filepath.Walk("prompts", func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(PromptsPath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}

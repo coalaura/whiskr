@@ -12,8 +12,15 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/coalaura/whiskr/internal/desktop"
 	"github.com/goccy/go-yaml"
 	"golang.org/x/crypto/bcrypt"
+)
+
+// LLM api types
+const (
+	APIOpenRouter = "openrouter"
+	APIOpenAI     = "openai"
 )
 
 // gost:preserve-layout
@@ -37,12 +44,6 @@ type EnvSettings struct {
 	RefreshInterval int64 `yaml:"refresh-interval"`
 	Statistics      bool  `yaml:"statistics"`
 }
-
-// LLM api types
-const (
-	APIOpenRouter = "openrouter"
-	APIOpenAI     = "openai"
-)
 
 // gost:preserve-layout
 type EnvLLM struct {
@@ -105,6 +106,8 @@ type Environment struct {
 	Authentication EnvAuthentication `yaml:"authentication"`
 }
 
+var ConfigPath = desktop.ResolveRelativePath("config.yml")
+
 func LoadEnv() (*Environment, error) {
 	// defaults
 	cfg := &Environment{
@@ -126,7 +129,7 @@ func LoadEnv() (*Environment, error) {
 		},
 	}
 
-	file, err := os.OpenFile("config.yml", os.O_RDONLY, 0)
+	file, err := os.OpenFile(ConfigPath, os.O_RDONLY, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +385,7 @@ func (e *Environment) Store() error {
 	e.fmx.Lock()
 	defer e.fmx.Unlock()
 
-	return os.WriteFile("config.yml", body, 0644)
+	return os.WriteFile(ConfigPath, body, 0644)
 }
 
 func CreateSecret(length int) (string, error) {

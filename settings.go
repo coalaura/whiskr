@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coalaura/whiskr/internal/desktop"
 	"github.com/goccy/go-yaml"
 )
 
@@ -22,8 +23,10 @@ type UserSettings struct {
 	Favorites []string `yaml:"favorites"`
 }
 
+var SettingsPath = desktop.ResolveRelativePath("settings.yml")
+
 func LoadSettings() (*Settings, error) {
-	file, err := os.OpenFile("settings.yml", os.O_RDONLY, 0)
+	file, err := os.OpenFile(SettingsPath, os.O_RDONLY, 0)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &Settings{
@@ -62,7 +65,7 @@ func (s *Settings) Store() error {
 	s.mx.Lock()
 	defer s.mx.Unlock()
 
-	file, err := os.OpenFile("settings.yml", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(SettingsPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
