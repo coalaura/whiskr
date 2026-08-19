@@ -23,12 +23,20 @@ jobs:
           cd static
           bun install
           bun run build
+          test -d dist
+          test -d internal
 
-      - name: Upload public
+      - name: Stage frontend artifact
+        run: |
+          mkdir -p artifact/static
+          cp -a static/dist artifact/static/dist
+          cp -a static/internal artifact/static/internal
+
+      - name: Upload frontend
         uses: actions/upload-artifact@v6
         with:
-          name: public
-          path: static/dist
+          name: frontend
+          path: artifact
           if-no-files-found: error
 
   server:
