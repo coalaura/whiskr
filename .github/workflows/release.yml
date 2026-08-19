@@ -58,11 +58,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download public
+      - name: Download frontend
         uses: actions/download-artifact@v8
         with:
-          name: public
-          path: public
+          name: frontend
+          path: .
+
+      - name: Restore frontend layout
+        run: |
+          test -d static/dist
+          test -d static/internal
+          rm -rf public
+          cp -a static/dist public
 
       - name: Set up Zig
         if: matrix.zig_target != ''
@@ -178,11 +185,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download public
+      - name: Download frontend
         uses: actions/download-artifact@v8
         with:
-          name: public
-          path: public
+          name: frontend
+          path: .
+
+      - name: Restore frontend layout
+        run: |
+          test -d static/dist
+          test -d static/internal
+          rm -rf public
+          cp -a static/dist public
 
       - name: Set up Zig
         if: matrix.zig_target != ''
