@@ -102,7 +102,19 @@ jobs:
           -o "build/whiskr${EXT}" .
 
         GUI=""
-        [[ "${{ matrix.goos }}" == "windows" ]] && GUI="-H windowsgui" || GUI=""
+        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          go-winres simply \
+            --manifest gui \
+            --product-name whiskr \
+            --original-filename whiskr_desktop.exe \
+            --icon public/favicon.ico \
+            --copyright "(c) 2026 coalaura" \
+            --file-description "Minimal LLM chat UI using OpenRouter giving you control over your context." \
+            --file-version "${{ github.ref_name }}" \
+            --arch "${{ matrix.goarch }}"
+
+          GUI="-H=windowsgui -extldflags '-mwindows'"
+        fi
 
         GOOS=${{ matrix.goos }} \
         GOARCH=${{ matrix.goarch }} \
