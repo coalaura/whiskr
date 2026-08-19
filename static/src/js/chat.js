@@ -3810,6 +3810,8 @@ async function loadData() {
 
 		if (model.author) {
 			el.dataset.icon = `/labs/${model.author}.png`;
+		} else {
+			el.dataset.icon = `/huggingface.png`;
 		}
 
 		const maxPrice = Math.max(model.pricing.input, model.pricing.output);

@@ -13,8 +13,6 @@ func LoadOpenAIModels() error {
 		return err
 	}
 
-	log.Println(base)
-
 	var (
 		newModelList  = make([]*Model, 0, len(base))
 		newModelMap   = make(map[string]*Model, len(base))

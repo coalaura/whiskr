@@ -192,22 +192,24 @@ func (e *Environment) Init() error {
 	}
 
 	// normalize the llm api type
-	e.LLM.API = strings.ToLower(strings.TrimSpace(e.LLM.API))
 	if e.LLM.API == "" {
 		e.LLM.API = APIOpenRouter
+	}
+
+	// normalize the llm base url
+	if e.LLM.BaseURL == "" {
+		e.LLM.BaseURL = "https://openrouter.ai/api/v1/"
 	}
 
 	if e.LLM.API != APIOpenRouter && e.LLM.API != APIOpenAI {
 		return fmt.Errorf("invalid llm.api %q (must be %q or %q)", e.LLM.API, APIOpenRouter, APIOpenAI)
 	}
 
-	e.LLM.BaseURL = strings.TrimSpace(e.LLM.BaseURL)
-
 	// check the api token for the selected llm api
 	switch e.LLM.API {
 	case APIOpenAI:
 		if e.Tokens.OpenAI == "" {
-			return errors.New("missing tokens.openai (required for llm.api: openai)")
+			return errors.New("missing tokens.openai")
 		}
 	default:
 		if e.Tokens.OpenRouter == "" {
@@ -215,10 +217,8 @@ func (e *Environment) Init() error {
 		}
 	}
 
-	log.Warnf("LLM api: %s\n", e.LLM.API)
-
-	if e.LLM.BaseURL != "" {
-		log.Warnf("LLM base url: %s\n", e.LLM.BaseURL)
+	if e.LLM.API == APIOpenAI {
+		log.Warnf("Using OpenAI compatible endpoint: %s\n", e.LLM.BaseURL)
 	}
 
 	// check if tavily token is set
