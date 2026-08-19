@@ -152,7 +152,7 @@ func (e *Environment) Addr() string {
 
 // IsOpenAI reports whether the configured llm api is an openai-compatible endpoint.
 func (e *Environment) IsOpenAI() bool {
-	return strings.EqualFold(e.LLM.API, APIOpenAI)
+	return e.LLM.API == APIOpenAI
 }
 
 func (e *Environment) Init() error {

@@ -28,10 +28,7 @@ func OpenRouterClient(proxy *EnvProxy) *openingrouter.Client {
 		openingrouter.WithTitle("Whiskr"),
 		openingrouter.WithReferer("https://github.com/coalaura/whiskr"),
 		openingrouter.WithClient(NewHttpClient(proxy)),
-	}
-
-	if env.LLM.BaseURL != "" {
-		options = append(options, openingrouter.WithBase(env.LLM.BaseURL))
+		openingrouter.WithBase(env.LLM.BaseURL),
 	}
 
 	return openingrouter.NewClient(env.Tokens.OpenRouter, options...)
@@ -39,10 +36,9 @@ func OpenRouterClient(proxy *EnvProxy) *openingrouter.Client {
 
 // OpenAIClient returns the openai-compatible client for the configured token and base url.
 func OpenAIClient(proxy *EnvProxy) *openingrouter.OpenAIClient {
-	options := []openingrouter.OpenAIOption{openingrouter.WithOpenAIHTTPClient(NewHttpClient(proxy))}
-
-	if env.LLM.BaseURL != "" {
-		options = append(options, openingrouter.WithOpenAIBase(env.LLM.BaseURL))
+	options := []openingrouter.OpenAIOption{
+		openingrouter.WithOpenAIHTTPClient(NewHttpClient(proxy)),
+		openingrouter.WithOpenAIBase(env.LLM.BaseURL),
 	}
 
 	return openingrouter.NewOpenAIClient(env.Tokens.OpenAI, options...)
