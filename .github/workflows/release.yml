@@ -100,6 +100,19 @@ jobs:
           -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS" \
           -o "build/whiskr${EXT}" .
 
+        GUI=""
+        [[ "${{ matrix.goos }}" == "windows" ]] && GUI="-H windowsgui" || GUI=""
+
+        GOOS=${{ matrix.goos }} \
+        GOARCH=${{ matrix.goarch }} \
+        CGO_ENABLED=1 \
+        go build \
+          -tags desktop \
+          -trimpath \
+          -buildvcs=false \
+          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS $GUI" \
+          -o "build/whiskr_desktop${EXT}" .
+
     - name: Build proxy
       shell: bash
       run: |
@@ -120,17 +133,30 @@ jobs:
       run: |
         [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
 
-        cp -r public build/public
-        cp -r prompts build/prompts
-        cp example.config.yml build/config.yml
+        mkdir -p build/server build/desktop
 
-        tar -czvf build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz -C build "whiskr${EXT}" "whiskr_proxy${EXT}" public prompts config.yml
-        rm -rf build/public build/prompts build/config.yml "build/whiskr${EXT}" "build/whiskr_proxy${EXT}"
+        cp "build/whiskr${EXT}" build/server/
+        cp "build/whiskr_proxy${EXT}" build/server/
+        cp -r public build/server/public
+        cp -r prompts build/server/prompts
+        cp example.config.yml build/server/config.yml
+
+        cp "build/whiskr_desktop${EXT}" build/desktop/
+        cp -r prompts build/desktop/prompts
+        cp example.config.yml build/desktop/config.yml
+
+        tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
+          -C build/server "whiskr${EXT}" "whiskr_proxy${EXT}" public prompts config.yml
+
+        tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}_desktop.tar.gz" \
+          -C build/desktop "whiskr_desktop${EXT}" prompts config.yml
+
+        rm -rf build/server build/desktop
 
     - name: Upload artifact
       uses: actions/upload-artifact@v6
       with:
-        name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+        name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}
         path: build/*
 
   release:

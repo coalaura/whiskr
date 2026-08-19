@@ -95,6 +95,14 @@ Optional configuration notes (from `config.yml`):
 - `tokens.tavily` (optional) - enables the search tools; without it, web search is unavailable.
 - `tokens.github` (optional) - increases GitHub API limits for the GitHub repository tool.
 
+## Desktop (optional)
+
+Each release also ships a desktop archive named `whiskr_<version>_<os>_<arch>_desktop.tar.gz`, containing `whiskr_desktop` (or `whiskr_desktop.exe` on Windows). It opens the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Setup is the same as above: set `tokens.openrouter` in the included `config.yml` and run `./whiskr_desktop`.
+
+The desktop app requires a native webview runtime:
+- **Windows**: WebView2, which is preinstalled on Windows 10/11.
+- **Linux**: GTK and WebKitGTK must be installed as system packages (e.g. `libwebkit2gtk-4.1-0` on Debian/Ubuntu, `webkit2gtk-4.1` on Fedora, `webkit2gtk` on Arch).
+
 ## Authentication (optional)
 
 whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt (12 rounds). If `authentication.enabled` is set to `false`, whiskr will not prompt for authentication at all.
