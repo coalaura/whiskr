@@ -18,6 +18,15 @@
 @import "./dropdown.css";
 @import "./markdown.css";
 
+html.desktop.darwin {
+	--titlebar-pad: 28px;
+}
+
+html.desktop.darwin body {
+	padding-top: var(--titlebar-pad);
+	background: var(--c-mantle);
+}
+
 html,
 body {
 	font-family: var(--font);

@@ -7,7 +7,10 @@ chat.db-wal
 whiskr.db
 whiskr.db-shm
 whiskr.db-wal
+whiskr.exe
+whiskr
 chat.exe
 chat
 vocabulary.tiktoken
 providers
+public

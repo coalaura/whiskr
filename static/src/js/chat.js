@@ -560,6 +560,21 @@ function applyTheme(theme) {
 	if (theme && theme !== "catppuccin") {
 		document.body.classList.add(theme);
 	}
+
+	syncDesktopTitlebar();
+}
+
+function syncDesktopTitlebar() {
+	if (typeof setTitlebarTheme !== "function") {
+		return;
+	}
+
+	const css = getComputedStyle(document.body);
+
+	setTitlebarTheme(
+		css.getPropertyValue("--c-mantle").trim(),
+		css.getPropertyValue("--c-text").trim()
+	);
 }
 
 function mark(index) {

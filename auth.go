@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/coalaura/whiskr/internal/desktop"
 )
 
 type AuthenticationRequest struct {
@@ -87,6 +89,14 @@ func (e *Environment) VerifyAuthToken(token string) *EnvUser {
 }
 
 func GetAuthenticatedUser(r *http.Request) *EnvUser {
+	if desktop.IsDesktop && !env.Authentication.Enabled {
+		if desktop.IsDesktop {
+			return &EnvUser{
+				Username: "desktop",
+			}
+		}
+	}
+
 	cookie, err := r.Cookie("whiskr_token")
 	if err != nil {
 		return nil

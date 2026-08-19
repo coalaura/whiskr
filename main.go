@@ -4,15 +4,16 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/coalaura/plain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/coalaura/whiskr/internal/desktop"
 )
 
 var Version = "dev"
@@ -146,7 +147,11 @@ func main() {
 		}
 	}()
 
-	log.WaitForInterrupt()
+	if desktop.IsDesktop {
+		desktop.RunDesktop(fmt.Sprintf("http://localhost%s/", addr), env.Debug)
+	} else {
+		log.WaitForInterrupt()
+	}
 
 	log.Warnln("Shutting down...")
 
@@ -172,17 +177,4 @@ func cache(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-func frontend() http.Handler {
-	if !env.Debug {
-		return http.FileServer(http.Dir("./public"))
-	}
-
-	target, _ := url.Parse("http://localhost:3000")
-	proxy := httputil.NewSingleHostReverseProxy(target)
-
-	log.Println("Proxying frontend requests to Rsbuild (:3000)")
-
-	return proxy
 }
