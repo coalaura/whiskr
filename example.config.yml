@@ -4,8 +4,10 @@ debug: false
 tokens:
   # server secret for signing auth tokens; auto-generated if empty
   secret: ...
-  # openrouter.ai api token (required)
+  # openrouter.ai api token (used when llm.api is openrouter)
   openrouter: sk-or-v1-...
+  # openai-compatible api token (used when llm.api is openai)
+  openai: sk-...
   # tavily search api token (optional; used by search tools)
   tavily: tvly-dev-...
   # github api token (optional; used by search tools)
@@ -30,6 +32,12 @@ settings:
   refresh-interval: 30
   # track non-identifying completion stats in sqlite (optional; default: true)
   statistics: true
+
+llm:
+  # llm api type: openrouter (default) or openai (openai-compatible endpoint)
+  api: openrouter
+  # override the api base url (optional; defaults to https://openrouter.ai/api/v1 or https://api.openai.com/v1)
+  base-url: "https://openrouter.ai/api/v1"
 
 models:
   # model used to generate titles (needs to have structured output support; set to "-" to disable title; default: google/gemini-2.5-flash-lite)

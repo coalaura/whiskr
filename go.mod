@@ -3,7 +3,7 @@ module github.com/coalaura/whiskr
 go 1.27.0
 
 require (
-	github.com/coalaura/openingrouter v1.1.0
+	github.com/coalaura/openingrouter v1.1.1
 	github.com/coalaura/plain v1.5.0
 	github.com/coalaura/schgo v0.3.2
 	github.com/crgimenes/glaze v0.0.51

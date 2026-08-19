@@ -20,6 +20,7 @@ import (
 type EnvTokens struct {
 	Secret     string `yaml:"secret"`
 	OpenRouter string `yaml:"openrouter"`
+	OpenAI     string `yaml:"openai"`
 	Tavily     string `yaml:"tavily"`
 	GitHub     string `yaml:"github"`
 }
@@ -35,6 +36,18 @@ type EnvSettings struct {
 	Timeout         int64 `yaml:"timeout"`
 	RefreshInterval int64 `yaml:"refresh-interval"`
 	Statistics      bool  `yaml:"statistics"`
+}
+
+// LLM api types
+const (
+	APIOpenRouter = "openrouter"
+	APIOpenAI     = "openai"
+)
+
+// gost:preserve-layout
+type EnvLLM struct {
+	API     string `yaml:"api"`
+	BaseURL string `yaml:"base-url"`
 }
 
 // gost:preserve-layout
@@ -86,6 +99,7 @@ type Environment struct {
 	Server         EnvServer         `yaml:"server"`
 	Proxies        []EnvProxy        `yaml:"proxies"`
 	Settings       EnvSettings       `yaml:"settings"`
+	LLM            EnvLLM            `yaml:"llm"`
 	Models         EnvModels         `yaml:"models"`
 	UI             EnvUI             `yaml:"ui"`
 	Authentication EnvAuthentication `yaml:"authentication"`
@@ -102,6 +116,9 @@ func LoadEnv() (*Environment, error) {
 			Timeout:         1200,
 			RefreshInterval: 30,
 			Statistics:      true,
+		},
+		LLM: EnvLLM{
+			API: APIOpenRouter,
 		},
 		Models: EnvModels{
 			ImageGeneration: true,
@@ -131,6 +148,11 @@ func LoadEnv() (*Environment, error) {
 
 func (e *Environment) Addr() string {
 	return fmt.Sprintf(":%d", e.Server.Port)
+}
+
+// IsOpenAI reports whether the configured llm api is an openai-compatible endpoint.
+func (e *Environment) IsOpenAI() bool {
+	return strings.EqualFold(e.LLM.API, APIOpenAI)
 }
 
 func (e *Environment) Init() error {
@@ -169,9 +191,34 @@ func (e *Environment) Init() error {
 		store = true
 	}
 
-	// check if openrouter token is set
-	if e.Tokens.OpenRouter == "" {
-		return errors.New("missing tokens.openrouter")
+	// normalize the llm api type
+	e.LLM.API = strings.ToLower(strings.TrimSpace(e.LLM.API))
+	if e.LLM.API == "" {
+		e.LLM.API = APIOpenRouter
+	}
+
+	if e.LLM.API != APIOpenRouter && e.LLM.API != APIOpenAI {
+		return fmt.Errorf("invalid llm.api %q (must be %q or %q)", e.LLM.API, APIOpenRouter, APIOpenAI)
+	}
+
+	e.LLM.BaseURL = strings.TrimSpace(e.LLM.BaseURL)
+
+	// check the api token for the selected llm api
+	switch e.LLM.API {
+	case APIOpenAI:
+		if e.Tokens.OpenAI == "" {
+			return errors.New("missing tokens.openai (required for llm.api: openai)")
+		}
+	default:
+		if e.Tokens.OpenRouter == "" {
+			return errors.New("missing tokens.openrouter")
+		}
+	}
+
+	log.Warnf("LLM api: %s\n", e.LLM.API)
+
+	if e.LLM.BaseURL != "" {
+		log.Warnf("LLM base url: %s\n", e.LLM.BaseURL)
 	}
 
 	// check if tavily token is set
@@ -288,12 +335,14 @@ func (e *Environment) Store() error {
 			"$.tokens":         {yaml.HeadComment("")},
 			"$.server":         {yaml.HeadComment("")},
 			"$.settings":       {yaml.HeadComment("")},
+			"$.llm":            {yaml.HeadComment("")},
 			"$.models":         {yaml.HeadComment("")},
 			"$.ui":             {yaml.HeadComment("")},
 			"$.authentication": {yaml.HeadComment("")},
 
 			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
-			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (required)")},
+			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (used when llm.api is openrouter)")},
+			"$.tokens.openai":     {yaml.HeadComment(" openai-compatible api token (used when llm.api is openai)")},
 			"$.tokens.tavily":     {yaml.HeadComment(" tavily search api token (optional; used by search tools)")},
 			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
 
@@ -303,6 +352,9 @@ func (e *Environment) Store() error {
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
 			"$.settings.statistics":       {yaml.HeadComment(" track non-identifying completion stats in sqlite (optional; default: true)")},
+
+			"$.llm.api":      {yaml.HeadComment(" llm api type: openrouter (default) or openai (openai-compatible endpoint)")},
+			"$.llm.base-url": {yaml.HeadComment(" override the api base url (optional; defaults to https://openrouter.ai/api/v1 or https://api.openai.com/v1)")},
 
 			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; set to \"-\" to disable title; default: google/gemini-2.5-flash-lite)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},

@@ -41,6 +41,14 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if env.IsOpenAI() {
+		RespondJson(w, http.StatusForbidden, map[string]any{
+			"error": "Text-to-speech is only available with the openrouter api",
+		})
+
+		return
+	}
+
 	var req TTSRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)

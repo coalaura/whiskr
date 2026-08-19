@@ -10,6 +10,12 @@ type Usage struct {
 }
 
 func HandleUsage(w http.ResponseWriter, r *http.Request) {
+	if env.IsOpenAI() {
+		RespondJson(w, http.StatusOK, Usage{})
+
+		return
+	}
+
 	client := OpenRouterClient(nil)
 
 	current, err := client.GetCurrentApiKey(r.Context())

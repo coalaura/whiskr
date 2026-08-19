@@ -97,6 +97,10 @@ func StartModelUpdateLoop() error {
 func LoadModels() error {
 	log.Println("Refreshing model list...")
 
+	if env.IsOpenAI() {
+		return LoadOpenAIModels()
+	}
+
 	base, err := OpenRouterListModels(context.Background())
 	if err != nil {
 		return err

@@ -4,6 +4,16 @@ github.com/coalaura/byteconv v0.1.0 h1:LSS0zi3STk/y81YNrjkv9OKwZZ1CS5TcOmM1JfIWQ
 github.com/coalaura/byteconv v0.1.0/go.mod h1:0UH4yRUmQnRcvT8amAaLDpasKBPWxkmDKaHVnI3sn5k=
 github.com/coalaura/openingrouter v1.1.0 h1:h0FpBti8z/ToDx8SDfL0OhHpKxlS6miV5YFlG3+W6cE=
 github.com/coalaura/openingrouter v1.1.0/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204453-fcfdae1dc9b1 h1:7JF8wxxMaK7Hy5W6v+OiMjTFMKbaza0tn1jqLFkK77Q=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204453-fcfdae1dc9b1/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204638-c4bc4dbf4f0a h1:CpU01Vd5yfLF/6AeYO/U/fR0+wJGm3L+ZVWrfo3NE8A=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204638-c4bc4dbf4f0a/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204801-e6544fdf1bdc h1:CuUSWXHz1msBhJVpL76eSFCDswcw/Add0llqogP0iHk=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204801-e6544fdf1bdc/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204930-9a16b09d1d12 h1:PfZfiYUvtOEgvmvinWhK4H9FOvmY4+F+bE15FN4sC8c=
+github.com/coalaura/openingrouter v1.1.1-0.20260819204930-9a16b09d1d12/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.1 h1:ukHLqggfcm25WNthSc83LtXxwb1o2KIVutE4c9UPEVU=
+github.com/coalaura/openingrouter v1.1.1/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
 github.com/coalaura/plain v1.5.0 h1:cNnEA1sChxVGqy84Z2fmu5m2zbTjcJNcxJmZC5yge4I=
 github.com/coalaura/plain v1.5.0/go.mod h1:Fqnxr6EaXiVJMtvZtV6p4LpiucuGqYcy6Vwor+Gkoek=
 github.com/coalaura/schgo v0.3.2 h1:M1k7O0qoFT2IXdiD598zOwo//TNBeTvLV8f02ENWR+I=
