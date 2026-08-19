@@ -4,6 +4,8 @@ github.com/coalaura/byteconv v0.1.0 h1:LSS0zi3STk/y81YNrjkv9OKwZZ1CS5TcOmM1JfIWQ
 github.com/coalaura/byteconv v0.1.0/go.mod h1:0UH4yRUmQnRcvT8amAaLDpasKBPWxkmDKaHVnI3sn5k=
 github.com/coalaura/openingrouter v1.1.2 h1:dXOeqbggWXYJBkmqPwxrep9djigiZdq52PtCyKPmJiU=
 github.com/coalaura/openingrouter v1.1.2/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
+github.com/coalaura/openingrouter v1.1.3 h1:DdyWOnQc7nYlUN05Hn8zO5cbxCXXovkL1Cimt3DAZdc=
+github.com/coalaura/openingrouter v1.1.3/go.mod h1:yXWZvv31G3EW0oH8QdU4IcB0+UYEFIsvUdFMTAuWjMU=
 github.com/coalaura/plain v1.5.0 h1:cNnEA1sChxVGqy84Z2fmu5m2zbTjcJNcxJmZC5yge4I=
 github.com/coalaura/plain v1.5.0/go.mod h1:Fqnxr6EaXiVJMtvZtV6p4LpiucuGqYcy6Vwor+Gkoek=
 github.com/coalaura/schgo v0.3.2 h1:M1k7O0qoFT2IXdiD598zOwo//TNBeTvLV8f02ENWR+I=
