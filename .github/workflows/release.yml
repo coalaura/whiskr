@@ -9,10 +9,33 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  frontend:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build frontend
+        run: |
+          cd static
+          bun install
+          bun run build
+
+      - name: Upload public
+        uses: actions/upload-artifact@v6
+        with:
+          name: public
+          path: static/dist
+          if-no-files-found: error
+
+  server:
+    needs: frontend
+    runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - goos: linux
@@ -31,78 +54,152 @@ jobs:
             goarch: arm64
             zig_target: aarch64-windows-gnu
             runner: ubuntu-latest
-      fail-fast: false
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Set up Zig
-      if: matrix.zig_target != ''
-      uses: goto-bus-stop/setup-zig@v2
-      with:
-        version: 0.15.2
+      - name: Download public
+        uses: actions/download-artifact@v8
+        with:
+          name: public
+          path: public
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
-      with:
-        go-version-file: 'go.mod'
+      - name: Set up Zig
+        if: matrix.zig_target != ''
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.15.2
 
-    - name: Set up Bun
-      uses: oven-sh/setup-bun@v2
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
 
-    - name: Build Frontend
-      run: |
-        cd static
-        bun install
-        bun run build
-        cd ..
-        mv static/dist public
+      - name: Generate Windows resources
+        if: matrix.goos == 'windows'
+        run: |
+          rm -f rsrc_*.syso *.syso
+          go install github.com/tc-hib/go-winres@latest
+          go-winres simply \
+            --manifest cli \
+            --product-name whiskr \
+            --original-filename whiskr.exe \
+            --icon public/favicon.ico \
+            --copyright "(c) 2026 coalaura" \
+            --file-description "Minimal LLM chat UI using OpenRouter giving you control over your context." \
+            --file-version "${{ github.ref_name }}" \
+            --arch "${{ matrix.goarch }}"
 
-    - name: Generate Windows resources
-      if: matrix.goos == 'windows'
-      run: |
-        go install github.com/tc-hib/go-winres@latest
-        go-winres simply \
-          --manifest cli \
-          --product-name whiskr \
-          --original-filename whiskr.exe \
-          --icon public/favicon.ico \
-          --copyright "(c) 2026 coalaura" \
-          --file-description "Minimal LLM chat UI using OpenRouter giving you control over your context." \
-          --file-version "${{ github.ref_name }}" \
-          --arch "${{ matrix.goarch }}"
+      - name: Build whiskr and proxy
+        shell: bash
+        run: |
+          mkdir -p build
+          EXT=""
+          LDFLAGS=""
+          [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe"
 
-    - name: Build whiskr
-      shell: bash
-      run: |
-        mkdir -p build
-        EXT=""
-        LDFLAGS=""
-
-        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
-
-        if [[ -n "${{ matrix.zig_target }}" ]]; then
-          export CC="zig cc -target ${{ matrix.zig_target }}"
-          export CXX="zig c++ -target ${{ matrix.zig_target }}"
-
-          if [[ "${{ matrix.zig_target }}" == *"musl"* ]]; then
-            LDFLAGS="-linkmode external -extldflags '-static'"
+          if [[ -n "${{ matrix.zig_target }}" ]]; then
+            export CC="zig cc -target ${{ matrix.zig_target }}"
+            export CXX="zig c++ -target ${{ matrix.zig_target }}"
+            if [[ "${{ matrix.zig_target }}" == *"musl"* ]]; then
+              LDFLAGS="-linkmode external -extldflags '-static'"
+            fi
           fi
-        fi
 
-        GOOS=${{ matrix.goos }} \
-        GOARCH=${{ matrix.goarch }} \
-        CGO_ENABLED=1 \
-        go build \
-          -tags release \
-          -trimpath \
-          -buildvcs=false \
-          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS" \
-          -o "build/whiskr${EXT}" .
+          GOOS=${{ matrix.goos }} \
+          GOARCH=${{ matrix.goarch }} \
+          CGO_ENABLED=1 \
+          go build \
+            -tags release \
+            -trimpath \
+            -buildvcs=false \
+            -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS" \
+            -o "build/whiskr${EXT}" .
 
-        GUI=""
-        if [[ "${{ matrix.goos }}" == "windows" ]]; then
+          GOOS=${{ matrix.goos }} \
+          GOARCH=${{ matrix.goarch }} \
+          CGO_ENABLED=0 \
+          go build \
+            -tags release \
+            -trimpath \
+            -buildvcs=false \
+            -ldflags "-s -w" \
+            -o "build/whiskr_proxy${EXT}" ./cmd/proxy
+
+      - name: Package
+        shell: bash
+        run: |
+          [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+          STAGE=build/stage
+          mkdir -p "$STAGE"
+
+          cp "build/whiskr${EXT}" "$STAGE/"
+          cp "build/whiskr_proxy${EXT}" "$STAGE/"
+          cp -r public "$STAGE/public"
+          cp -r prompts "$STAGE/prompts"
+          cp example.config.yml "$STAGE/config.yml"
+
+          tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
+            -C "$STAGE" "whiskr${EXT}" "whiskr_proxy${EXT}" public prompts config.yml
+
+          rm -rf "$STAGE" "build/whiskr${EXT}" "build/whiskr_proxy${EXT}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: build/*.tar.gz
+          if-no-files-found: error
+
+  desktop:
+    needs: frontend
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            zig_target: x86_64-linux-musl
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            zig_target: aarch64-linux-musl
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            zig_target: x86_64-windows-gnu
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            zig_target: aarch64-windows-gnu
+            runner: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download public
+        uses: actions/download-artifact@v8
+        with:
+          name: public
+          path: public
+
+      - name: Set up Zig
+        if: matrix.zig_target != ''
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.15.2
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Generate Windows resources
+        if: matrix.goos == 'windows'
+        run: |
+          rm -f rsrc_*.syso *.syso
+          go install github.com/tc-hib/go-winres@latest
           go-winres simply \
             --manifest gui \
             --product-name whiskr \
@@ -113,92 +210,116 @@ jobs:
             --file-version "${{ github.ref_name }}" \
             --arch "${{ matrix.goarch }}"
 
-          GUI="-H=windowsgui -extldflags '-mwindows'"
-        fi
+      - name: Build whiskr desktop
+        shell: bash
+        run: |
+          mkdir -p build
+          EXT=""
+          LDFLAGS=""
+          [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe"
 
-        GOOS=${{ matrix.goos }} \
-        GOARCH=${{ matrix.goarch }} \
-        CGO_ENABLED=1 \
-        go build \
-          -tags desktop,release \
-          -trimpath \
-          -buildvcs=false \
-          -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS $GUI" \
-          -o "build/whiskr_desktop${EXT}" .
+          if [[ -n "${{ matrix.zig_target }}" ]]; then
+            ZIG_FLAGS="-target ${{ matrix.zig_target }}"
+            [[ "${{ matrix.goos }}" == "windows" ]] && ZIG_FLAGS="$ZIG_FLAGS -mwindows"
+            export CC="zig cc $ZIG_FLAGS"
+            export CXX="zig c++ $ZIG_FLAGS"
 
-    - name: Build proxy
-      shell: bash
-      run: |
-        mkdir -p build
-        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+            if [[ "${{ matrix.zig_target }}" == *"musl"* ]]; then
+              LDFLAGS="-linkmode external -extldflags '-static'"
+            fi
+          fi
 
-        GOOS=${{ matrix.goos }} \
-        GOARCH=${{ matrix.goarch }} \
-        CGO_ENABLED=0 \
-        go build \
-          -trimpath \
-          -buildvcs=false \
-          -ldflags "-s -w" \
-          -o "build/whiskr_proxy${EXT}" ./cmd/proxy
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            LDFLAGS="$LDFLAGS -H=windowsgui"
+            export CGO_LDFLAGS="${CGO_LDFLAGS:+$CGO_LDFLAGS }-mwindows"
+          fi
 
-    - name: Package
-      shell: bash
-      run: |
-        [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+          echo "CC=$CC"
+          echo "CXX=$CXX"
+          echo "CGO_LDFLAGS=$CGO_LDFLAGS"
+          echo "LDFLAGS=$LDFLAGS"
 
-        mkdir -p build/server build/desktop
+          GOOS=${{ matrix.goos }} \
+          GOARCH=${{ matrix.goarch }} \
+          CGO_ENABLED=1 \
+          go build \
+            -tags desktop,release \
+            -trimpath \
+            -buildvcs=false \
+            -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' $LDFLAGS" \
+            -o "build/whiskr_desktop${EXT}" .
 
-        cp "build/whiskr${EXT}" build/server/
-        cp "build/whiskr_proxy${EXT}" build/server/
-        cp -r public build/server/public
-        cp -r prompts build/server/prompts
-        cp example.config.yml build/server/config.yml
+      - name: Verify Windows GUI subsystem
+        if: matrix.goos == 'windows'
+        shell: bash
+        run: |
+          python3 - "build/whiskr_desktop.exe" <<'PY'
+          import struct, sys
+          path = sys.argv[1]
+          with open(path, "rb") as f:
+              if f.read(2) != b"MZ":
+                  raise SystemExit(f"{path} is not a PE file")
+              f.seek(0x3C)
+              pe = struct.unpack("<I", f.read(4))[0]
+              f.seek(pe)
+              if f.read(4) != b"PE\0\0":
+                  raise SystemExit(f"{path} is missing a PE header")
+              # IMAGE_OPTIONAL_HEADER.Subsystem is at optional-header + 68
+              f.seek(pe + 24 + 68)
+              subsystem = struct.unpack("<H", f.read(2))[0]
+          names = {2: "WINDOWS_GUI", 3: "WINDOWS_CUI"}
+          print(f"{path}: subsystem={subsystem} ({names.get(subsystem, 'unknown')})")
+          if subsystem != 2:
+              raise SystemExit("desktop binary is WINDOWS_CUI; a console window will still appear")
+          PY
 
-        cp "build/whiskr_desktop${EXT}" build/desktop/
-        cp -r prompts build/desktop/prompts
-        cp example.config.yml build/desktop/config.yml
+      - name: Package
+        shell: bash
+        run: |
+          [[ "${{ matrix.goos }}" == "windows" ]] && EXT=".exe" || EXT=""
+          STAGE=build/stage
+          mkdir -p "$STAGE"
 
-        tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz" \
-          -C build/server "whiskr${EXT}" "whiskr_proxy${EXT}" public prompts config.yml
+          cp "build/whiskr_desktop${EXT}" "$STAGE/"
+          cp -r prompts "$STAGE/prompts"
+          cp example.config.yml "$STAGE/config.yml"
 
-        tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}_desktop.tar.gz" \
-          -C build/desktop "whiskr_desktop${EXT}" prompts config.yml
+          tar -czvf "build/whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}_desktop.tar.gz" \
+            -C "$STAGE" "whiskr_desktop${EXT}" prompts config.yml
 
-        rm -rf build/server build/desktop \
-          "build/whiskr${EXT}" \
-          "build/whiskr_desktop${EXT}" \
-          "build/whiskr_proxy${EXT}"
+          rm -rf "$STAGE" "build/whiskr_desktop${EXT}"
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v6
-      with:
-        name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}
-        path: build/*.tar.gz
-        if-no-files-found: error
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}_desktop
+          path: build/*.tar.gz
+          if-no-files-found: error
 
   release:
-    needs: build
+    needs: [server, desktop]
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: ./artifacts
+          pattern: whiskr_*
 
-    - name: Download all build artifacts
-      uses: actions/download-artifact@v8
-      with:
-        path: ./artifacts
+      - name: Collect release archives
+        run: |
+          mkdir -p dist
+          find artifacts -type f -name '*.tar.gz' -exec cp -v {} dist/ \;
+          ls -la dist
+          count=$(find dist -name '*.tar.gz' | wc -l)
+          echo "archives: $count"
+          test "$count" -eq 8
 
-    - name: Collect release archives
-      run: |
-        mkdir -p dist
-        find artifacts -type f -name '*.tar.gz' -exec cp -v {} dist/ \;
-        ls -la dist
-
-    - name: Create GitHub release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: dist/*.tar.gz
-        fail_on_unmatched_files: true
-        name: "Release ${{ github.ref_name }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
+          fail_on_unmatched_files: true
+          name: "Release ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
