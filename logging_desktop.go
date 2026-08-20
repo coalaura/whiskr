@@ -5,7 +5,7 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"runtime/debug"
+	rdebug "runtime/debug"
 
 	"github.com/coalaura/whiskr/internal/open"
 )
@@ -42,7 +42,7 @@ func SetupLogging() error {
 func HandlePanic() {
 	recovered := recover()
 	if recovered != nil {
-		log.Errorf("panic: %v\n%s\n", recovered, debug.Stack())
+		log.Errorf("panic: %v\n%s\n", recovered, rdebug.Stack())
 	}
 
 	if logFile != nil {
