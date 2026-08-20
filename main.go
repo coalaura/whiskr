@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path/filepath"
-	"strings"
 
 	"github.com/coalaura/plain"
 	"github.com/go-chi/chi/v5"
@@ -81,7 +79,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(log.Middleware())
 
-	r.Handle("/*", cache(frontend()))
+	r.Handle("/*", frontend(env.Debug))
 
 	r.Get("/-/data", func(w http.ResponseWriter, r *http.Request) {
 		modelMx.RLock()
@@ -161,25 +159,4 @@ func main() {
 	log.Warnln("Shutting down...")
 
 	server.Close()
-}
-
-func cache(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if env.Debug {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-
-			next.ServeHTTP(w, r)
-
-			return
-		}
-
-		path := strings.ToLower(r.URL.Path)
-		ext := filepath.Ext(path)
-
-		if ext == ".png" || ext == ".svg" || ext == ".ttf" || strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") {
-			w.Header().Set("Cache-Control", "public, max-age=3024000, immutable")
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

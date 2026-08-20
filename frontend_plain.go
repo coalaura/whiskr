@@ -1,4 +1,4 @@
-//go:build !desktop
+//go:build !desktop || !release
 
 package main
 
@@ -8,8 +8,8 @@ import (
 	"net/url"
 )
 
-func frontend() http.Handler {
-	if !env.Debug {
+func frontend(debug bool) http.Handler {
+	if !debug {
 		server := http.FileServer(http.Dir("./public"))
 
 		return cache(server)
@@ -20,5 +20,5 @@ func frontend() http.Handler {
 
 	log.Println("Proxying frontend requests to Rsbuild (:3000)")
 
-	return cache(proxy)
+	return noCache(proxy)
 }
