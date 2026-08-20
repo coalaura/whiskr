@@ -7,8 +7,8 @@ import { parseDateTime } from "./date.js";
 import { dropdown } from "./dropdown.js";
 import { resetGenerationState, setGenerationState } from "./favicon.js";
 import {
-	bHeight,
 	clamp,
+	confirmDialog,
 	convertToJpeg,
 	dataUrlFilename,
 	dataUrlToBlobUrl,
@@ -25,6 +25,7 @@ import {
 	notify,
 	previewFile,
 	previewImage,
+	promptDialog,
 	readFileAsDataUrl,
 	resizeDataUrl,
 	schedule,
@@ -122,8 +123,7 @@ const $version = document.getElementById("version"),
 	$password = document.getElementById("password"),
 	$login = document.getElementById("login");
 
-const nearBottom = 22,
-	timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
 	markdownImageRegex = /!\[([^\]]*)\]\(([^)\n]+)\)/g;
 
 let platform = "";
@@ -149,7 +149,6 @@ const messages = [],
 	pendingImages = new Map();
 
 let autoScrolling = false,
-	followTail = true,
 	awaitingScroll = false,
 	allowFiles = true,
 	jsonMode = false,
@@ -168,7 +167,6 @@ let autoScrolling = false,
 let searchAvailable = false,
 	ttsAvailable = false,
 	isResizing = false,
-	scrollResize = false,
 	isUploading = false,
 	usageType = "monthly",
 	totalUsage = {},
@@ -504,21 +502,26 @@ function updateScrollButton() {
 	});
 }
 
-function setFollowTail(follow) {
-	followTail = follow;
+function setAutoScrolling(enabled) {
+	const changed = autoScrolling !== enabled;
 
-	$scrolling.classList.toggle("not-following", !followTail);
-}
+	autoScrolling = enabled;
 
-function scroll(force = false, instant = false) {
-	if (awaitingScroll || !(followTail || force)) {
-		updateScrollButton();
+	$scrolling.title = `${enabled ? "Turn off" : "Turn on"} auto-scrolling`;
+	$scrolling.classList.toggle("on", enabled);
 
-		return;
+	if (changed) {
+		store("scrolling", enabled);
 	}
 
-	if (!document.hasFocus()) {
-		$messages.scrollTop = $messages.scrollHeight;
+	if (enabled) {
+		scroll();
+	}
+}
+
+function scroll() {
+	if (awaitingScroll || !autoScrolling) {
+		updateScrollButton();
 
 		return;
 	}
@@ -526,16 +529,13 @@ function scroll(force = false, instant = false) {
 	awaitingScroll = true;
 
 	requestAnimationFrame(() => {
-		if (!followTail && !force) {
-			return;
+		if (autoScrolling) {
+			$messages.scrollTop = $messages.scrollHeight;
 		}
 
-		$messages.scroll({
-			top: $messages.scrollHeight,
-			behavior: instant ? "instant" : "smooth",
-		});
-
 		awaitingScroll = false;
+
+		updateScrollButton();
 	});
 }
 
@@ -776,7 +776,7 @@ class Message {
 
 			updateScrollButton();
 
-			setFollowTail(false);
+			setAutoScrolling(false);
 		});
 
 		// message role (wrapper)
@@ -840,7 +840,7 @@ class Message {
 
 			updateScrollButton();
 
-			setFollowTail(distanceFromBottom() <= nearBottom);
+			scroll();
 
 			this.save();
 		});
@@ -1040,13 +1040,11 @@ class Message {
 		_reasoning.appendChild(_toggle);
 
 		_toggle.addEventListener("click", () => {
-			let delta = this.#updateReasoningHeight() + 16; // margin
+			this.#updateReasoningHeight();
 
-			if (!_reasoning.classList.toggle("expanded")) {
-				delta = -delta;
-			}
+			_reasoning.classList.toggle("expanded");
 
-			setFollowTail(distanceFromBottom() + delta <= nearBottom);
+			scroll();
 
 			updateScrollButton();
 		});
@@ -1071,7 +1069,7 @@ class Message {
 
 						updateScrollButton();
 
-						setFollowTail(distanceFromBottom() <= nearBottom);
+						scroll();
 					}
 
 					this.toggleEdit();
@@ -1146,13 +1144,10 @@ class Message {
 		this.#_tool.appendChild(_call);
 
 		_call.addEventListener("click", () => {
-			let delta = this.#updateToolHeight() + 16; // margin
+			this.#updateToolHeight();
+			this.#_tool.classList.toggle("expanded");
 
-			if (!this.#_tool.classList.toggle("expanded")) {
-				delta = -delta;
-			}
-
-			setFollowTail(distanceFromBottom() + delta <= nearBottom);
+			scroll();
 
 			updateScrollButton();
 		});
@@ -1344,7 +1339,7 @@ class Message {
 				infoBox.textContent = `${w}×${h}`;
 			}
 
-			$messages.scrollTop += img.offsetHeight;
+			scroll();
 		};
 
 		if (img.complete) {
@@ -2258,12 +2253,18 @@ class Message {
 		});
 	}
 
-	clearFiles(skipConfirm = false) {
+	async clearFiles(skipConfirm = false) {
 		if (!this.#files.length) {
 			return;
 		}
 
-		if (!skipConfirm && !confirm(`Remove all ${this.#files.length} file${this.#files.length === 1 ? "" : "s"} from this message?`)) {
+		const confirmed = skipConfirm || await confirmDialog(`Remove all ${this.#files.length} file${this.#files.length === 1 ? "" : "s"} from this message?`, {
+			title: "Remove attachments",
+			confirmLabel: "Remove all",
+			destructive: true,
+		});
+
+		if (!confirmed) {
 			return;
 		}
 
@@ -2620,7 +2621,7 @@ class Message {
 
 				this.#render(false, true);
 
-				setFollowTail(distanceFromBottom() <= nearBottom);
+				scroll();
 
 				updateScrollButton();
 
@@ -2646,7 +2647,7 @@ class Message {
 			});
 		}
 
-		setFollowTail(distanceFromBottom() <= nearBottom);
+		scroll();
 
 		updateScrollButton();
 	}
@@ -2677,7 +2678,7 @@ class Message {
 
 		messages.splice(index, 1);
 
-		setFollowTail(distanceFromBottom() <= nearBottom);
+		scroll();
 
 		this.save();
 
@@ -3119,10 +3120,6 @@ async function buildRequest(noPush = false) {
 async function generate(cancel = false, noPush = false) {
 	if (abortNow() && cancel) {
 		return;
-	}
-
-	if (autoScrolling) {
-		setFollowTail(true);
 	}
 
 	const body = await buildRequest(noPush);
@@ -4161,9 +4158,7 @@ function restore() {
 
 	$iterations.parentNode.classList.toggle("none", !shouldSearch);
 
-	if (!autoScrolling && load("scrolling")) {
-		$scrolling.click();
-	}
+	setAutoScrolling(!!load("scrolling"));
 
 	load("messages", []).forEach(message => {
 		new Message(message);
@@ -4174,9 +4169,7 @@ function restore() {
 
 	updateTitle();
 
-	requestAnimationFrame(() => {
-		$messages.scrollTop = $messages.scrollHeight;
-	});
+	scroll();
 }
 
 async function resolveTokenCount(str) {
@@ -4937,7 +4930,7 @@ function getSavedChats() {
 	return load("saved-chats", []);
 }
 
-function saveChatToStorage(name, skipConfirm = false) {
+async function saveChatToStorage(name, skipConfirm = false) {
 	name = name?.trim();
 
 	if (!name) {
@@ -4956,7 +4949,13 @@ function saveChatToStorage(name, skipConfirm = false) {
 			data: chatData,
 		});
 	} else {
-		if (!skipConfirm && !confirm(`A chat named "${name}" already exists. Overwrite?`)) {
+		const confirmed = skipConfirm || await confirmDialog(`A chat named "${name}" already exists. Overwrite it?`, {
+			title: "Overwrite saved chat",
+			confirmLabel: "Overwrite",
+			destructive: true,
+		});
+
+		if (!confirmed) {
 			return false;
 		}
 
@@ -5097,11 +5096,17 @@ function renderSavedChats() {
 
 		overwriteBtn.title = "Overwrite with current chat";
 
-		overwriteBtn.addEventListener("click", event => {
+		overwriteBtn.addEventListener("click", async event => {
 			event.stopPropagation();
 
-			if (confirm(`Overwrite saved chat "${chat.name}" with current chat state?`)) {
-				saveChatToStorage(chat.name, true);
+			const confirmed = await confirmDialog(`Overwrite saved chat "${chat.name}" with the current chat?`, {
+				title: "Overwrite saved chat",
+				confirmLabel: "Overwrite",
+				destructive: true,
+			});
+
+			if (confirmed) {
+				await saveChatToStorage(chat.name, true);
 			}
 		});
 
@@ -5112,10 +5117,16 @@ function renderSavedChats() {
 
 		deleteBtn.title = "Delete this chat";
 
-		deleteBtn.addEventListener("click", event => {
+		deleteBtn.addEventListener("click", async event => {
 			event.stopPropagation();
 
-			if (confirm(`Delete saved chat "${chat.name}"?`)) {
+			const confirmed = await confirmDialog(`Delete saved chat "${chat.name}"?`, {
+				title: "Delete saved chat",
+				confirmLabel: "Delete",
+				destructive: true,
+			});
+
+			if (confirmed) {
 				deleteChatFromStorage(chat.name);
 			}
 		});
@@ -5175,17 +5186,23 @@ $messages.addEventListener("scroll", () => {
 	updateScrollButton();
 });
 
-$messages.addEventListener("wheel", event => {
-	if (event.deltaY < 0) {
-		setFollowTail(false);
-	} else {
-		setFollowTail(distanceFromBottom() - event.deltaY <= nearBottom);
+$messages.addEventListener("wheel", () => {
+	setAutoScrolling(false);
+});
+
+$messages.addEventListener("touchmove", () => {
+	setAutoScrolling(false);
+}, { passive: true });
+
+$messages.addEventListener("pointerdown", event => {
+	const bounds = $messages.getBoundingClientRect();
+
+	if (event.clientX >= bounds.right - 12) {
+		setAutoScrolling(false);
 	}
 });
 
 $bottom.addEventListener("click", () => {
-	setFollowTail(true);
-
 	$messages.scroll({
 		top: $messages.scrollHeight,
 		behavior: "smooth",
@@ -5193,7 +5210,7 @@ $bottom.addEventListener("click", () => {
 });
 
 $top.addEventListener("click", () => {
-	setFollowTail($messages.scrollHeight <= $messages.clientHeight);
+	setAutoScrolling(false);
 
 	$messages.scroll({
 		top: 0,
@@ -5202,14 +5219,12 @@ $top.addEventListener("click", () => {
 });
 
 $resizeBar.addEventListener("mousedown", event => {
-	const isAtBottom = $messages.scrollHeight - ($messages.scrollTop + $messages.clientHeight) <= 10;
-
 	if (event.button === 1) {
 		$chat.style.height = "";
 
 		store("resized", false);
 
-		scroll(isAtBottom, true);
+		scroll();
 
 		return;
 	}
@@ -5219,7 +5234,6 @@ $resizeBar.addEventListener("mousedown", event => {
 	}
 
 	isResizing = true;
-	scrollResize = isAtBottom;
 
 	document.body.classList.add("resizing");
 });
@@ -5495,8 +5509,14 @@ $add.addEventListener("click", () => {
 	pushMessage();
 });
 
-$clear.addEventListener("click", () => {
-	if (!confirm("Are you sure you want to delete all messages?")) {
+$clear.addEventListener("click", async () => {
+	const confirmed = await confirmDialog("This will permanently delete every message in the current chat.", {
+		title: "Clear chat",
+		confirmLabel: "Delete all",
+		destructive: true,
+	});
+
+	if (!confirmed) {
 		return;
 	}
 
@@ -5510,11 +5530,14 @@ $clear.addEventListener("click", () => {
 
 $sidebarTrigger.addEventListener("click", toggleSidebar);
 
-$saveCurrentChat.addEventListener("click", () => {
-	const name = prompt("Enter a name for this chat:", chatTitle || "New Chat");
+$saveCurrentChat.addEventListener("click", async () => {
+	const name = await promptDialog("Enter a name for this chat.", chatTitle || "New Chat", {
+		title: "Save chat",
+		confirmLabel: "Save",
+	});
 
-	if (name) {
-		saveChatToStorage(name);
+	if (name !== null) {
+		await saveChatToStorage(name);
 	}
 });
 
@@ -5619,22 +5642,9 @@ $import?.addEventListener("click", async () => {
 
 	closeSidebar();
 });
+
 $scrolling.addEventListener("click", () => {
-	autoScrolling = !autoScrolling;
-
-	if (autoScrolling) {
-		setFollowTail(true);
-
-		$scrolling.title = "Turn off auto-scrolling";
-		$scrolling.classList.add("on");
-
-		scroll();
-	} else {
-		$scrolling.title = "Turn on auto-scrolling";
-		$scrolling.classList.remove("on");
-	}
-
-	store("scrolling", autoScrolling);
+	setAutoScrolling(!autoScrolling);
 });
 
 $send.addEventListener("click", () => {
@@ -5769,7 +5779,7 @@ addEventListener("mousemove", event => {
 
 	store("resized", height);
 
-	scroll(scrollResize, true);
+	scroll();
 });
 
 addEventListener("mouseup", () => {
@@ -5797,32 +5807,26 @@ addEventListener("keydown", event => {
 		case "ArrowUp":
 			delta = event.key === "PageUp" ? -$messages.clientHeight : -120;
 
-			setFollowTail(false);
-
 			break;
 		case "PageDown":
 		case "ArrowDown":
 			delta = event.key === "PageDown" ? $messages.clientHeight : 120;
 
-			setFollowTail(distanceFromBottom() - delta <= nearBottom);
-
 			break;
 		case "Home":
 			delta = -$messages.scrollTop;
 
-			setFollowTail(false);
-
 			break;
 		case "End":
 			delta = $messages.scrollHeight - $messages.clientHeight - $messages.scrollTop;
-
-			setFollowTail(true);
 
 			break;
 	}
 
 	if (delta) {
 		event.preventDefault();
+
+		setAutoScrolling(false);
 
 		$messages.scrollBy({
 			top: delta,

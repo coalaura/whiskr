@@ -55,7 +55,7 @@ export function wrapJSON(txt) {
 		const data = JSON.parse(txt);
 
 		return `\`\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\`\``;
-	} catch {}
+	} catch { }
 
 	return txt;
 }
@@ -555,7 +555,7 @@ export async function detectPlatform() {
 
 			platform = data.platform;
 			arch = data.architecture;
-		} catch {}
+		} catch { }
 	}
 
 	const ua = navigator.userAgent || "";
@@ -600,6 +600,114 @@ export async function detectPlatform() {
 }
 
 const $notifications = document.getElementById("notifications");
+
+function showDialog({ title, message, value, confirmLabel = "OK", cancelLabel, destructive = false }) {
+	return new Promise(resolve => {
+		const previousFocus = document.activeElement,
+			modal = make("div", "modal", "dialog-modal", "open"),
+			background = make("div", "background"),
+			content = make("form", "content"),
+			header = make("div", "header"),
+			body = make("div", "body"),
+			buttons = make("div", "buttons"),
+			cancel = cancelLabel ? make("button", "dialog-cancel") : null,
+			confirm = make("button", "dialog-confirm");
+
+		header.id = uid();
+		header.textContent = title;
+
+		body.textContent = message;
+
+		content.setAttribute("role", "dialog");
+		content.setAttribute("aria-modal", "true");
+		content.setAttribute("aria-labelledby", header.id);
+
+		confirm.type = "submit";
+		confirm.textContent = confirmLabel;
+		confirm.classList.toggle("destructive", destructive);
+
+		let input;
+
+		if (value !== undefined) {
+			input = make("input", "dialog-input");
+
+			input.type = "text";
+			input.value = value;
+
+			body.appendChild(input);
+		}
+
+		if (cancel) {
+			cancel.type = "button";
+			cancel.textContent = cancelLabel;
+
+			buttons.appendChild(cancel);
+		}
+
+		buttons.appendChild(confirm);
+		content.append(header, body, buttons);
+		modal.append(background, content);
+
+		document.body.appendChild(modal);
+
+		const close = result => {
+			document.removeEventListener("keydown", onKeyDown);
+
+			modal.remove();
+
+			previousFocus?.focus();
+
+			resolve(result);
+		};
+
+		const onKeyDown = event => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				event.stopPropagation();
+
+				close(null);
+			} else if (event.key === "Tab") {
+				const focusable = [cancel, input, confirm].filter(Boolean),
+					index = focusable.indexOf(document.activeElement),
+					last = focusable.length - 1;
+
+				if ((event.shiftKey && index <= 0) || (!event.shiftKey && index === last)) {
+					event.preventDefault();
+
+					focusable[event.shiftKey ? last : 0].focus();
+				}
+			}
+		};
+
+		content.addEventListener("submit", event => {
+			event.preventDefault();
+
+			close(input ? input.value : true);
+		});
+
+		cancel?.addEventListener("click", () => close(null));
+
+		background.addEventListener("click", () => close(null));
+
+		document.addEventListener("keydown", onKeyDown);
+
+		(input || confirm).focus();
+
+		input?.select();
+	});
+}
+
+export function alertDialog(message, title = "Notice") {
+	return showDialog({ title, message });
+}
+
+export async function confirmDialog(message, options = {}) {
+	return (await showDialog({ title: "Confirm", cancelLabel: "Cancel", ...options, message })) === true;
+}
+
+export function promptDialog(message, value = "", options = {}) {
+	return showDialog({ title: "Enter a value", confirmLabel: "Save", cancelLabel: "Cancel", ...options, message, value });
+}
 
 export async function notify(msg, type = "error", persistent = false) {
 	const notification = make("div", "notification", type, "off-screen");

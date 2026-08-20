@@ -2500,10 +2500,6 @@ input.invalid {
 	mask-image: url(icons/screen.svg);
 }
 
-#scrolling.not-following {
-	opacity: 0.5;
-}
-
 #files {
 	background-color: var(--c-subtext);
 	mask-image: url(icons/files-off.svg);
@@ -2709,6 +2705,51 @@ input.invalid {
 .modal .buttons {
 	display: flex;
 	justify-content: end;
+}
+
+.dialog-modal .content {
+	width: min(420px, calc(100vw - 32px));
+	max-width: none;
+}
+
+.dialog-modal .body {
+	gap: 14px;
+	line-height: 1.45;
+}
+
+.dialog-input {
+	width: 100%;
+	padding: 8px 10px;
+	background: var(--c-surface0);
+	border: 1px solid var(--c-surface1);
+	border-radius: 4px;
+	color: var(--c-text);
+	font: inherit;
+}
+
+.dialog-modal .buttons {
+	gap: 8px;
+}
+
+.dialog-modal .buttons button {
+	padding: 7px 12px;
+	border-radius: 4px;
+	font: inherit;
+	font-weight: 500;
+}
+
+.dialog-cancel {
+	background: var(--c-surface0);
+	color: var(--c-text);
+}
+
+.dialog-confirm {
+	background: var(--c-green);
+	color: var(--c-crust-dark);
+}
+
+.dialog-confirm.destructive {
+	background: var(--c-red);
 }
 
 #save-settings,
@@ -3078,6 +3119,17 @@ input.invalid {
 	#total,
 	body {
 		transition: none;
+	}
+}
+
+@media (hover: none) and (pointer: coarse) {
+
+	input,
+	textarea,
+	select,
+	.dropdown,
+	.dropdown .search-wrapper .search {
+		font-size: 16px !important;
 	}
 }
 
