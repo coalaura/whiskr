@@ -14,11 +14,14 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/coalaura/whiskr/internal/desktop"
+	"github.com/coalaura/whiskr/internal/paths"
 )
 
 var Version = "dev"
 
 var (
+	path     paths.Paths
+	prompts  []Prompt
 	env      *Environment
 	settings *Settings
 
@@ -27,6 +30,18 @@ var (
 
 func main() {
 	var err error
+
+	log.Println("Loading paths...")
+
+	path, err = paths.ResolvePaths()
+	log.MustFail(err)
+
+	log.Println(path)
+
+	log.Println("Loading prompts...")
+
+	prompts, err = LoadPrompts()
+	log.MustFail(err)
 
 	log.Println("Loading environment...")
 
@@ -48,8 +63,8 @@ func main() {
 
 	log.Println("Calculating overhead...")
 
-	for i, p := range Prompts {
-		Prompts[i].Tokens = tokenizer.CountTokens(p.Text)
+	for i, p := range prompts {
+		prompts[i].Tokens = tokenizer.CountTokens(p.Text)
 	}
 
 	searchToolsJson, _ := json.Marshal(GetSearchTools())
@@ -86,7 +101,7 @@ func main() {
 			"overhead":     overhead,
 			"models":       ModelList,
 			"audio_models": AudioList,
-			"prompts":      Prompts,
+			"prompts":      prompts,
 			"version":      Version,
 		})
 	})

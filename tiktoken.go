@@ -11,8 +11,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/coalaura/whiskr/internal/desktop"
 )
 
 const TikTokenSource = "https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken"
@@ -30,17 +28,15 @@ type mergeCandidate struct {
 
 type candidateHeap []mergeCandidate
 
-var TikTokenPath = desktop.ResolveRelativePath("vocabulary.tiktoken")
-
 func LoadTokenizer(url string) (*Tokenizer, error) {
-	err := PreloadVocabulary(url, TikTokenPath)
+	err := PreloadVocabulary(url, path.VocabularyCache)
 	if err != nil {
 		return nil, err
 	}
 
 	log.Println("Loading tokenizer...")
 
-	file, err := os.OpenFile(TikTokenPath, os.O_RDONLY, 0)
+	file, err := os.OpenFile(path.VocabularyCache, os.O_RDONLY, 0)
 	if err != nil {
 		return nil, err
 	}

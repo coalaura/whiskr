@@ -12,8 +12,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"github.com/coalaura/whiskr/internal/desktop"
 )
 
 type PromptData struct {
@@ -54,21 +52,13 @@ var (
 
 	InternalTitleTmpl *template.Template
 
-	Prompts       []Prompt
 	Templates     = make(map[string]*template.Template)
 	BareTemplates = make(map[string]*template.Template)
-
-	PromptsPath = desktop.ResolveRelativePath("prompts")
 )
 
 func init() {
 	InternalToolsTmpl = NewTemplate("internal-tools", InternalToolsPrompt)
 	InternalTitleTmpl = NewTemplate("internal-title", InternalTitlePrompt)
-
-	var err error
-
-	Prompts, err = LoadPrompts()
-	log.MustFail(err)
 }
 
 func NewTemplate(name, text string) *template.Template {
@@ -82,7 +72,7 @@ func LoadPrompts() ([]Prompt, error) {
 
 	log.Println("Loading prompts...")
 
-	err := filepath.Walk(PromptsPath, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(path.Prompts, func(path string, info fs.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}

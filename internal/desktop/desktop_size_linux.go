@@ -12,9 +12,9 @@ type gdkRectangle struct {
 }
 
 func primaryWorkArea() (int, int, bool) {
-	lib, err := purego.Dlopen("libgdk-3.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	lib, err := purego.Dlopen("libgtk-4.so.1", purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	if err != nil {
-		lib, err = purego.Dlopen("libgtk-4.so.1", purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		lib, err = purego.Dlopen("libgdk-3.so.0", purego.RTLD_NOW|purego.RTLD_GLOBAL)
 	}
 
 	if err != nil {
