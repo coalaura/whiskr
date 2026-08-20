@@ -28,7 +28,12 @@ var (
 )
 
 func main() {
+	defer HandlePanic()
+
 	var err error
+
+	err = SetupLogging()
+	log.MustFail(err)
 
 	log.Println("Loading paths...")
 

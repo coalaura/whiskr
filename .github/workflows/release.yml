@@ -194,15 +194,13 @@ jobs:
           cp "build/whiskr_proxy${EXT}" "$STAGE/"
           cp -a public "$STAGE/public"
           cp -a prompts "$STAGE/prompts"
-          cp example.config.yml "$STAGE/config.yml"
 
           tar -czvf "$ARCHIVE" \
             -C "$STAGE" \
             "whiskr${EXT}" \
             "whiskr_proxy${EXT}" \
             public \
-            prompts \
-            config.yml
+            prompts
 
           rm -rf "$STAGE"
           rm -f "build/whiskr${EXT}" "build/whiskr_proxy${EXT}"
@@ -302,7 +300,6 @@ jobs:
 
           cp build/whiskr_desktop "$APPROOT/whiskr_desktop"
           cp -a prompts/. "$APPROOT/prompts/"
-          cp example.config.yml "$APPROOT/config.example.yml"
 
           chmod +x "$APPROOT/whiskr_desktop"
 
@@ -643,7 +640,6 @@ jobs:
           [Files]
           Source: "{#RepoRoot}\build\whiskr_desktop.exe"; DestDir: "{app}"; Flags: ignoreversion
           Source: "{#RepoRoot}\prompts\*"; DestDir: "{app}\prompts"; Flags: ignoreversion recursesubdirs createallsubdirs
-          Source: "{#RepoRoot}\example.config.yml"; DestDir: "{app}"; DestName: "config.example.yml"; Flags: ignoreversion
 
           [Icons]
           Name: "{autoprograms}\Whiskr"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
@@ -828,7 +824,6 @@ jobs:
             "$RESOURCES/whiskr_desktop"
 
           cp -a prompts/. "$RESOURCES/prompts/"
-          cp example.config.yml "$RESOURCES/config.example.yml"
 
           chmod +x "$RESOURCES/whiskr_desktop"
 
