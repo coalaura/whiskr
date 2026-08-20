@@ -401,7 +401,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: whiskr_${{ github.ref_name }}_linux_${{ matrix.goarch }}_desktop
-          path: build/*.AppImage
+          path: build/whiskr_${{ github.ref_name }}_linux_${{ matrix.goarch }}.AppImage
           if-no-files-found: error
 
   desktop_windows:
@@ -1220,7 +1220,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: whiskr_${{ github.ref_name }}_darwin_universal_desktop
-          path: build/*.pkg
+          path: build/whiskr_${{ github.ref_name }}_darwin_universal.pkg
           if-no-files-found: error
 
   release:
@@ -1245,27 +1245,56 @@ jobs:
         run: |
           set -euxo pipefail
 
+          rm -rf dist
           mkdir -p dist
 
-          find artifacts \
-            -type f \
-            \( \
-              -name "*.tar.gz" \
-              -o -name "*.AppImage" \
-              -o -name "*_setup.exe" \
-              -o -name "*.pkg" \
-            \) \
-            -exec cp -v {} dist/ \;
+          copy_release_files() {
+            local expected_count="$1"
+            local pattern="$2"
+            local files=()
 
+            mapfile -d '' files < <(
+              find artifacts \
+                -type f \
+                -name "$pattern" \
+                -print0
+            )
+
+            echo "Pattern '$pattern': ${#files[@]} file(s)"
+
+            if [[ "${#files[@]}" -ne "$expected_count" ]]; then
+              echo "::error::Expected $expected_count file(s) matching '$pattern', found ${#files[@]}"
+              printf '%s\n' "${files[@]}"
+              return 1
+            fi
+
+            cp -v "${files[@]}" dist/
+          }
+
+          # Four server archives.
+          copy_release_files \
+            4 \
+            "whiskr_${{ github.ref_name }}_*.tar.gz"
+
+          # Two Linux desktop installers: amd64 and arm64.
+          copy_release_files \
+            2 \
+            "whiskr_${{ github.ref_name }}_linux_*.AppImage"
+
+          # Two Windows desktop installers: amd64 and arm64.
+          copy_release_files \
+            2 \
+            "whiskr_${{ github.ref_name }}_windows_*_setup.exe"
+
+          # One universal macOS desktop installer.
+          copy_release_files \
+            1 \
+            "whiskr_${{ github.ref_name }}_darwin_universal.pkg"
+
+          echo "Release contents:"
           ls -lah dist
 
-          count="$(
-            find dist \
-              -maxdepth 1 \
-              -type f \
-              | wc -l
-          )"
-
+          count="$(find dist -maxdepth 1 -type f | wc -l)"
           echo "Release files: $count"
           test "$count" -eq 9
 
