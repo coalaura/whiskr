@@ -686,8 +686,6 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 func RunCompletion(ctx context.Context, response *Stream, request *openingrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
 	started := time.Now()
 
-	inputImages, inputFiles := countMediaInRequest(request)
-
 	var (
 		id             string
 		open           int
@@ -695,8 +693,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openingrouter
 		completing     bool
 		reasoning      bool
 		hasContent     bool
-		hasReasoning   bool
-		succeeded      bool
 		tool           *ChatToolCall
 		statistics     *Statistics
 		finish         openingrouter.ChatFinishReason
@@ -706,57 +702,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openingrouter
 		reasoningStart int64
 		outputImages   int
 	)
-
-	defer func() {
-		if database == nil {
-			return
-		}
-
-		durationMs := time.Since(started).Milliseconds()
-
-		rec := StatisticRecord{
-			Model:        request.Model,
-			DurationMs:   durationMs,
-			TTFTMs:       ttftMs,
-			TTFOMs:       ttfoMs,
-			InputImages:  inputImages,
-			OutputImages: outputImages,
-			InputFiles:   inputFiles,
-			HasReasoning: hasReasoning,
-			FinishReason: string(finish),
-			Success:      succeeded,
-		}
-
-		if hasReasoning && reasoningStart > 0 {
-			if ttfoMs > reasoningStart {
-				rec.ReasoningMs = ttfoMs - reasoningStart
-			} else if ttfoMs == 0 && durationMs > reasoningStart {
-				rec.ReasoningMs = durationMs - reasoningStart
-			}
-		}
-
-		if tool != nil {
-			rec.ToolCall = true
-			rec.ToolName = tool.Name
-		}
-
-		if statistics != nil {
-			if statistics.Model != "" {
-				rec.Model = statistics.Model
-			}
-
-			rec.Provider = statistics.Provider
-			rec.InputTokens = statistics.InputTokens
-			rec.OutputTokens = statistics.OutputTokens
-			rec.ReasoningTokens = statistics.ReasoningTokens
-			rec.CachedTokens = statistics.CachedTokens
-			rec.Cost = statistics.Cost
-		}
-
-		if err := database.AddStatistics(rec); err != nil {
-			log.Warnln("statistics:", err)
-		}
-	}()
 
 	markToken := func(output bool) {
 		elapsed := time.Since(started).Milliseconds()
@@ -896,8 +841,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openingrouter
 				reasoningStart = time.Since(started).Milliseconds()
 			}
 
-			hasReasoning = true
-
 			markToken(false)
 		} else if len(delta.Images) > 0 {
 			for _, image := range delta.Images {
@@ -925,8 +868,6 @@ func RunCompletion(ctx context.Context, response *Stream, request *openingrouter
 	if noContent {
 		response.WriteChunk(NewChunk(ChunkError, errors.New("no content returned")))
 	}
-
-	succeeded = badStop == "" && !noContent
 
 	if statistics != nil {
 		response.WriteChunk(NewChunk(ChunkUsage, *statistics))
@@ -999,4 +940,32 @@ func LimitChatRequestImages(request *openingrouter.ChatCompletionRequest, maxIma
 			return
 		}
 	}
+}
+
+func countMediaInRequest(request *openingrouter.ChatCompletionRequest) (int, int) {
+	var (
+		images int
+		files  int
+	)
+
+	for _, message := range request.Messages {
+		images += len(message.Images)
+
+		for _, part := range message.Content.Parts {
+			switch part.Type {
+			case openingrouter.ChatContentPartTypeImageURL:
+				images++
+			case openingrouter.ChatContentPartTypeFile:
+				files++
+			case openingrouter.ChatContentPartTypeText:
+				files += strings.Count(part.Text, "<file name=")
+			}
+		}
+
+		if message.Content.Text != "" {
+			files += strings.Count(message.Content.Text, "<file name=")
+		}
+	}
+
+	return images, files
 }

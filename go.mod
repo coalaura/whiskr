@@ -5,13 +5,11 @@ go 1.27.0
 require (
 	github.com/coalaura/openingrouter v1.1.3
 	github.com/coalaura/plain v1.5.0
-	github.com/coalaura/schgo v0.3.2
 	github.com/crgimenes/glaze v0.0.51
 	github.com/ebitengine/purego v0.10.2
 	github.com/expr-lang/expr v1.17.8
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/goccy/go-yaml v1.19.2
-	github.com/mattn/go-sqlite3 v1.14.50
 	github.com/vmihailenco/msgpack/v5 v5.4.1
 	golang.org/x/crypto v0.55.0
 	golang.org/x/sys v0.47.0

@@ -21,7 +21,6 @@ var Version = "dev"
 var (
 	env      *Environment
 	settings *Settings
-	database *Database
 
 	log = plain.New(plain.WithDate(plain.RFC3339Local))
 )
@@ -43,15 +42,6 @@ func main() {
 
 	err = StartModelUpdateLoop()
 	log.MustFail(err)
-
-	if env.Settings.Statistics {
-		log.Println("Connecting to database...")
-
-		database, err = ConnectToDatabase()
-		log.MustFail(err)
-
-		defer database.Close()
-	}
 
 	tokenizer, err := LoadTokenizer(TikTokenSource)
 	log.MustFail(err)

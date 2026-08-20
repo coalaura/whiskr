@@ -42,7 +42,6 @@ type EnvSettings struct {
 	CleanContent    bool  `yaml:"cleanup"`
 	Timeout         int64 `yaml:"timeout"`
 	RefreshInterval int64 `yaml:"refresh-interval"`
-	Statistics      bool  `yaml:"statistics"`
 }
 
 // gost:preserve-layout
@@ -118,7 +117,6 @@ func LoadEnv() (*Environment, error) {
 			CleanContent:    true,
 			Timeout:         1200,
 			RefreshInterval: 30,
-			Statistics:      true,
 		},
 		LLM: EnvLLM{
 			API: APIOpenRouter,
