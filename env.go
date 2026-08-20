@@ -104,9 +104,8 @@ type Environment struct {
 	Authentication EnvAuthentication `yaml:"authentication"`
 }
 
-func LoadEnv() (*Environment, error) {
-	// defaults
-	cfg := &Environment{
+func DefaultEnv() *Environment {
+	return &Environment{
 		Server: EnvServer{
 			Port: 3443,
 		},
@@ -123,6 +122,10 @@ func LoadEnv() (*Environment, error) {
 			TextToSpeech:    true,
 		},
 	}
+}
+
+func LoadEnv() (*Environment, error) {
+	cfg := DefaultEnv()
 
 	file, err := os.OpenFile(path.Config, os.O_RDONLY, 0)
 	if err != nil {
@@ -350,7 +353,6 @@ func (e *Environment) Store() error {
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
 			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 1200s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
-			"$.settings.statistics":       {yaml.HeadComment(" track non-identifying completion stats in sqlite (optional; default: true)")},
 
 			"$.llm.api":      {yaml.HeadComment(" llm api type: openrouter (default) or openai (openai-compatible endpoint)")},
 			"$.llm.base-url": {yaml.HeadComment(" override the api base url (optional; defaults to https://openrouter.ai/api/v1 or https://api.openai.com/v1)")},
