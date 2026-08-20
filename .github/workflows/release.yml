@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -46,7 +46,7 @@ jobs:
           cp -a static/internal artifact/static/internal
 
       - name: Upload frontend artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: frontend
           path: artifact
@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download frontend
         uses: actions/download-artifact@v8
@@ -108,7 +108,7 @@ jobs:
           version: 0.15.2
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -208,7 +208,7 @@ jobs:
           rm -f "build/whiskr${EXT}" "build/whiskr_proxy${EXT}"
 
       - name: Upload server archive
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: whiskr_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}
           path: build/*.tar.gz
@@ -233,7 +233,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download frontend
         uses: actions/download-artifact@v8
@@ -258,7 +258,7 @@ jobs:
           version: 0.15.2
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -398,7 +398,7 @@ jobs:
           chmod +x "$OUTPUT"
 
       - name: Upload Linux desktop package
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: whiskr_${{ github.ref_name }}_linux_${{ matrix.goarch }}_desktop
           path: build/whiskr_${{ github.ref_name }}_linux_${{ matrix.goarch }}.AppImage
@@ -425,7 +425,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download frontend
         uses: actions/download-artifact@v8
@@ -450,7 +450,7 @@ jobs:
           version: 0.15.2
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -721,7 +721,7 @@ jobs:
           }
 
       - name: Upload Windows desktop installer
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: whiskr_${{ github.ref_name }}_windows_${{ matrix.goarch }}_desktop
           path: build/installer/*.exe
@@ -743,7 +743,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download frontend
         uses: actions/download-artifact@v8
@@ -763,7 +763,7 @@ jobs:
           cp -a static/dist public
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -1217,7 +1217,7 @@ jobs:
           xcrun stapler validate "$OUTPUT"
 
       - name: Upload macOS desktop installer
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: whiskr_${{ github.ref_name }}_darwin_universal_desktop
           path: build/whiskr_${{ github.ref_name }}_darwin_universal.pkg
