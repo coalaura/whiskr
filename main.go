@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/coalaura/whiskr/internal/desktop"
+	"github.com/coalaura/whiskr/internal/open"
 	"github.com/coalaura/whiskr/internal/paths"
 )
 
@@ -34,7 +35,19 @@ func main() {
 	path, err = paths.ResolvePaths()
 	log.MustFail(err)
 
-	log.Println(path)
+	log.Println("Ensuring config...")
+
+	created, err := EnsureConfig(path.Config)
+	log.MustFail(err)
+
+	if created && desktop.IsDesktop {
+		log.Printf("Created %s; opening it for setup\n", path.Config)
+
+		err = open.OpenFile(path.Config)
+		log.MustFail(err)
+
+		return
+	}
 
 	log.Println("Loading prompts...")
 
@@ -44,6 +57,17 @@ func main() {
 	log.Println("Loading environment...")
 
 	env, err = LoadEnv()
+	if err != nil && desktop.IsDesktop {
+		log.Warnf("Unable to load config: %v; opening %s\n", err, path.Config)
+
+		err = open.OpenFile(path.Config)
+		if err == nil {
+			return
+		} else {
+			log.Warnf("Unable to open config: %v\n", err)
+		}
+	}
+
 	log.MustFail(err)
 
 	log.Println("Loading settings...")

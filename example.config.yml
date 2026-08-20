@@ -3,35 +3,29 @@ debug: false
 
 tokens:
   # server secret for signing auth tokens; auto-generated if empty
-  secret: ...
+  secret: ""
   # openrouter.ai api token (used when llm.api is openrouter)
-  openrouter: sk-or-v1-...
+  openrouter: ""
   # openai-compatible api token (used when llm.api is openai)
-  openai: sk-...
+  openai: ""
   # tavily search api token (optional; used by search tools)
-  tavily: tvly-dev-...
+  tavily: ""
   # github api token (optional; used by search tools)
-  github: gh-...
+  github: ""
 
 server:
   # port to serve whiskr on (required; default 3443)
   port: 3443
-proxies:
-- name: us-east
-  host: us-east.example.com
-  token: wsk-...
+
+proxies: []
 
 settings:
-  # maximum amount of output tokens per response (optional; default: 1,048,575)
-  max-tokens: 1048575
   # normalize unicode in assistant output (optional; default: true)
   cleanup: true
-  # the http timeout to use for completion requests in seconds (optional; default: 300s)
+  # the http timeout to use for completion requests in seconds (optional; default: 1200s)
   timeout: 1200
   # the interval in which the model list is refreshed in minutes (optional; default: 30m)
   refresh-interval: 30
-  # track non-identifying completion stats in sqlite (optional; default: true)
-  statistics: true
 
 llm:
   # llm api type: openrouter (default) or openai (openai-compatible endpoint)
@@ -41,13 +35,13 @@ llm:
 
 models:
   # model used to generate titles (needs to have structured output support; set to "-" to disable title; default: google/gemini-2.5-flash-lite)
-  title-model: google/gemini-2.5-flash-lite
+  title-model: "google/gemini-2.5-flash-lite"
   # allow image generation (optional; default: true)
   image-generation: true
   # allow text to speech (optional; default: true)
   text-to-speech: true
   # what transformation method to use for too long contexts (optional; default: middle-out)
-  transformation: middle-out
+  transformation: "middle-out"
   # boolean expression to filter available models (optional; fields: `price`, `slug`, `name`, `tags`, `created`; operators: `<`, `>`, `==`, `!=`, `~` (contains), `^` (starts-with), `$` (ends-with); Logic: `&&`, `||`, `!`, `( )`)
   filters: ""
 

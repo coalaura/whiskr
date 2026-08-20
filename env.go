@@ -333,6 +333,7 @@ func (e *Environment) Store() error {
 			"$.tokens":         {yaml.HeadComment("")},
 			"$.server":         {yaml.HeadComment("")},
 			"$.settings":       {yaml.HeadComment("")},
+			"$.proxies":        {yaml.HeadComment("")},
 			"$.llm":            {yaml.HeadComment("")},
 			"$.models":         {yaml.HeadComment("")},
 			"$.ui":             {yaml.HeadComment("")},
@@ -347,7 +348,7 @@ func (e *Environment) Store() error {
 			"$.server.port": {yaml.HeadComment(" port to serve whiskr on (required; default 3443)")},
 
 			"$.settings.cleanup":          {yaml.HeadComment(" normalize unicode in assistant output (optional; default: true)")},
-			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 300s)")},
+			"$.settings.timeout":          {yaml.HeadComment(" the http timeout to use for completion requests in seconds (optional; default: 1200s)")},
 			"$.settings.refresh-interval": {yaml.HeadComment(" the interval in which the model list is refreshed in minutes (optional; default: 30m)")},
 			"$.settings.statistics":       {yaml.HeadComment(" track non-identifying completion stats in sqlite (optional; default: true)")},
 

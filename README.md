@@ -97,7 +97,7 @@ Optional configuration notes (from `config.yml`):
 
 ## Desktop (optional)
 
-Each release also ships a desktop archive named `whiskr_<version>_<os>_<arch>_desktop.tar.gz`, containing `whiskr_desktop` (or `whiskr_desktop.exe` on Windows). It opens the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Setup is the same as above: set `tokens.openrouter` in the included `config.yml` and run `./whiskr_desktop`.
+Desktop releases open the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Windows releases use an installer; Linux releases use an AppImage; and macOS releases use an app bundle. On first launch, whiskr creates and opens the user config. Set `tokens.openrouter`, save the file and launch whiskr again. On Windows, the config is stored at `%APPDATA%\\whiskr\\config.yml`.
 
 The desktop app requires a native webview runtime:
 - **Windows**: WebView2, which is preinstalled on Windows 10/11.

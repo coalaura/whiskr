@@ -276,7 +276,7 @@ jobs:
           GOARCH="${{ matrix.goarch }}" \
           CGO_ENABLED=1 \
           go build \
-            -tags desktop \
+            -tags desktop,release \
             -trimpath \
             -buildvcs=false \
             -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' -linkmode external -extldflags=-static" \
@@ -492,7 +492,7 @@ jobs:
           GOARCH="${{ matrix.goarch }}" \
           CGO_ENABLED=1 \
           go build \
-            -tags desktop \
+            -tags desktop,release \
             -trimpath \
             -buildvcs=false \
             -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}' -H=windowsgui -linkmode=external -extldflags=-Wl,--subsystem,windows" \
@@ -789,7 +789,7 @@ jobs:
             CGO_CXXFLAGS="-arch $clang_arch -mmacosx-version-min=11.0" \
             CGO_LDFLAGS="-arch $clang_arch -mmacosx-version-min=11.0" \
             go build \
-              -tags desktop \
+              -tags desktop,release \
               -trimpath \
               -buildvcs=false \
               -ldflags "-s -w -X 'main.Version=${{ github.ref_name }}'" \
