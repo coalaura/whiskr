@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -145,6 +146,30 @@ func LoadEnv() (*Environment, error) {
 	}
 
 	return cfg, nil
+}
+
+func EnsureEnv() (bool, error) {
+	_, err := os.Stat(path.Config)
+	if err == nil {
+		return false, nil
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		return false, err
+	}
+
+	err = os.MkdirAll(filepath.Dir(path.Config), 0755)
+	if err != nil {
+		return false, err
+	}
+
+	cfg := DefaultEnv()
+
+	if err = cfg.Store(); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (e *Environment) Addr() string {

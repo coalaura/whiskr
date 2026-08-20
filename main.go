@@ -37,7 +37,7 @@ func main() {
 
 	log.Println("Ensuring config...")
 
-	created, err := EnsureConfig(path.Config)
+	created, err := EnsureEnv()
 	log.MustFail(err)
 
 	if created && desktop.IsDesktop {
