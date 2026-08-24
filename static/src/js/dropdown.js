@@ -1023,23 +1023,27 @@ class Dropdown {
 			return {
 				text: "",
 				rank: false,
+				discount: false,
 			};
 		}
 
-		const match = text.match(/^(.*?)\s+\(#(\d+)\)$/);
+		const match = text.match(/^(.*?)\s+\((?:#(\d+)|-(\d+)%)\)$/);
 
 		if (!match) {
 			return {
 				text: text,
 				rank: false,
+				discount: false,
 			};
 		}
 
-		const rank = parseInt(match[2], 10);
+		const rank = match[2] ? parseInt(match[2], 10) : NaN,
+			discount = match[3] ? parseInt(match[3], 10) : NaN;
 
 		return {
 			text: match[1].trim() || text,
 			rank: Number.isInteger(rank) && rank > 0 ? rank : false,
+			discount: Number.isInteger(discount) && discount > 0 ? discount : false,
 		};
 	}
 
@@ -1072,6 +1076,14 @@ class Dropdown {
 			subtitleRank.textContent = `#${parsedSubtitle.rank}`;
 
 			subtitleEl.appendChild(subtitleRank);
+		}
+
+		if (parsedSubtitle.discount) {
+			const subtitleDiscount = make("span", "subtitle-discount");
+
+			subtitleDiscount.textContent = `-${parsedSubtitle.discount}%`;
+
+			subtitleEl.appendChild(subtitleDiscount);
 		}
 
 		return parsedSubtitle.rank;

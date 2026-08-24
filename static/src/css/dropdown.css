@@ -293,6 +293,10 @@
 	overflow: hidden;
 }
 
+.dropdown .opts .label {
+	gap: 8px;
+}
+
 .dropdown .label .text-wrapper {
 	display: flex;
 	flex-direction: column;
@@ -330,6 +334,21 @@
 	letter-spacing: 0.01em;
 	font-variant-numeric: tabular-nums;
 	color: color-mix(in srgb, var(--c-text) 70%, var(--c-subtext));
+	white-space: nowrap;
+	overflow: visible;
+	text-overflow: clip;
+}
+
+.dropdown .label .subtitle .subtitle-discount {
+	flex-shrink: 0;
+	line-height: 1.2;
+	font-weight: 650;
+	letter-spacing: 0.01em;
+	font-variant-numeric: tabular-nums;
+	color: var(--c-green);
+	background: color-mix(in srgb, var(--c-green) 15%, transparent);
+	border-radius: 3px;
+	padding: 1px 4px;
 	white-space: nowrap;
 	overflow: visible;
 	text-overflow: clip;
@@ -453,6 +472,24 @@
 	mask-image: url(icons/tags/free.svg);
 }
 
+.tags .tag.retains {
+	--color: var(--c-yellow);
+	background-color: var(--c-yellow);
+	mask-image: url(icons/tags/retains.svg);
+}
+
+.tags .tag.training {
+	--color: var(--c-red);
+	background-color: var(--c-red);
+	mask-image: url(icons/tags/training.svg);
+}
+
+.tags .tag.auto {
+	--color: var(--c-blue);
+	background-color: var(--c-blue);
+	mask-image: url(icons/tags/auto.svg);
+}
+
 .tags .tag.all {
 	background-color: var(--c-yellow);
 	mask-image: url(icons/tags/all.svg);
@@ -542,11 +579,13 @@
 }
 
 @keyframes drop-pulse {
+
 	0%,
 	100% {
 		opacity: 1;
 		box-shadow: 0 0 4px var(--c-mauve);
 	}
+
 	50% {
 		opacity: 0.6;
 		box-shadow: 0 0 8px var(--c-mauve);

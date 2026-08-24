@@ -2384,6 +2384,11 @@ input.invalid {
 	mask-image: url(icons/user.svg);
 }
 
+#chat label[for="provider"] {
+	background-color: var(--c-text);
+	mask-image: url(icons/provider.svg);
+}
+
 #chat label[for="model"] {
 	background-color: var(--c-text);
 	mask-image: url(icons/model.svg);

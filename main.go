@@ -150,6 +150,7 @@ func main() {
 		gr.Use(Authenticate)
 
 		gr.Get("/-/usage", HandleUsage)
+		gr.Get("/-/providers", HandleModelProviders)
 		gr.Post("/-/title", HandleTitle)
 
 		gr.Post("/-/chat", HandleChat)

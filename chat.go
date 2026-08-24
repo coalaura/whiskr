@@ -79,6 +79,7 @@ type ChatRequest struct {
 	Prompt      string        `json:"prompt"`
 	Model       string        `json:"model"`
 	Provider    string        `json:"provider"`
+	ProviderPin string        `json:"provider_pin"`
 	Temperature float64       `json:"temperature"`
 	Iterations  int64         `json:"iterations"`
 	Tools       ChatTools     `json:"tools"`
@@ -292,19 +293,23 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 		}
 	}
 
+	prefs := &openingrouter.ProviderPreferences{}
+
 	switch r.Provider {
 	case "throughput":
-		request.Provider = &openingrouter.ProviderPreferences{
-			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortThroughput},
-		}
+		prefs.Sort = &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortThroughput}
 	case "latency":
-		request.Provider = &openingrouter.ProviderPreferences{
-			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortLatency},
-		}
+		prefs.Sort = &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortLatency}
 	case "price":
-		request.Provider = &openingrouter.ProviderPreferences{
-			Sort: &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortPrice},
-		}
+		prefs.Sort = &openingrouter.ProviderSortConfig{By: openingrouter.ProviderSortPrice}
+	}
+
+	if r.ProviderPin != "" {
+		prefs.Only = []string{r.ProviderPin}
+	}
+
+	if prefs.Sort != nil || len(prefs.Only) > 0 {
+		request.Provider = prefs
 	}
 
 	if model.JSON && r.Tools.JSON {

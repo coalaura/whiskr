@@ -66,6 +66,7 @@ const $version = document.getElementById("version"),
 	$attachments = document.getElementById("attachments"),
 	$role = document.getElementById("role").querySelector("select"),
 	$model = document.getElementById("model"),
+	$provider = document.getElementById("provider"),
 	$proxy = document.getElementById("proxy").querySelector("select"),
 	$providerSorting = document.getElementById("provider-sorting"),
 	$modelBenchmark = document.getElementById("model-benchmark"),
@@ -174,7 +175,7 @@ let searchAvailable = false,
 
 let scrollButtonRaf;
 
-let modelDropdown, reasoningDropdown, exportRolesDropdown;
+let modelDropdown, reasoningDropdown, providerDropdown, exportRolesDropdown;
 
 const benchmarkLabels = {
 	intelligence: "Intelligence",
@@ -3089,6 +3090,7 @@ async function buildRequest(noPush = false) {
 		prompt: $prompt.value,
 		model: model.slug,
 		provider: $providerSorting.value,
+		provider_pin: $provider.value,
 		temperature: temperature,
 		iterations: iterations,
 		tools: {
@@ -4502,6 +4504,7 @@ function getChatData(name) {
 		role: $role.value,
 		model: $model.value,
 		provider: $providerSorting.value,
+		provider_pin: $provider.value,
 		prompt: $prompt.value,
 		temperature: $temperature.value,
 		iterations: $iterations.value,
@@ -4683,6 +4686,7 @@ function normalizeImport(data) {
 		role: ["user", "assistant", "system"].includes(data.role) ? data.role : "user",
 		model: modelList.some(item => item.id === model) ? model : defaultModel,
 		provider: ["throughput", "latency", "price"].includes(data.provider) ? data.provider : "",
+		provider_pin: importString(data.provider_pin, "", 128),
 		prompt: promptList.some(item => item.key === prompt) ? prompt : defaultPrompt,
 		temperature: importNumber(data.temperature, 0.85, 0, 2),
 		iterations: importNumber(data.iterations, 3, 1, 50),
@@ -5002,6 +5006,7 @@ function loadChatFromStorage(name) {
 	store("temperature", data.temperature);
 	store("iterations", data.iterations);
 	store("provider", data.provider);
+	store("provider-pin", data.provider_pin);
 	store("image-resolution", data.image?.resolution);
 	store("image-resize", data.image?.resize);
 	store("max-images", data.image?.maxImages);
@@ -5248,12 +5253,110 @@ $proxy.addEventListener("change", () => {
 	store("proxy", $proxy.value);
 });
 
+function buildProviderOption(el, provider) {
+	el.value = provider.slug;
+	el.textContent = provider.name;
+
+	if (provider.icon) {
+		el.dataset.icon = provider.icon;
+	}
+
+	let subtitle = `${formatMoney(provider.input)} In · ${formatMoney(provider.output)} Out`;
+
+	if (provider.discount) {
+		subtitle += ` (-${Math.round(provider.discount * 100)}%)`;
+	}
+
+	el.dataset.subtitle = subtitle;
+
+	const tags = [];
+
+	if (provider.retains) {
+		tags.push("retains");
+	}
+
+	if (provider.training) {
+		tags.push("training");
+	}
+
+	if (tags.length) {
+		el.dataset.tags = tags.join(",");
+	}
+
+	const lines = [
+		provider.name,
+		`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
+	];
+
+	if (provider.retains) {
+		lines.push(provider.retention_days ? `- Retains prompts for ${provider.retention_days} days` : "- Retains prompts");
+	} else {
+		lines.push("- Does not retain prompts")
+	}
+
+	if (provider.training) {
+		lines.push("- Trains on prompts");
+	} else {
+		lines.push("- Does not train on prompts")
+	}
+
+	el.title = lines.join("\n");
+}
+
+async function loadModelProviders() {
+	const model = models[$model.value];
+
+	if (!model) {
+		$provider.parentNode.classList.add("none");
+
+		return;
+	}
+
+	let providers = await json(`/-/providers?model=${encodeURIComponent(model.slug)}`);
+
+	if (!Array.isArray(providers)) {
+		providers = [];
+	}
+
+	const previous = $provider.nextElementSibling;
+
+	if (previous && previous.classList.contains("dropdown")) {
+		previous.remove();
+	}
+
+	$provider.style.display = "";
+
+	$provider.innerHTML = "";
+
+	const auto = document.createElement("option");
+
+	auto.value = "";
+	auto.textContent = "Auto";
+	auto.dataset.icon = "/auto.svg";
+	auto.dataset.tags = "auto";
+	auto.dataset.subtitle = "Default provider routing";
+
+	$provider.appendChild(auto);
+
+	fillSelect($provider, providers, buildProviderOption, true);
+
+	const pin = load("provider-pin", "");
+
+	$provider.value = providers.some(provider => provider.slug === pin) ? pin : "";
+
+	$provider.parentNode.classList.toggle("none", !providers.length);
+
+	providerDropdown = dropdown($provider);
+}
+
 $model.addEventListener("change", () => {
 	const model = $model.value,
 		data = model ? models[model] : null,
 		tags = data?.tags || [];
 
 	store("model", model);
+
+	loadModelProviders();
 
 	if (data?.reasoning) {
 		$reasoningEffort.parentNode.classList.remove("none");
@@ -5318,6 +5421,10 @@ $uiTheme.addEventListener("change", () => {
 	store("ui-theme", theme);
 
 	applyTheme(theme);
+});
+
+$provider.addEventListener("change", () => {
+	store("provider-pin", $provider.value);
 });
 
 $providerSorting.addEventListener("change", () => {
