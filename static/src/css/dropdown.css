@@ -484,12 +484,6 @@
 	mask-image: url(icons/tags/training.svg);
 }
 
-.tags .tag.auto {
-	--color: var(--c-blue);
-	background-color: var(--c-blue);
-	mask-image: url(icons/tags/auto.svg);
-}
-
 .tags .tag.all {
 	background-color: var(--c-yellow);
 	mask-image: url(icons/tags/all.svg);

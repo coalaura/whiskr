@@ -5333,7 +5333,6 @@ async function loadModelProviders() {
 	auto.value = "";
 	auto.textContent = "Auto";
 	auto.dataset.icon = "/auto.svg";
-	auto.dataset.tags = "auto";
 	auto.dataset.subtitle = "Default provider routing";
 
 	$provider.appendChild(auto);
