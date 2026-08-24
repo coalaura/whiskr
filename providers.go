@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -224,7 +225,7 @@ func loadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) 
 		}
 
 		if provider.Icon != nil {
-			info.Icon = "https://openrouter.ai" + provider.Icon.URL
+			info.Icon = "/-/icon/" + filepath.Base(provider.Icon.URL)
 		}
 
 		if provider.DataPolicy != nil {

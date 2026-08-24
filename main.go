@@ -103,6 +103,7 @@ func main() {
 	}
 
 	log.Println("Preparing router...")
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recoverer)
@@ -160,6 +161,8 @@ func main() {
 		gr.Post("/-/preview", HandlePreview)
 		gr.Post("/-/image", HandleImage)
 		gr.Post("/-/tts", HandleTTS)
+
+		gr.Get("/-/icon/{path}", HandleIcon)
 
 		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})
