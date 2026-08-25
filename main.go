@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -84,6 +85,12 @@ func main() {
 
 	err = StartModelUpdateLoop()
 	log.MustFail(err)
+
+	if !env.IsOpenAI() {
+		log.Println("Loading provider registry...")
+
+		go LoadProviderRegistry(context.Background())
+	}
 
 	tokenizer, err := LoadTokenizer(TikTokenSource)
 	log.MustFail(err)

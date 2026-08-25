@@ -17,6 +17,7 @@ func ResolvePaths() (Paths, error) {
 		Config:          filepath.Join(cwd, "config.yml"),
 		Settings:        filepath.Join(cwd, "settings.yml"),
 		Prompts:         filepath.Join(cwd, "prompts"),
+		ProviderIcons:   filepath.Join(cwd, "providers"),
 		VocabularyCache: filepath.Join(cwd, "vocabulary.tiktoken"),
 	}, nil
 }

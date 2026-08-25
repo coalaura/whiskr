@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -66,7 +65,7 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 
 	providerMx.Unlock()
 
-	registry, err := loadProviderRegistry(ctx)
+	registry, err := LoadProviderRegistry(ctx)
 	if err != nil {
 		if staleOK {
 			return stale, nil
@@ -213,7 +212,7 @@ func HandleModelProviders(w http.ResponseWriter, r *http.Request) {
 	RespondJson(w, http.StatusOK, providers)
 }
 
-func loadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) {
+func LoadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) {
 	providerMx.Lock()
 
 	if providerRegistry != nil && time.Since(providerRegistryAt) < providerCacheTTL {
@@ -240,14 +239,12 @@ func loadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) 
 		}
 
 		if provider.Icon != nil {
-			uri, err := providerIconURL(provider.Icon.URL)
+			uri, err := CacheProviderIcon(ctx, provider.Name, provider.Icon.URL)
 			if err != nil {
-				log.Warnf("Invalid provider icon url %q: %v\n", provider.Icon.URL, err)
-
-				continue
+				log.Warnf("Unable to cache icon for provider %q: %v\n", provider.Name, err)
+			} else {
+				info.Icon = uri
 			}
-
-			info.Icon = uri
 		}
 
 		if provider.DataPolicy != nil {
@@ -297,19 +294,4 @@ func providerVariantName(name, tag string) string {
 	}
 
 	return name + " (" + strings.Join(words, " ") + ")"
-}
-
-func providerIconURL(uri string) (string, error) {
-	base := &url.URL{
-		Scheme: "https",
-		Host:   "openrouter.ai",
-		Path:   "/",
-	}
-
-	ref, err := url.Parse(uri)
-	if err != nil {
-		return "", err
-	}
-
-	return base.ResolveReference(ref).String(), nil
 }
