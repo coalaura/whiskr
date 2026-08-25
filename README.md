@@ -22,7 +22,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 ![files](.github/files.png)
 
 ### Conversation Control
-- **Full Message Control**: Change the role, edit, delete or copy any message in the conversation, or add a message without immediately starting a completion.
+- **Full Message Control**: Change the role, edit, delete or copy any message in the conversation or add a message without immediately starting a completion.
 - **Collapse/Expand Messages**: Collapse large messages to keep your chat history tidy.
 - **Retry & Regenerate**: Easily retry assistant responses or regenerate from any point in the conversation.
 - **Title Generation**: Automatically generate (and refresh) a title for your chat.
@@ -40,7 +40,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
   - Tags indicate if a model supports **tools**, **vision**, **reasoning**, structured output or image generation.
   - Search models, mark favorites and, on OpenRouter, inspect or pin providers using price, throughput, uptime, quantization and privacy metadata.
 - **Personalization & Appearance**: Add custom instructions, choose from multiple themes, select provider sorting, compare model benchmarks, resize uploaded images or override the current time.
-- **Request Controls**: Configure reasoning effort or token limits, tool iterations and auto-scrolling, or enable bare-bones, offline-simulation and context-compression modes when supported.
+- **Request Controls**: Configure reasoning effort or token limits, tool iterations and auto-scrolling or enable bare-bones, offline-simulation and context-compression modes when supported.
 - **Responsive Interface**: The chat, sidebar, settings and searchable dropdowns adapt for desktop, tablet and mobile screens.
 - **Smooth Interface**: Built with [morphdom](https://github.com/patrick-steele-idem/morphdom) to ensure UI updates don't lose your selections, scroll position or focus.
 
@@ -190,7 +190,7 @@ server {
 - Adjust model, temperature, prompt or message role from the controls in the bottom-left.
 - Open **Settings** to personalize your prompts, select a theme, choose provider sorting and model benchmarks, resize uploaded images, configure text-to-speech or override the current time.
 - **Custom Prompts**: The `extra` folder contains additional pre-made system prompts. You can copy these into the main `prompts` folder if you want to use them alongside the default built-in prompts.
-- Attach images using markdown syntax (`![alt](url)`), paste or upload images, or upload text/code files with the attachment button. Attachments can be reordered before sending; hold `Shift` while choosing an image to insert it inline.
+- Attach images using markdown syntax (`![alt](url)`), paste or upload images or upload text/code files with the attachment button. Attachments can be reordered before sending; hold `Shift` while choosing an image to insert it inline.
 - When using an **image-output model** and `models.image-generation` is enabled, whiskr will display returned images inline and lets you select an image resolution and aspect ratio.
 - Enable **JSON** to request structured JSON output from compatible models or enable **Search** to allow web search and page fetching. The adjacent controls toggle text-file output, bare-bones mode, offline simulation and context compression.
 - Open the sidebar to save chats or **import/export** the current chat. Use the clear button in the composer header to remove all messages.
