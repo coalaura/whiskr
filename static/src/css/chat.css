@@ -2841,7 +2841,7 @@ input.invalid {
 
 #settings-modal .body {
 	padding: 16px;
-	max-height: min(78vh, 760px);
+	max-height: min(78vh, 770px);
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
