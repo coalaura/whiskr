@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -86,12 +85,6 @@ func main() {
 	err = StartModelUpdateLoop()
 	log.MustFail(err)
 
-	if !env.IsOpenAI() {
-		log.Println("Loading provider registry...")
-
-		go LoadProviderRegistry(context.Background())
-	}
-
 	tokenizer, err := LoadTokenizer(TikTokenSource)
 	log.MustFail(err)
 
@@ -168,8 +161,6 @@ func main() {
 		gr.Post("/-/preview", HandlePreview)
 		gr.Post("/-/image", HandleImage)
 		gr.Post("/-/tts", HandleTTS)
-
-		gr.Get("/-/icon/{path}", HandleIcon)
 
 		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})

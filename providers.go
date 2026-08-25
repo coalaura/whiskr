@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -44,6 +45,8 @@ type ProviderGroup struct {
 }
 
 var (
+	providerIconNameRgx = regexp.MustCompile(`[^A-Za-z0-9_-]+`)
+
 	providerMx         sync.Mutex
 	providerRegistry   map[string]ProviderInfo
 	providerRegistryAt time.Time
@@ -239,12 +242,7 @@ func LoadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) 
 		}
 
 		if provider.Icon != nil {
-			uri, err := CacheProviderIcon(ctx, provider.Name, provider.Icon.URL)
-			if err != nil {
-				log.Warnf("Unable to cache icon for provider %q: %v\n", provider.Name, err)
-			} else {
-				info.Icon = uri
-			}
+			info.Icon = providerIconFilename(provider.Slug)
 		}
 
 		if provider.DataPolicy != nil {
@@ -294,4 +292,10 @@ func providerVariantName(name, tag string) string {
 	}
 
 	return name + " (" + strings.Join(words, " ") + ")"
+}
+
+func providerIconFilename(slug string) string {
+	slug = strings.Trim(providerIconNameRgx.ReplaceAllString(slug, "-"), "-")
+
+	return "providers/" + strings.ToLower(slug+".png")
 }
