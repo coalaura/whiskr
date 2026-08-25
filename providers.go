@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"net/http"
-	"path/filepath"
+	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -85,20 +86,32 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 
 	groups := make(map[string]*ProviderGroup)
 	order := make([]string, 0)
+	groupOrder := make(map[string]int)
 
 	for _, endpoint := range response.Endpoints {
-		base := baseProviderSlug(endpoint.Tag)
+		providerSlug := endpoint.Tag
 
-		if base == "" {
+		if providerSlug == "" {
 			continue
 		}
 
-		group, ok := groups[base]
+		group, ok := groups[providerSlug]
 		if !ok {
 			group = &ProviderGroup{Name: endpoint.ProviderName}
 
-			groups[base] = group
-			order = append(order, base)
+			groups[providerSlug] = group
+			order = append(order, providerSlug)
+
+			baseSlug := baseProviderSlug(providerSlug)
+			if _, exists := groupOrder[baseSlug]; !exists {
+				groupOrder[baseSlug] = len(groupOrder)
+			}
+		}
+
+		discount := endpoint.Pricing.Discount
+
+		if discount > 0 && discount > group.Discount {
+			group.Discount = discount
 		}
 
 		input := float64(endpoint.Pricing.Prompt) * 1000000
@@ -115,12 +128,23 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 		}
 	}
 
+	sort.SliceStable(order, func(left, right int) bool {
+		leftGroup := groupOrder[baseProviderSlug(order[left])]
+		rightGroup := groupOrder[baseProviderSlug(order[right])]
+
+		return leftGroup < rightGroup
+	})
+
 	providers := make([]ModelProvider, 0, len(order))
 
-	for _, base := range order {
-		group := groups[base]
+	for _, providerSlug := range order {
+		group := groups[providerSlug]
+		baseSlug := baseProviderSlug(providerSlug)
 
-		info := registry[base]
+		info, registered := registry[providerSlug]
+		if !registered {
+			info = registry[baseSlug]
+		}
 
 		name := info.DisplayName
 		if name == "" {
@@ -132,11 +156,15 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 		}
 
 		if name == "" {
-			name = base
+			name = baseSlug
+		}
+
+		if !registered {
+			name = providerVariantName(name, providerSlug)
 		}
 
 		providers = append(providers, ModelProvider{
-			Slug:          base,
+			Slug:          providerSlug,
 			Name:          name,
 			Icon:          info.Icon,
 			Input:         group.Input,
@@ -212,7 +240,14 @@ func loadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) 
 		}
 
 		if provider.Icon != nil {
-			info.Icon = "/-/icon/" + filepath.Base(provider.Icon.URL)
+			uri, err := providerIconURL(provider.Icon.URL)
+			if err != nil {
+				log.Warnf("Invalid provider icon url %q: %v\n", provider.Icon.URL, err)
+
+				continue
+			}
+
+			info.Icon = uri
 		}
 
 		if provider.DataPolicy != nil {
@@ -240,4 +275,41 @@ func baseProviderSlug(tag string) string {
 	}
 
 	return tag
+}
+
+func providerVariantName(name, tag string) string {
+	_, variant, ok := strings.Cut(tag, "/")
+	if !ok || variant == "" {
+		return name
+	}
+
+	variant = strings.NewReplacer("/", " ", "-", " ", "_", " ").Replace(variant)
+	words := strings.Fields(variant)
+
+	for index, word := range words {
+		if len(word) <= 2 {
+			words[index] = strings.ToUpper(word)
+
+			continue
+		}
+
+		words[index] = strings.ToUpper(word[:1]) + word[1:]
+	}
+
+	return name + " (" + strings.Join(words, " ") + ")"
+}
+
+func providerIconURL(uri string) (string, error) {
+	base := &url.URL{
+		Scheme: "https",
+		Host:   "openrouter.ai",
+		Path:   "/",
+	}
+
+	ref, err := url.Parse(uri)
+	if err != nil {
+		return "", err
+	}
+
+	return base.ResolveReference(ref).String(), nil
 }
