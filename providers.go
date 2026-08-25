@@ -104,19 +104,6 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 		input := float64(endpoint.Pricing.Prompt) * 1000000
 		output := float64(endpoint.Pricing.Completion) * 1000000
 
-		discount := endpoint.Pricing.Discount
-
-		if discount > 0 {
-			factor := 1 - discount
-
-			input *= factor
-			output *= factor
-
-			if discount > group.Discount {
-				group.Discount = discount
-			}
-		}
-
 		if !group.HaveIn || input < group.Input {
 			group.Input = input
 			group.HaveIn = true
