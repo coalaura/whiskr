@@ -61,6 +61,10 @@ class Dropdown {
 		this.#_select.querySelectorAll("option").forEach(option => {
 			const classes = option.dataset.classes?.trim(),
 				tags = option.dataset.tags?.trim(),
+				badge = option.dataset.badge?.trim(),
+				badgeTitle = option.dataset.badgeTitle?.trim(),
+				meter = Number.parseFloat(option.dataset.meter),
+				meterTitle = option.dataset.meterTitle?.trim(),
 				isFavorite = !!option.dataset.favorite,
 				isDisabled = !!option.dataset.disabled,
 				isNew = !!option.dataset.new,
@@ -85,6 +89,10 @@ class Dropdown {
 				classes: classes ? classes.split(",") : [],
 				icon: option.dataset.icon,
 				tags: tags ? tags.split(",") : [],
+				badge: badge || "",
+				badgeTitle: badgeTitle || "",
+				meter: Number.isFinite(meter) ? Math.min(Math.max(meter, 0), 100) : false,
+				meterTitle: meterTitle || "",
 				favorite: isFavorite,
 				disabled: isDisabled,
 				new: isNew,
@@ -332,25 +340,55 @@ class Dropdown {
 				_span.appendChild(_new);
 			}
 
-			// right tags (optional)
-			if (option.tags.length) {
-				const _tags = make("div", "tags");
+			// right-side metadata (optional)
+			if (option.badge || option.tags.length) {
+				const _meta = make("div", "meta");
 
-				_tags.title = `${this.#maxTags ? `${option.tags.length}/${this.#maxTags}: ` : ""}${option.tags.join(", ")}`;
+				if (option.badge) {
+					const _badge = make("div", "badge");
 
-				if (this.#maxTags && option.tags.length >= this.#maxTags) {
-					const _all = make("div", "tag", "all");
+					_badge.textContent = option.badge;
+					_badge.title = option.badgeTitle;
 
-					_tags.appendChild(_all);
-				} else {
-					for (const tag of option.tags) {
-						const _tag = make("div", "tag", tag);
-
-						_tags.appendChild(_tag);
-					}
+					_meta.appendChild(_badge);
 				}
 
-				_opt.appendChild(_tags);
+				if (option.tags.length) {
+					const _tags = make("div", "tags");
+
+					_tags.title = `${this.#maxTags ? `${option.tags.length}/${this.#maxTags}: ` : ""}${option.tags.join(", ")}`;
+
+					if (this.#maxTags && option.tags.length >= this.#maxTags) {
+						const _all = make("div", "tag", "all");
+
+						_tags.appendChild(_all);
+					} else {
+						for (const tag of option.tags) {
+							const _tag = make("div", "tag", tag);
+
+							_tags.appendChild(_tag);
+						}
+					}
+
+					_meta.appendChild(_tags);
+				}
+
+				_opt.appendChild(_meta);
+			}
+
+			if (option.meter !== false) {
+				const _meter = make("div", "meter");
+
+				const colors = ["var(--c-red)", "var(--c-orange)", "var(--c-yellow)", "var(--c-green)"],
+					position = Math.max(0, Math.min(1, (option.meter - 80) / 20)) * (colors.length - 1),
+					segment = Math.min(Math.floor(position), colors.length - 2),
+					mix = (position - segment) * 100;
+
+				_meter.style.setProperty("--value", `${option.meter}%`);
+				_meter.style.setProperty("--meter-color", `color-mix(in oklab, ${colors[segment]}, ${colors[segment + 1]} ${mix}%)`);
+				_meter.title = option.meterTitle;
+
+				_opt.appendChild(_meter);
 			}
 
 			// add to options (all)

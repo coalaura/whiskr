@@ -24,28 +24,37 @@ type ProviderInfo struct {
 }
 
 type ModelProvider struct {
-	Slug          string  `json:"slug"`
-	Name          string  `json:"name"`
-	Icon          string  `json:"icon,omitempty"`
-	Input         float64 `json:"input"`
-	Output        float64 `json:"output"`
-	Discount      float64 `json:"discount,omitempty"`
-	Training      bool    `json:"training"`
-	Retains       bool    `json:"retains"`
-	RetentionDays *int    `json:"retention_days,omitempty"`
+	Slug          string   `json:"slug"`
+	Name          string   `json:"name"`
+	Icon          string   `json:"icon,omitempty"`
+	Input         float64  `json:"input"`
+	Output        float64  `json:"output"`
+	Discount      float64  `json:"discount,omitempty"`
+	Quantization  string   `json:"quantization,omitempty"`
+	Throughput    *float64 `json:"throughput,omitempty"`
+	Uptime        *float64 `json:"uptime,omitempty"`
+	UptimePeriod  string   `json:"uptime_period,omitempty"`
+	Training      bool     `json:"training"`
+	Retains       bool     `json:"retains"`
+	RetentionDays *int     `json:"retention_days,omitempty"`
 }
 
 type ProviderGroup struct {
-	Name     string
-	Input    float64
-	Output   float64
-	Discount float64
-	HaveIn   bool
-	HaveOut  bool
+	Name         string
+	Input        float64
+	Output       float64
+	Discount     float64
+	Quantization string
+	Throughput   *float64
+	Uptime       *float64
+	UptimePeriod string
+	HaveIn       bool
+	HaveOut      bool
 }
 
 var (
-	providerIconNameRgx = regexp.MustCompile(`[^A-Za-z0-9_-]+`)
+	providerIconNameRgx           = regexp.MustCompile(`[^A-Za-z0-9_-]+`)
+	providerQuantizationSuffixRgx = regexp.MustCompile(`(?i)\s+\((?:int4|int8|fp4|mxfp4|nvfp4|fp6|fp8|mxfp8|fp16|bf16|fp32)\)$`)
 
 	providerMx         sync.Mutex
 	providerRegistry   map[string]ProviderInfo
@@ -116,6 +125,26 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 			group.Discount = discount
 		}
 
+		if group.Quantization == "" && endpoint.Quantization != "" && endpoint.Quantization != openingrouter.QuantizationUnknown {
+			group.Quantization = string(endpoint.Quantization)
+		}
+
+		if group.Throughput == nil && endpoint.ThroughputLast30m != nil {
+			throughput := endpoint.ThroughputLast30m.P50
+			group.Throughput = &throughput
+		}
+
+		if group.Uptime == nil && endpoint.UptimeLast30m != nil {
+			group.Uptime = endpoint.UptimeLast30m
+			group.UptimePeriod = "30m"
+		} else if group.Uptime == nil && endpoint.UptimeLast5m != nil {
+			group.Uptime = endpoint.UptimeLast5m
+			group.UptimePeriod = "5m"
+		} else if group.Uptime == nil && endpoint.UptimeLast1d != nil {
+			group.Uptime = endpoint.UptimeLast1d
+			group.UptimePeriod = "24h"
+		}
+
 		input := float64(endpoint.Pricing.Prompt) * 1000000
 		output := float64(endpoint.Pricing.Completion) * 1000000
 
@@ -163,6 +192,8 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 
 		if !registered {
 			name = providerVariantName(name, providerSlug)
+
+			name = providerQuantizationSuffixRgx.ReplaceAllString(name, "")
 		}
 
 		providers = append(providers, ModelProvider{
@@ -172,6 +203,10 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 			Input:         group.Input,
 			Output:        group.Output,
 			Discount:      group.Discount,
+			Quantization:  group.Quantization,
+			Throughput:    group.Throughput,
+			Uptime:        group.Uptime,
+			UptimePeriod:  group.UptimePeriod,
 			Training:      info.Training,
 			Retains:       info.Retains,
 			RetentionDays: info.RetentionDays,

@@ -5261,13 +5261,32 @@ function buildProviderOption(el, provider) {
 		el.dataset.icon = provider.icon;
 	}
 
-	let subtitle = `${formatMoney(provider.input)} In · ${formatMoney(provider.output)} Out`;
+	const quantization = typeof provider.quantization === "string" && provider.quantization.toLowerCase() !== "unknown" ? provider.quantization.toUpperCase() : "",
+		throughput = Number.isFinite(provider.throughput) ? formatNumber(provider.throughput) : "",
+		uptime = Number.isFinite(provider.uptime) ? formatNumber(Math.round(provider.uptime * 100) / 100) : "",
+		uptimePeriod = typeof provider.uptime_period === "string" ? provider.uptime_period : "30m";
+
+	const subtitleParts = [`${formatMoney(provider.input)} In · ${formatMoney(provider.output)} Out`];
 
 	if (provider.discount) {
-		subtitle += ` (-${Math.round(provider.discount * 100)}%)`;
+		subtitleParts[0] += ` (-${Math.round(provider.discount * 100)}%)`;
 	}
 
-	el.dataset.subtitle = subtitle;
+	if (quantization) {
+		el.dataset.badge = quantization;
+		el.dataset.badgeTitle = `Quantization: ${quantization}`;
+	}
+
+	if (throughput) {
+		subtitleParts.push(`${throughput} tok/s`);
+	}
+
+	if (uptime) {
+		el.dataset.meter = provider.uptime;
+		el.dataset.meterTitle = `Uptime (${uptimePeriod}): ${uptime}%`;
+	}
+
+	el.dataset.subtitle = subtitleParts.join(" · ");
 
 	const tags = [];
 
@@ -5287,6 +5306,18 @@ function buildProviderOption(el, provider) {
 		provider.name,
 		`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
 	];
+
+	if (quantization) {
+		lines.push(`Quantization: ${quantization}`);
+	}
+
+	if (throughput) {
+		lines.push(`Throughput (30m): ${throughput} tok/s`);
+	}
+
+	if (uptime) {
+		lines.push(`Uptime (${uptimePeriod}): ${uptime}%`);
+	}
 
 	if (provider.retains) {
 		lines.push(provider.retention_days ? `- Retains prompts for ${provider.retention_days} days` : "- Retains prompts");
