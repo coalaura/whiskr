@@ -6,6 +6,7 @@ class Dropdown {
 	#_options;
 	#_selected;
 	#_search;
+	#_tooltip;
 	#_tagFilters = [];
 
 	#all = {
@@ -148,6 +149,13 @@ class Dropdown {
 			this.#_dropdown.classList.add("height-low");
 		}
 
+		// tooltip
+		this.#_tooltip = make("div", "dropdown-tooltip");
+
+		this.#_tooltip.setAttribute("role", "tooltip");
+
+		this.#_dropdown.appendChild(this.#_tooltip);
+
 		// selected item
 		this.#_selected = make("div", "selected");
 
@@ -275,8 +283,6 @@ class Dropdown {
 		for (const option of this.#options) {
 			// option wrapper
 			const _opt = make("div", "opt");
-
-			_opt.title = option.title || "";
 
 			_opt.classList.add(...option.classes);
 
@@ -596,18 +602,32 @@ class Dropdown {
 
 			els.forEach(el => {
 				el.addEventListener("mouseenter", () => {
+					this.#showTooltip(option.title, el);
+
 					this.#trigger("option:hover", option.value);
+				});
+
+				el.addEventListener("mouseleave", () => {
+					this.#hideTooltip();
 				});
 			});
 		}
 
 		this.#_options.addEventListener("mouseleave", () => {
+			this.#hideTooltip();
+
 			this.#trigger("option:hover", false);
+		});
+
+		this.#_options.addEventListener("scroll", () => {
+			this.#hideTooltip();
 		});
 	}
 
 	#toggleDropdownOpen() {
 		const willOpen = !this.#_dropdown.classList.contains("open");
+
+		this.#hideTooltip();
 
 		if (willOpen) {
 			const rect = this.#_dropdown.getBoundingClientRect();
@@ -832,7 +852,13 @@ class Dropdown {
 
 		// hover listener
 		option.favoriteClone.addEventListener("mouseenter", () => {
+			this.#showTooltip(option.title, option.favoriteClone);
+
 			this.#trigger("option:hover", option.value);
+		});
+
+		option.favoriteClone.addEventListener("mouseleave", () => {
+			this.#hideTooltip();
 		});
 
 		// Insert in correct position based on order
@@ -876,7 +902,6 @@ class Dropdown {
 			this.#_selected.classList.remove("all-tags");
 
 			if (!selected.length) {
-				this.#_selected.title = this.#_select.title;
 				this.#_selected.textContent = "None";
 
 				this.#_dropdown.removeAttribute("data-value");
@@ -887,7 +912,6 @@ class Dropdown {
 			const labels = selected.map(option => option.label),
 				title = labels.join(", ");
 
-			this.#_selected.title = title;
 			this.#_selected.textContent = labels.length <= 2 ? title : `${labels.length} selected`;
 
 			this.#_dropdown.setAttribute("data-value", selected.map(option => option.value).join(","));
@@ -896,7 +920,6 @@ class Dropdown {
 		}
 
 		if (this.#selected === false) {
-			this.#_selected.title = "";
 			this.#_selected.innerHTML = "";
 
 			return;
@@ -924,10 +947,85 @@ class Dropdown {
 
 		this.#_selected.classList.toggle("all-tags", selection.tags.length >= this.#maxTags);
 
-		this.#_selected.title = selection.title || this.#_select.title;
 		this.#_selected.innerHTML = selection.el.innerHTML;
 
 		this.#_dropdown.setAttribute("data-value", selection.value);
+	}
+
+	#showTooltip(title, anchor) {
+		this.#hideTooltip();
+
+		if (!title) {
+			return;
+		}
+
+		const lines = title
+			.split(/\r?\n/)
+			.map(line => line.trim())
+			.filter(Boolean);
+
+		if (!lines.length) {
+			return;
+		}
+
+		const heading = make("div", "tooltip-title");
+
+		heading.textContent = lines.shift();
+
+		this.#_tooltip.appendChild(heading);
+
+		for (const line of lines) {
+			if (/^[─—=\-]{3,}$/.test(line)) {
+				this.#_tooltip.appendChild(make("div", "tooltip-divider"));
+
+				continue;
+			}
+
+			const field = line.match(/^([^:\t]{1,28}):[\t ]*(.+)$/);
+
+			if (field) {
+				const row = make("div", "tooltip-row"),
+					label = make("span", "tooltip-label"),
+					value = make("span", "tooltip-value");
+
+				label.textContent = field[1];
+				value.textContent = field[2];
+
+				row.append(label, value);
+
+				this.#_tooltip.appendChild(row);
+
+				continue;
+			}
+
+			const body = make("div", line.startsWith("- ") ? "tooltip-bullet" : "tooltip-body");
+
+			body.textContent = line.startsWith("- ") ? line.slice(2) : line;
+
+			this.#_tooltip.appendChild(body);
+		}
+
+		this.#_tooltip.classList.add("visible");
+
+		const anchorRect = anchor.getBoundingClientRect(),
+			tooltipRect = this.#_tooltip.getBoundingClientRect(),
+			gap = 10,
+			viewportPadding = 8,
+			rightSpace = window.innerWidth - anchorRect.right,
+			showRight = rightSpace >= tooltipRect.width + gap || rightSpace >= anchorRect.left,
+			left = showRight ? anchorRect.right + gap : anchorRect.left - tooltipRect.width - gap,
+			top = Math.min(Math.max(anchorRect.top, viewportPadding), window.innerHeight - tooltipRect.height - viewportPadding);
+
+		this.#_tooltip.classList.toggle("side-right", showRight);
+		this.#_tooltip.classList.toggle("side-left", !showRight);
+
+		this.#_tooltip.style.left = `${Math.min(Math.max(left, viewportPadding), window.innerWidth - tooltipRect.width - viewportPadding)}px`;
+		this.#_tooltip.style.top = `${Math.max(top, viewportPadding)}px`;
+	}
+
+	#hideTooltip() {
+		this.#_tooltip.classList.remove("visible", "side-left", "side-right");
+		this.#_tooltip.textContent = "";
 	}
 
 	#trigger(event, data) {

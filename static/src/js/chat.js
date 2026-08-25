@@ -5302,8 +5302,10 @@ function buildProviderOption(el, provider) {
 		el.dataset.tags = tags.join(",");
 	}
 
-	const lines = [
+	const separator = "─".repeat(24),
+		lines = [
 		provider.name,
+		separator,
 		`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
 	];
 
@@ -5318,6 +5320,8 @@ function buildProviderOption(el, provider) {
 	if (uptime) {
 		lines.push(`Uptime (${uptimePeriod}): ${uptime}%`);
 	}
+
+	lines.push(separator);
 
 	if (provider.retains) {
 		lines.push(provider.retention_days ? `- Retains prompts for ${provider.retention_days} days` : "- Retains prompts");

@@ -80,6 +80,112 @@
 	display: none;
 }
 
+.dropdown-tooltip {
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	width: max-content;
+	min-width: 220px;
+	max-width: min(380px, calc(100vw - 16px));
+	padding: 10px 12px;
+	border: 1px solid var(--c-surface2);
+	border-radius: 2px;
+	background: var(--c-surface0);
+	color: var(--c-text);
+	box-shadow:
+		0 8px 24px rgba(0, 0, 0, 0.22),
+		0 2px 6px rgba(0, 0, 0, 0.12);
+	font-size: 12px;
+	line-height: 1.45;
+	white-space: normal;
+	pointer-events: none;
+}
+
+.dropdown-tooltip.visible {
+	display: block;
+}
+
+.dropdown-tooltip::before,
+.dropdown-tooltip::after {
+	content: "";
+	position: absolute;
+	top: 12px;
+	border: 6px solid transparent;
+}
+
+.dropdown-tooltip.side-right::before {
+	right: 100%;
+	border-right-color: var(--c-surface2);
+}
+
+.dropdown-tooltip.side-right::after {
+	right: calc(100% - 1px);
+	border-right-color: var(--c-surface0);
+}
+
+.dropdown-tooltip.side-left::before {
+	left: 100%;
+	border-left-color: var(--c-surface2);
+}
+
+.dropdown-tooltip.side-left::after {
+	left: calc(100% - 1px);
+	border-left-color: var(--c-surface0);
+}
+
+.dropdown-tooltip .tooltip-title {
+	font-size: 13px;
+	font-weight: 650;
+	color: var(--c-text);
+}
+
+.dropdown-tooltip .tooltip-divider {
+	height: 1px;
+	margin: 7px 0;
+	background: var(--c-surface2);
+}
+
+.dropdown-tooltip .tooltip-row {
+	display: grid;
+	grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+	gap: 12px;
+	align-items: baseline;
+	margin-top: 4px;
+}
+
+.dropdown-tooltip .tooltip-label {
+	color: var(--c-subtext);
+	font-weight: 550;
+}
+
+.dropdown-tooltip .tooltip-value {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.dropdown-tooltip .tooltip-body {
+	margin-top: 6px;
+	color: var(--c-subtext);
+}
+
+.dropdown-tooltip .tooltip-bullet {
+	position: relative;
+	margin-top: 4px;
+	padding-left: 11px;
+	color: var(--c-subtext);
+}
+
+.dropdown-tooltip .tooltip-bullet::before {
+	content: "";
+	position: absolute;
+	top: 0.55em;
+	left: 1px;
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: var(--c-mauve);
+}
+
 .dropdown .tabs {
 	display: flex;
 	background: var(--c-surface0-dark);
