@@ -2,13 +2,13 @@
 
 ![screenshot](.github/chat.png)
 
-whiskr is a private, self-hosted web chat interface for interacting with AI models via [OpenRouter](https://openrouter.ai/).
+whiskr is a private, self-hosted web chat interface for interacting with AI models via [OpenRouter](https://openrouter.ai/) or an OpenAI-compatible API.
 
 ## Features
 
 ### Core Functionality
-- **Private & Self-Hosted**: All your data is stored in `indexedDB`.
-- **Broad Model Support**: Use any model available on your OpenRouter account.
+- **Private & Self-Hosted**: Conversations, attachments, saved chats and UI settings are stored locally in your browser using IndexedDB. When authentication is enabled, model favorites are also synced per user through the server's `settings.yml`.
+- **Broad Model Support**: Use models from OpenRouter or a configured OpenAI-compatible endpoint.
 - **Real-time Responses**: Get streaming responses from models as they are generated.
 - **Persistent Settings**: Your chosen model, temperature, provider sorting, theme and other parameters are saved between sessions.
 - **Authentication**: Optional user/password authentication for added security.
@@ -22,23 +22,26 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 ![files](.github/files.png)
 
 ### Conversation Control
-- **Full Message Control**: Edit, delete or copy any message in the conversation.
+- **Full Message Control**: Change the role, edit, delete or copy any message in the conversation, or add a message without immediately starting a completion.
 - **Collapse/Expand Messages**: Collapse large messages to keep your chat history tidy.
 - **Retry & Regenerate**: Easily retry assistant responses or regenerate from any point in the conversation.
 - **Title Generation**: Automatically generate (and refresh) a title for your chat.
-- **Import & Export**: Save and load entire chats as local JSON files.
+- **Saved Chats**: Save named chats in the browser, then load, overwrite or delete them from the sidebar.
+- **Import & Export**: Import whiskr JSON and export chats as whiskr JSON, an OpenRouter request, Markdown or HTML.
 - **Structured Output**: Request JSON responses from models that support structured output.
 
 ### Rich UI & UX
-- **File Attachments**: Attach text, code or images to your messages for vision-enabled models.
+- **File Attachments**: Attach, paste, reorder or remove text, code and images. Images can also be inserted inline for vision-enabled models.
 - **Reasoning & Transparency**:
   - View the model's thought process and tool usage in an expandable "Reasoning" section.
   - See detailed statistics for each message: provider, time-to-first-token, tokens-per-second, token count and cost.
   - Keep track of the total cost for the entire conversation.
 - **Advanced Model Search**:
-  - Tags indicate if a model supports **tools**, **vision** or **reasoning**.
-  - Fuzzy matching helps you quickly find the exact model you need.
+  - Tags indicate if a model supports **tools**, **vision**, **reasoning**, structured output or image generation.
+  - Search models, mark favorites and, on OpenRouter, inspect or pin providers using price, throughput, uptime, quantization and privacy metadata.
 - **Personalization & Appearance**: Add custom instructions, choose from multiple themes, select provider sorting, compare model benchmarks, resize uploaded images or override the current time.
+- **Request Controls**: Configure reasoning effort or token limits, tool iterations and auto-scrolling, or enable bare-bones, offline-simulation and context-compression modes when supported.
+- **Responsive Interface**: The chat, sidebar, settings and searchable dropdowns adapt for desktop, tablet and mobile screens.
 - **Smooth Interface**: Built with [morphdom](https://github.com/patrick-steele-idem/morphdom) to ensure UI updates don't lose your selections, scroll position or focus.
 
 ![settings](.github/settings.png)
@@ -48,7 +51,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 - **`fetch_contents`**: Fetch the contents of one or more URLs.
 - **`github_repository`**: Get a comprehensive overview of a GitHub repository. The tool returns:
   - Core info (URL, description, stars, forks).
-  - A list of top-level files and directories.
+  - Up to 256 entries from the recursive repository tree, filtered and ordered to keep the result compact.
   - The full content of the repository's README file.
 
 ## Built With
@@ -68,7 +71,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 **Backend**
 - Go
 - [chi/v5](https://go-chi.io/) for the http routing/server
-- [OpenRouter](https://openrouter.ai/) for model list and completions
+- [OpenRouter](https://openrouter.ai/) or an OpenAI-compatible API for model lists and completions
 - [Tavily](https://www.tavily.com/) for web search and content retrieval (`/search`, `/extract`)
 
 ## Getting Started
@@ -78,7 +81,7 @@ whiskr is a private, self-hosted web chat interface for interacting with AI mode
 ```bash
 tar -xzf whiskr_<version>_<os>_<arch>.tar.gz
 ```
-3. Set `tokens.openrouter` in the included `config.yml`, then run whiskr:
+3. Set `tokens.openrouter` in the included `config.yml`. Alternatively, set `llm.api` to `openai` and configure `tokens.openai` and `llm.base-url` for an OpenAI-compatible endpoint. Then run whiskr:
 ```bash
 ./whiskr
 ```
@@ -86,6 +89,12 @@ On Windows, run `./whiskr.exe` instead.
 4. Open `http://localhost:3443` in your browser.
 
 Optional configuration notes (from `config.yml`):
+- `debug` (bool, default: false) - enable verbose diagnostics and write completion/title request bodies to local JSON files.
+- `server.port` (int, default: `3443`) - port used by the web server.
+- `settings.timeout` (int, default: `1200`) - completion request timeout in seconds.
+- `settings.refresh-interval` (int, default: `30`) - model-list refresh interval in minutes.
+- `llm.api` (`openrouter` or `openai`, default: `openrouter`) - select OpenRouter or an OpenAI-compatible API.
+- `llm.base-url` (string) - API base URL; defaults to OpenRouter or OpenAI according to `llm.api`.
 - `models.image-generation` (bool, default: true) - allow models with image output to generate images. If set to false, whiskr requests text-only responses even for image-capable models.
 - `models.text-to-speech` (bool, default: true) - enable text-to-speech voice synthesis and playback controls.
 - `models.title-model` (string, default: `google/gemini-2.5-flash-lite`) - model used to generate chat titles (requires structured output support); set it to `-` to disable title generation.
@@ -105,7 +114,7 @@ The desktop app requires a native webview runtime:
 
 ## Authentication (optional)
 
-whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt (12 rounds). If `authentication.enabled` is set to `false`, whiskr will not prompt for authentication at all.
+whiskr supports simple, stateless authentication. If enabled, users must log in with a username and password before accessing the chat. Passwords are hashed using bcrypt. Plaintext values prefixed with `text=` are hashed with bcrypt's default cost when whiskr starts. If `authentication.enabled` is set to `false`, whiskr will not prompt for authentication at all.
 
 ```yaml
 authentication:
@@ -117,7 +126,7 @@ authentication:
       password: "$2a$12$mhImN70h05wnqPxWTci8I.RzomQt9vyLrjWN9ilaV1.GIghcGq.Iy"
 ```
 
-After a successful login, whiskr issues a signed (HMAC-SHA256) token, using the server secret (`tokens.secret` in `config.yml`). This is stored as a cookie and re-used for future authentications.
+After a successful login, whiskr issues an HMAC-SHA3-512-signed token using the server secret (`tokens.secret` in `config.yml`). This is stored as a cookie and re-used for future authentications.
 
 ## Proxy (optional)
 
@@ -176,15 +185,15 @@ server {
 ## Usage
 
 - Send a message with `Ctrl+Enter` or the send button.
-- Hover over a message to reveal controls to **edit, delete, copy, collapse or retry**.
+- Hover over a message to reveal controls to change its role, **edit, delete, copy, collapse or retry**. Assistant messages can also copy detailed developer statistics.
 - Click **"Reasoning"** on an assistant message to view the model's thought process or tool usage.
 - Adjust model, temperature, prompt or message role from the controls in the bottom-left.
 - Open **Settings** to personalize your prompts, select a theme, choose provider sorting and model benchmarks, resize uploaded images, configure text-to-speech or override the current time.
 - **Custom Prompts**: The `extra` folder contains additional pre-made system prompts. You can copy these into the main `prompts` folder if you want to use them alongside the default built-in prompts.
-- Attach images using markdown syntax (`![alt](url)`) or upload text/code files with the attachment button.
+- Attach images using markdown syntax (`![alt](url)`), paste or upload images, or upload text/code files with the attachment button. Attachments can be reordered before sending; hold `Shift` while choosing an image to insert it inline.
 - When using an **image-output model** and `models.image-generation` is enabled, whiskr will display returned images inline and lets you select an image resolution and aspect ratio.
-- Enable **JSON** to request structured JSON output from compatible models or enable **Search** to allow web search and page fetching.
-- Use the buttons in the top-right to **import/export** the chat or clear all messages.
+- Enable **JSON** to request structured JSON output from compatible models or enable **Search** to allow web search and page fetching. The adjacent controls toggle text-file output, bare-bones mode, offline simulation and context compression.
+- Open the sidebar to save chats or **import/export** the current chat. Use the clear button in the composer header to remove all messages.
 
 ## License
 
