@@ -154,8 +154,10 @@ func (s *Settings) MigrateFavoriteModelIDs(models []*Model) bool {
 
 		for _, favorite := range user.Favorites {
 			ids := []string{favorite}
+
 			if !IsModelShortID(favorite) {
-				if migrated := idsBySlug[favorite]; len(migrated) > 0 {
+				migrated := idsBySlug[favorite]
+				if len(migrated) > 0 {
 					ids = migrated
 				}
 			}

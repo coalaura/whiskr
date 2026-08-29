@@ -125,7 +125,8 @@ const $version = document.getElementById("version"),
 	$login = document.getElementById("login");
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-	markdownImageRegex = /!\[([^\]]*)\]\(([^)\n]+)\)/g;
+	markdownImageRegex = /!\[([^\]]*)\]\(([^)\n]+)\)/g,
+	autoScrollResumeDistance = 50;
 
 let platform = "";
 
@@ -150,6 +151,7 @@ const messages = [],
 	pendingImages = new Map();
 
 let autoScrolling = false,
+	autoScrollingPaused = false,
 	awaitingScroll = false,
 	allowFiles = true,
 	jsonMode = false,
@@ -168,12 +170,17 @@ let autoScrolling = false,
 let searchAvailable = false,
 	ttsAvailable = false,
 	isResizing = false,
+	isManualScrolling = false,
 	isUploading = false,
 	usageType = "monthly",
 	totalUsage = {},
 	promptOverheads = {};
 
-let scrollButtonRaf;
+let scrollButtonRaf,
+	autoScrollResumeTimeout,
+	autoScrollResumePending = false,
+	lastTouchY = null,
+	lastMessagesScrollTop = 0;
 
 let modelDropdown, reasoningDropdown, providerDropdown, exportRolesDropdown;
 
@@ -477,7 +484,7 @@ function setupCrossTabSync() {
 		}
 
 		if (change.key === "model-favorites" && modelDropdown) {
-			schedule(() => {
+		schedule(() => {
 				modelDropdown.setFavorites(change.value || []);
 			});
 		}
@@ -499,17 +506,64 @@ function updateScrollButton() {
 		const bottom = distanceFromBottom();
 
 		$top.classList.toggle("hidden", $messages.scrollTop < 80);
-		$bottom.classList.toggle("hidden", bottom < 80);
+		$bottom.classList.toggle("hidden", bottom <= autoScrollResumeDistance && !autoScrollingPaused);
 	});
+}
+
+function cancelAutoScrollResume() {
+	clearTimeout(autoScrollResumeTimeout);
+
+	autoScrollResumeTimeout = null;
+	autoScrollResumePending = false;
+}
+
+function queueAutoScrollResume() {
+	clearTimeout(autoScrollResumeTimeout);
+
+	autoScrollResumePending = true;
+	autoScrollResumeTimeout = null;
+
+	if (isManualScrolling) {
+		return;
+	}
+
+	autoScrollResumeTimeout = setTimeout(() => {
+		autoScrollResumeTimeout = null;
+
+		if (!autoScrollResumePending || isManualScrolling) {
+			return;
+		}
+
+		autoScrollResumePending = false;
+
+		resumeAutoScrolling();
+		scroll();
+	}, 150);
+}
+
+function finishManualScrolling() {
+	if (!isManualScrolling) {
+		return;
+	}
+
+	isManualScrolling = false;
+
+	if (autoScrollResumePending) {
+		queueAutoScrollResume();
+	}
 }
 
 function setAutoScrolling(enabled) {
 	const changed = autoScrolling !== enabled;
 
+	cancelAutoScrollResume();
+
 	autoScrolling = enabled;
+	autoScrollingPaused = false;
 
 	$scrolling.title = `${enabled ? "Turn off" : "Turn on"} auto-scrolling`;
 	$scrolling.classList.toggle("on", enabled);
+	$scrolling.classList.remove("paused");
 
 	if (changed) {
 		store("scrolling", enabled);
@@ -520,8 +574,34 @@ function setAutoScrolling(enabled) {
 	}
 }
 
+function suspendAutoScrolling() {
+	cancelAutoScrollResume();
+
+	if (!autoScrolling || autoScrollingPaused) {
+		return;
+	}
+
+	autoScrollingPaused = true;
+
+	$scrolling.title = "Auto-scrolling paused; scroll to bottom to resume";
+	$scrolling.classList.add("paused");
+}
+
+function resumeAutoScrolling() {
+	cancelAutoScrollResume();
+
+	if (!autoScrollingPaused) {
+		return;
+	}
+
+	autoScrollingPaused = false;
+
+	$scrolling.title = `${autoScrolling ? "Turn off" : "Turn on"} auto-scrolling`;
+	$scrolling.classList.remove("paused");
+}
+
 function scroll() {
-	if (awaitingScroll || !autoScrolling) {
+	if (awaitingScroll || !autoScrolling || autoScrollingPaused) {
 		updateScrollButton();
 
 		return;
@@ -530,13 +610,28 @@ function scroll() {
 	awaitingScroll = true;
 
 	requestAnimationFrame(() => {
-		if (autoScrolling) {
+		if (autoScrolling && !autoScrollingPaused) {
 			$messages.scrollTop = $messages.scrollHeight;
 		}
 
 		awaitingScroll = false;
 
 		updateScrollButton();
+	});
+}
+
+function goToBottom() {
+	resumeAutoScrolling();
+
+	if (autoScrolling && $chat.classList.contains("completing")) {
+		scroll();
+
+		return;
+	}
+
+	$messages.scroll({
+		top: $messages.scrollHeight,
+		behavior: "smooth",
 	});
 }
 
@@ -777,7 +872,7 @@ class Message {
 
 			updateScrollButton();
 
-			setAutoScrolling(false);
+			suspendAutoScrolling();
 		});
 
 		// message role (wrapper)
@@ -1431,7 +1526,7 @@ class Message {
 
 		this.#patching[name] = true;
 
-		schedule(() => {
+			schedule(() => {
 			const { html, files } = render(this.#pending[name]);
 
 			this.#patching[name] = false;
@@ -1445,6 +1540,8 @@ class Message {
 			after?.();
 
 			this.#_diff.innerHTML = "";
+
+			noScroll || scroll();
 		});
 
 		return true;
@@ -5188,34 +5285,74 @@ $titleRefresh.addEventListener("click", () => {
 });
 
 $messages.addEventListener("scroll", () => {
+	const scrollTop = $messages.scrollTop,
+		movedUp = scrollTop < lastMessagesScrollTop,
+		movedDown = scrollTop > lastMessagesScrollTop;
+
+	lastMessagesScrollTop = scrollTop;
+
+	if (isManualScrolling && movedUp) {
+		suspendAutoScrolling();
+	}
+
+	if (autoScrollingPaused && movedDown && distanceFromBottom() <= autoScrollResumeDistance) {
+		queueAutoScrollResume();
+	}
+
 	updateScrollButton();
 });
 
-$messages.addEventListener("wheel", () => {
-	setAutoScrolling(false);
+$messages.addEventListener("wheel", event => {
+	if (event.ctrlKey) {
+		return;
+	}
+
+	if (event.deltaY < 0 && $messages.scrollTop > 0) {
+		suspendAutoScrolling();
+	}
 });
 
-$messages.addEventListener("touchmove", () => {
-	setAutoScrolling(false);
-}, { passive: true });
+$messages.addEventListener("touchstart", event => {
+	lastTouchY = event.touches[0]?.clientY ?? null;
+}, {passive: true});
+
+$messages.addEventListener("touchmove", event => {
+	const touchY = event.touches[0]?.clientY;
+
+	if (touchY == null) {
+		return;
+	}
+
+	if (lastTouchY != null && touchY > lastTouchY && $messages.scrollTop > 0) {
+		suspendAutoScrolling();
+	}
+
+	lastTouchY = touchY;
+}, {passive: true});
+
+$messages.addEventListener("touchend", () => {
+	lastTouchY = null;
+}, {passive: true});
+
+$messages.addEventListener("touchcancel", () => {
+	lastTouchY = null;
+}, {passive: true});
 
 $messages.addEventListener("pointerdown", event => {
-	const bounds = $messages.getBoundingClientRect();
+	const bounds = $messages.getBoundingClientRect(),
+		scrollbarWidth = Math.max($messages.offsetWidth - $messages.clientWidth, 12);
 
-	if (event.clientX >= bounds.right - 12) {
-		setAutoScrolling(false);
+	if (event.pointerType !== "mouse" || event.clientX >= bounds.right - scrollbarWidth) {
+		isManualScrolling = true;
 	}
 });
 
 $bottom.addEventListener("click", () => {
-	$messages.scroll({
-		top: $messages.scrollHeight,
-		behavior: "smooth",
-	});
+	goToBottom();
 });
 
 $top.addEventListener("click", () => {
-	setAutoScrolling(false);
+	suspendAutoScrolling();
 
 	$messages.scroll({
 		top: 0,
@@ -5785,6 +5922,12 @@ $import?.addEventListener("click", async () => {
 });
 
 $scrolling.addEventListener("click", () => {
+	if (autoScrollingPaused) {
+		goToBottom();
+
+		return;
+	}
+
 	setAutoScrolling(!autoScrolling);
 });
 
@@ -5929,6 +6072,14 @@ addEventListener("mouseup", () => {
 	document.body.classList.remove("resizing");
 });
 
+addEventListener("pointerup", () => {
+	finishManualScrolling();
+});
+
+addEventListener("pointercancel", () => {
+	finishManualScrolling();
+});
+
 addEventListener("keydown", event => {
 	if (event.key === "Escape") {
 		if ($sidebar.classList.contains("open")) {
@@ -5959,15 +6110,19 @@ addEventListener("keydown", event => {
 
 			break;
 		case "End":
-			delta = $messages.scrollHeight - $messages.clientHeight - $messages.scrollTop;
+			event.preventDefault();
 
-			break;
+			goToBottom();
+
+			return;
 	}
 
 	if (delta) {
 		event.preventDefault();
 
-		setAutoScrolling(false);
+		if (delta < 0) {
+			suspendAutoScrolling();
+		}
 
 		$messages.scrollBy({
 			top: delta,

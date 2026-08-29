@@ -2505,6 +2505,10 @@ input.invalid {
 	mask-image: url(icons/screen.svg);
 }
 
+#scrolling.on.paused {
+	background-color: var(--c-overlay0);
+}
+
 #files {
 	background-color: var(--c-subtext);
 	mask-image: url(icons/files-off.svg);
