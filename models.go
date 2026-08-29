@@ -48,7 +48,8 @@ type Model struct {
 	ReasoningLevels []string `json:"reasoning_levels,omitempty"`
 	Voices          []string `json:"voices,omitempty"`
 
-	IsRouter bool `json:"is_router"`
+	IsRouter   bool `json:"is_router"`
+	IsTextOnly bool `json:"-"`
 
 	Vision bool `json:"-"`
 	JSON   bool `json:"-"`
@@ -186,7 +187,8 @@ func LoadModels() error {
 				Completion: model.Endpoint.MaxCompletionTokens,
 			},
 
-			IsRouter: strings.EqualFold(model.Group, "router"),
+			IsRouter:   strings.EqualFold(model.Group, "router"),
+			IsTextOnly: canText && len(model.OutputModalities) == 1,
 		}
 
 		GetModelTags(model, m)

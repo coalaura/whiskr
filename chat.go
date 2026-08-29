@@ -235,7 +235,7 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 
 	request.MetadataLevel = openingrouter.ChatMetadataLevelEnabled
 
-	if model.Text {
+	if !model.IsTextOnly && model.Text {
 		request.Modalities = append(request.Modalities, openingrouter.OutputModalityText)
 	}
 
