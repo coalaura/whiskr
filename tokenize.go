@@ -15,7 +15,8 @@ func HandleTokenize(tokenizer *Tokenizer) http.HandlerFunc {
 
 		var raw TokenizeRequest
 
-		if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+		err := json.NewDecoder(r.Body).Decode(&raw)
+		if err != nil {
 			RespondJson(w, http.StatusBadRequest, map[string]any{
 				"error": err.Error(),
 			})

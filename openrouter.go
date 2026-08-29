@@ -12,6 +12,7 @@ import (
 // NewHttpClient builds the shared http client honoring the proxy and timeout config.
 func NewHttpClient(proxy *EnvProxy) *http.Client {
 	transport := http.DefaultTransport
+
 	if proxy != nil {
 		transport = proxy.transport
 	}

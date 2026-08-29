@@ -63,7 +63,7 @@ func ReadImageRequest(r *http.Request) (*ImageRequest, error) {
 	for {
 		part, err := reader.NextPart()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 

@@ -217,7 +217,9 @@ func (h candidateHeap) down(i0, n int) {
 		}
 
 		j := j1
-		if j2 := j1 + 1; j2 < n && h[j2].rank < h[j1].rank {
+
+		j2 := j1 + 1
+		if j2 < n && h[j2].rank < h[j1].rank {
 			j = j2
 		}
 
@@ -232,7 +234,8 @@ func (h candidateHeap) down(i0, n int) {
 }
 
 func PreloadVocabulary(url, path string) error {
-	if _, err := os.Stat(path); err == nil {
+	_, err := os.Stat(path)
+	if err == nil {
 		return nil
 	}
 
@@ -296,7 +299,8 @@ func LoadVocabulary(path string) (map[string]int, error) {
 		vocab[string(decoded)] = id
 	}
 
-	if err := scanner.Err(); err != nil {
+	err = scanner.Err()
+	if err != nil {
 		return nil, err
 	}
 

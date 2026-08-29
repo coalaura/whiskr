@@ -130,7 +130,8 @@ func Authenticate(next http.Handler) http.Handler {
 func HandleAuthentication(w http.ResponseWriter, r *http.Request) {
 	var request AuthenticationRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
 		RespondJson(w, http.StatusBadRequest, map[string]any{
 			"error": "missing username or password",
 		})

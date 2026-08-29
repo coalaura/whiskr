@@ -26,7 +26,7 @@ type TavilyResults struct {
 	RequestID string         `json:"requestId,omitempty"`
 	Query     string         `json:"query,omitempty"`
 	Results   []TavilyResult `json:"results"`
-	Usage     TavilyUsage    `json:"usage,omitempty"`
+	Usage     TavilyUsage    `json:"usage,omitzero"`
 }
 
 type TavilyExtractRequest struct {
@@ -61,7 +61,7 @@ type TavilyExtractResponse struct {
 	Results       []TavilyExtractResult       `json:"results"`
 	FailedResults []TavilyExtractFailedResult `json:"failed_results"`
 	ResponseTime  float64                     `json:"response_time"`
-	Usage         TavilyUsage                 `json:"usage,omitempty"`
+	Usage         TavilyUsage                 `json:"usage,omitzero"`
 	RequestID     string                      `json:"request_id,omitempty"`
 }
 
@@ -111,7 +111,7 @@ type TavilySearchResponse struct {
 	Results        []TavilySearchResult `json:"results"`
 	AutoParameters any                  `json:"auto_parameters,omitempty"`
 	ResponseTime   float64              `json:"response_time"`
-	Usage          TavilyUsage          `json:"usage,omitempty"`
+	Usage          TavilyUsage          `json:"usage,omitzero"`
 	RequestID      string               `json:"request_id,omitempty"`
 }
 
@@ -182,9 +182,11 @@ func DoTavilyExtract(ctx context.Context, data TavilyExtractRequest) (TavilyExtr
 
 func TavilyRunSearch(ctx context.Context, args *SearchWebArguments) (*TavilyResults, error) {
 	queries := make([]string, 0, len(args.Queries))
-	for _, q := range args.Queries {
-		if q = strings.TrimSpace(q); q != "" {
-			queries = append(queries, q)
+
+	for _, query := range args.Queries {
+		query = strings.TrimSpace(query)
+		if query != "" {
+			queries = append(queries, query)
 		}
 	}
 

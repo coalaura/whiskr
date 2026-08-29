@@ -9,6 +9,7 @@ type FlushingWriter struct {
 
 func (fw FlushingWriter) Write(p []byte) (int, error) {
 	n, err := fw.wr.Write(p)
+
 	if fw.fl != nil {
 		fw.fl.Flush()
 	}

@@ -140,6 +140,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 	}
 
 	templates := Templates
+
 	if bare {
 		templates = BareTemplates
 	}
@@ -154,6 +155,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 	}
 
 	settings := metadata.Settings
+
 	if bare {
 		settings = ChatSettings{}
 	}
@@ -180,12 +182,14 @@ func FormatPromptDate(metadata ChatMetadata) string {
 	tz := time.UTC
 
 	if metadata.Timezone != "" {
-		if parsed, err := time.LoadLocation(metadata.Timezone); err == nil {
+		parsed, err := time.LoadLocation(metadata.Timezone)
+		if err == nil {
 			tz = parsed
 		}
 	}
 
 	now := time.Now()
+
 	if metadata.Time != nil {
 		now = time.Unix(*metadata.Time, 0)
 	}

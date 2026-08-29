@@ -300,7 +300,8 @@ func LoadProviderRegistry(ctx context.Context) (map[string]ProviderInfo, error) 
 }
 
 func baseProviderSlug(tag string) string {
-	if before, _, ok := strings.Cut(tag, "/"); ok {
+	before, _, ok := strings.Cut(tag, "/")
+	if ok {
 		return before
 	}
 

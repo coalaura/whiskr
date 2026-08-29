@@ -92,7 +92,8 @@ func (s *Stream) WriteChunk(chunk *Chunk) error {
 
 	debugIf(chunk.Type == ChunkError, "error: %v", chunk.Data)
 
-	if err := s.ctx.Err(); err != nil {
+	err := s.ctx.Err()
+	if err != nil {
 		return err
 	}
 
@@ -114,7 +115,8 @@ func (s *Stream) WriteChunk(chunk *Chunk) error {
 		binary.Write(buf, binary.LittleEndian, uint32(0))
 	}
 
-	if _, err := s.wr.Write(buf.Bytes()); err != nil {
+	_, err = s.wr.Write(buf.Bytes())
+	if err != nil {
 		return err
 	}
 

@@ -59,7 +59,8 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 
 	var raw TitleRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&raw)
+	if err != nil {
 		RespondJson(w, http.StatusBadRequest, map[string]any{
 			"error": err.Error(),
 		})
@@ -119,7 +120,8 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
-	if err := InternalTitleTmpl.Execute(buf, raw); err != nil {
+	err = InternalTitleTmpl.Execute(buf, raw)
+	if err != nil {
 		RespondJson(w, http.StatusInternalServerError, map[string]any{
 			"error": err.Error(),
 		})
@@ -143,9 +145,6 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 				Strict: new(true),
 			},
 		},
-		StreamOptions: &openingrouter.ChatStreamOptions{
-			IncludeUsage: new(true),
-		},
 	}
 
 	if raw.Title != nil {
@@ -166,9 +165,12 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	choice := response.Choices[0].Message.Content.String()
+
 	var cost float64
+
 	if response.Usage != nil {
 		cost = Nullable(response.Usage.Cost, 0)
+
 		if response.Usage.CostDetails != nil {
 			cost += Nullable(response.Usage.CostDetails.UpstreamInferenceCost, 0)
 		}

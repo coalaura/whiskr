@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 )
@@ -69,7 +70,7 @@ func ReadPreviewRequest(r *http.Request) (*PreviewRequest, error) {
 	for {
 		part, err := reader.NextPart()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 

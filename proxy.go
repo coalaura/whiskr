@@ -17,7 +17,8 @@ type ProxyTransport struct {
 func NewProxyTransport(host, token string) *ProxyTransport {
 	scheme := "https"
 
-	if idx := strings.Index(host, "://"); idx != -1 {
+	idx := strings.Index(host, "://")
+	if idx != -1 {
 		scheme = host[:idx]
 		host = host[idx+3:]
 	}
@@ -76,9 +77,8 @@ func translateProxyError(err error) error {
 		return nil
 	}
 
-	var urlErr *url.Error
-
-	if errors.As(err, &urlErr) {
+	urlErr, ok := errors.AsType[*url.Error](err)
+	if ok {
 		err = urlErr.Err
 	}
 

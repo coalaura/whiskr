@@ -495,17 +495,14 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 
 	LimitChatRequestImages(&request, maxImages)
 
-	request.StreamOptions = &openingrouter.ChatStreamOptions{
-		IncludeUsage: new(true),
-	}
-
 	return &request, nil
 }
 
 func ParseChatRequest(r *http.Request) (*ChatRequest, *openingrouter.ChatCompletionRequest, error) {
 	var raw ChatRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&raw)
+	if err != nil {
 		return nil, nil, err
 	}
 

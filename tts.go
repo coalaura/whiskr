@@ -134,6 +134,7 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	defer resp.Body.Close()
 
 	audio, err := io.ReadAll(resp.Body)
