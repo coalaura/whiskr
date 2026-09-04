@@ -164,6 +164,7 @@ let autoScrolling = false,
 	chatTitle = false,
 	chatTitleEnabled = false,
 	chatFilename = false,
+	sessionID = false,
 	timeOverride = false,
 	modelBenchmarkMode = "intelligence";
 
@@ -3188,6 +3189,7 @@ async function buildRequest(noPush = false) {
 		model: model.slug,
 		provider: $providerSorting.value,
 		provider_pin: $provider.value,
+		session_id: sessionID,
 		temperature: temperature,
 		iterations: iterations,
 		tools: {
@@ -4265,6 +4267,9 @@ function restore() {
 
 	chatTitle = load("title");
 	chatFilename = load("file");
+	sessionID = importSessionID(load("session-id")) || createSessionID();
+
+	store("session-id", sessionID);
 
 	updateTitle();
 
@@ -4596,6 +4601,7 @@ function getChatData(name) {
 		proxy: $proxy.value,
 		title: name?.trim?.() || chatTitle,
 		file: chatFilename,
+		session_id: sessionID,
 		message: $message.value,
 		attachments: attachments,
 		role: $role.value,
@@ -4640,6 +4646,24 @@ function importString(value, fallback = "", maxLength = 4 * 1024 * 1024) {
 	}
 
 	return fallback;
+}
+
+function importSessionID(value) {
+	return importString(value, "", 256).trim();
+}
+
+function createSessionID() {
+	if (typeof crypto.randomUUID === "function") {
+		return crypto.randomUUID();
+	}
+
+	return `${uid()}-${uid()}`;
+}
+
+function resetSessionID() {
+	sessionID = createSessionID();
+
+	store("session-id", sessionID);
 }
 
 function importBoolean(value, fallback = false) {
@@ -4773,6 +4797,7 @@ function normalizeImport(data) {
 	return {
 		title: importString(data.title, "", 256),
 		file: importString(data.file, "", 128),
+		session_id: importSessionID(data.session_id) || createSessionID(),
 		message: importString(data.message),
 		attachments: Array.isArray(data.attachments)
 			? data.attachments
@@ -5092,9 +5117,11 @@ function loadChatFromStorage(name) {
 	// restore all state
 	chatTitle = data.title;
 	chatFilename = data.file;
+	sessionID = importSessionID(data.session_id) || createSessionID();
 
 	store("title", data.title);
 	store("file", data.file);
+	store("session-id", sessionID);
 	store("message", data.message);
 	store("attachments", data.attachments);
 	store("role", data.role);
@@ -5799,6 +5826,7 @@ $clear.addEventListener("click", async () => {
 	}
 
 	clearMessages();
+	resetSessionID();
 
 	chatTitle = false;
 	chatFilename = false;
@@ -5894,6 +5922,7 @@ $import?.addEventListener("click", async () => {
 
 	await Promise.all([
 		store("title", data.title),
+		store("session-id", data.session_id),
 		store("message", data.message),
 		store("attachments", data.attachments),
 		store("role", data.role),

@@ -80,6 +80,7 @@ type ChatRequest struct {
 	Model       string        `json:"model"`
 	Provider    string        `json:"provider"`
 	ProviderPin string        `json:"provider_pin"`
+	SessionID   string        `json:"session_id"`
 	Temperature float64       `json:"temperature"`
 	Iterations  int64         `json:"iterations"`
 	Tools       ChatTools     `json:"tools"`
@@ -193,8 +194,9 @@ func (r *ChatRequest) AddToolPrompt(request *openingrouter.ChatCompletionRequest
 	if isLastIteration {
 		debug("no more tool calls")
 
-		request.Tools = nil
-		request.ToolChoice = nil
+		request.ToolChoice = &openingrouter.ChatToolChoice{
+			Mode: openingrouter.ChatToolChoiceModeNone,
+		}
 	}
 
 	// iterations - 1
@@ -232,8 +234,13 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 	}
 
 	request.Model = r.Model
+	request.SessionID = r.SessionID
 
 	request.MetadataLevel = openingrouter.ChatMetadataLevelEnabled
+
+	if len(r.SessionID) > 256 {
+		return nil, errors.New("session ID is too long (max 256 characters)")
+	}
 
 	if !model.IsTextOnly && model.Text {
 		request.Modalities = append(request.Modalities, openingrouter.OutputModalityText)
@@ -349,11 +356,6 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 				prompt += InternalNoFilesPrompt
 			}
 		}
-	}
-
-	if prompt != "" && !r.Tools.Bare {
-		// volatile context after the cacheable system-prompt prefix.
-		prompt += "\n\nCurrent date and time: " + FormatPromptDate(r.Metadata)
 	}
 
 	if prompt != "" {
@@ -485,6 +487,12 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 
 			request.Messages = append(request.Messages, msg)
 		}
+	}
+
+	if !r.Tools.Bare {
+		request.Messages = append(request.Messages, openingrouter.SystemMessage(
+			"Current date and time: "+FormatPromptDate(r.Metadata),
+		))
 	}
 
 	maxImages := r.Image.MaxImages
