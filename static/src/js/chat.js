@@ -145,6 +145,7 @@ const settings = {
 const messages = [],
 	models = {},
 	audioModels = {},
+	modelProviders = [],
 	modelList = [],
 	disabledModels = [],
 	promptList = [],
@@ -412,12 +413,28 @@ async function updateChatTokens() {
 		total += 5;
 	}
 
-	const modelData = models[$model.value];
+	const modelData = models[$model.value],
+		selectedProvider = modelProviders.find(provider => provider.slug === $provider.value),
+		pricing = modelData ? selectedProvider || modelData.pricing : null;
 
 	let costStr = "?";
 
-	if (modelData && modelData.pricing && modelData.pricing.input !== undefined) {
-		const costEstimate = (total / 1000000) * modelData.pricing.input;
+	if (pricing?.input !== undefined) {
+		let estimatedCachedTokens = 0;
+
+		for (let i = messages.length - 1; i >= 0; i--) {
+			if (messages[i].isAssistant()) {
+				estimatedCachedTokens = messages[i].getReusableCachedTokens(modelData, selectedProvider);
+
+				break;
+			}
+		}
+
+		estimatedCachedTokens = Math.min(total, estimatedCachedTokens);
+
+		const cacheReadPrice = pricing.cache_read ?? pricing.input,
+			uncachedTokens = total - estimatedCachedTokens,
+			costEstimate = (uncachedTokens * pricing.input + estimatedCachedTokens * cacheReadPrice) / 1000000;
 
 		costStr = formatMoney(costEstimate);
 	}
@@ -1964,6 +1981,14 @@ class Message {
 
 	getCachedTokens() {
 		return this.#statistics?.cached || 0;
+	}
+
+	getReusableCachedTokens(model, provider) {
+		if (this.#statistics?.model !== model.slug || (provider && this.#statistics?.provider !== provider.name)) {
+			return 0;
+		}
+
+		return (this.#statistics?.cached || 0) + (this.#statistics?.cache_write || 0);
 	}
 
 	isAssistant() {
@@ -5502,6 +5527,16 @@ function buildProviderOption(el, provider) {
 		`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
 	];
 
+	const cachePricing = [
+		provider.cache_read ? `${formatMoney(provider.cache_read)} Read` : "",
+		provider.cache_write ? `${formatMoney(provider.cache_write)} Write` : "",
+		provider.cache_write_1h ? `${formatMoney(provider.cache_write_1h)} Write (1h)` : "",
+	].filter(Boolean);
+
+	if (cachePricing.length) {
+		lines.push(`Cache/1M: ${cachePricing.join(" | ")}`);
+	}
+
 	if (quantization) {
 		lines.push(`Quantization: ${quantization}`);
 	}
@@ -5534,6 +5569,8 @@ function buildProviderOption(el, provider) {
 async function loadModelProviders() {
 	const model = models[$model.value];
 
+	modelProviders.length = 0;
+
 	if (!model) {
 		$provider.parentNode.classList.add("none");
 
@@ -5545,6 +5582,12 @@ async function loadModelProviders() {
 	if (!Array.isArray(providers)) {
 		providers = [];
 	}
+
+	if (models[$model.value] !== model) {
+		return;
+	}
+
+	modelProviders.splice(0, modelProviders.length, ...providers);
 
 	const previous = $provider.nextElementSibling;
 
@@ -5574,6 +5617,8 @@ async function loadModelProviders() {
 	$provider.parentNode.classList.toggle("none", !providers.length);
 
 	providerDropdown = dropdown($provider);
+
+	updateChatTokens();
 }
 
 $model.addEventListener("change", () => {
@@ -5652,6 +5697,8 @@ $uiTheme.addEventListener("change", () => {
 
 $provider.addEventListener("change", () => {
 	store("provider-pin", $provider.value);
+
+	updateChatTokens();
 });
 
 $providerSorting.addEventListener("change", () => {

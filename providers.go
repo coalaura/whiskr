@@ -29,6 +29,9 @@ type ModelProvider struct {
 	Icon          string   `json:"icon,omitempty"`
 	Input         float64  `json:"input"`
 	Output        float64  `json:"output"`
+	CacheRead     float64  `json:"cache_read,omitempty"`
+	CacheWrite    float64  `json:"cache_write,omitempty"`
+	CacheWrite1H  float64  `json:"cache_write_1h,omitempty"`
 	Discount      float64  `json:"discount,omitempty"`
 	Quantization  string   `json:"quantization,omitempty"`
 	Throughput    *float64 `json:"throughput,omitempty"`
@@ -40,16 +43,22 @@ type ModelProvider struct {
 }
 
 type ProviderGroup struct {
-	Name         string
-	Input        float64
-	Output       float64
-	Discount     float64
-	Quantization string
-	Throughput   *float64
-	Uptime       *float64
-	UptimePeriod string
-	HaveIn       bool
-	HaveOut      bool
+	Name             string
+	Input            float64
+	Output           float64
+	CacheRead        float64
+	CacheWrite       float64
+	CacheWrite1H     float64
+	Discount         float64
+	Quantization     string
+	Throughput       *float64
+	Uptime           *float64
+	UptimePeriod     string
+	HaveIn           bool
+	HaveOut          bool
+	HaveCacheRead    bool
+	HaveCacheWrite   bool
+	HaveCacheWrite1H bool
 }
 
 var (
@@ -147,6 +156,9 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 
 		input := float64(endpoint.Pricing.Prompt) * 1000000
 		output := float64(endpoint.Pricing.Completion) * 1000000
+		cacheRead := float64(endpoint.Pricing.InputCacheRead) * 1000000
+		cacheWrite := float64(endpoint.Pricing.InputCacheWrite) * 1000000
+		cacheWrite1H := float64(endpoint.Pricing.InputCacheWrite1H) * 1000000
 
 		if !group.HaveIn || input < group.Input {
 			group.Input = input
@@ -156,6 +168,21 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 		if !group.HaveOut || output < group.Output {
 			group.Output = output
 			group.HaveOut = true
+		}
+
+		if cacheRead > 0 && (!group.HaveCacheRead || cacheRead < group.CacheRead) {
+			group.CacheRead = cacheRead
+			group.HaveCacheRead = true
+		}
+
+		if cacheWrite > 0 && (!group.HaveCacheWrite || cacheWrite < group.CacheWrite) {
+			group.CacheWrite = cacheWrite
+			group.HaveCacheWrite = true
+		}
+
+		if cacheWrite1H > 0 && (!group.HaveCacheWrite1H || cacheWrite1H < group.CacheWrite1H) {
+			group.CacheWrite1H = cacheWrite1H
+			group.HaveCacheWrite1H = true
 		}
 	}
 
@@ -202,6 +229,9 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 			Icon:          info.Icon,
 			Input:         group.Input,
 			Output:        group.Output,
+			CacheRead:     group.CacheRead,
+			CacheWrite:    group.CacheWrite,
+			CacheWrite1H:  group.CacheWrite1H,
 			Discount:      group.Discount,
 			Quantization:  group.Quantization,
 			Throughput:    group.Throughput,
