@@ -422,15 +422,18 @@ async function updateChatTokens() {
 		costStr = formatMoney(costEstimate);
 	}
 
-	let chatCost = 0;
+	let chatCost = 0,
+		chatCachedTokens = 0;
 
 	for (const msg of messages) {
 		chatCost += msg.getCost() || 0;
+		chatCachedTokens += msg.getCachedTokens();
 	}
 
-	const chatCostStr = chatCost > 0 ? `&nbsp;&nbsp;|&nbsp;&nbsp;<span title="Actual total cost of the entire chat">${formatMoney(chatCost)}</span>` : "";
+	const chatCostStr = chatCost > 0 ? `&nbsp;&nbsp;|&nbsp;&nbsp;<span title="Actual total cost of the entire chat">${formatMoney(chatCost)}</span>` : "",
+		chatCachedStr = chatCachedTokens > 0 ? `&nbsp;&nbsp;|&nbsp;&nbsp;<span title="Cache-read tokens across the entire chat">${formatNumber(chatCachedTokens)}t cached</span>` : "";
 
-	$chatTokens.innerHTML = `<span title="Estimated cost of next message">~${formatNumber(total)}t (~${costStr})</span>${chatCostStr}`;
+	$chatTokens.innerHTML = `<span title="Estimated cost of next message">~${formatNumber(total)}t (~${costStr})</span>${chatCostStr}${chatCachedStr}`;
 }
 
 function updateTitle() {
@@ -1655,7 +1658,15 @@ class Message {
 			let html = "";
 
 			if (this.#statistics) {
-				const { provider, model, input, output, cost } = this.#statistics;
+				const { provider, model, input, output, cost, cached, cache_write: cacheWrite } = this.#statistics,
+					cacheDetails = [
+						cached ? `${formatNumber(cached)}t R` : "",
+						cacheWrite ? `${formatNumber(cacheWrite)}t W` : "",
+					].filter(Boolean).join(" + "),
+					cacheLabel = [
+						cached ? `${formatNumber(cached)} cached tokens read` : "",
+						cacheWrite ? `${formatNumber(cacheWrite)} cache tokens written` : "",
+					].filter(Boolean).join(", ");
 
 				let extraCost = 0;
 
@@ -1666,12 +1677,13 @@ class Message {
 				html = [
 					provider ? `<div class="provider">${provider} (${model.split("/").pop()})</div>` : "",
 					`<div class="tokens">
-						<div class="input">${input}</div>
+						<div class="input">${formatNumber(input)}</div>
 						+
-						<div class="output">${output}</div>
+						<div class="output">${formatNumber(output)}</div>
 						=
-						<div class="total">${input + output}t</div>
+						<div class="total">${formatNumber(input + output)}t</div>
 					</div>`,
+					cacheDetails ? `<div class="cache" aria-label="${cacheLabel}">${cacheDetails}</div>` : "",
 					`<div class="cost">${formatMoney(cost)} ${extraCost ? `+ ${formatMoney(extraCost)} = ${formatMoney(cost + extraCost)}` : ""}</div>`,
 				].join("");
 			}
@@ -1950,6 +1962,10 @@ class Message {
 		return (this.#statistics?.cost || 0) + (this.#tool?.cost || 0);
 	}
 
+	getCachedTokens() {
+		return this.#statistics?.cached || 0;
+	}
+
 	isAssistant() {
 		return this.#role === "assistant";
 	}
@@ -2012,7 +2028,7 @@ class Message {
 		}
 
 		if (this.#statistics) {
-			const { provider, model, input, output, cost, reasoning } = this.#statistics;
+			const { provider, model, input, output, cost, reasoning, cached, cache_write: cacheWrite } = this.#statistics;
 
 			lines.push(`provider: ${provider || "?"}`);
 			lines.push(`model: ${model || "?"}`);
@@ -2021,6 +2037,12 @@ class Message {
 
 			if (reasoning) {
 				lines.push(`reasoning_tokens: ${reasoning}`);
+			}
+			if (cached) {
+				lines.push(`cached_tokens: ${cached}`);
+			}
+			if (cacheWrite) {
+				lines.push(`cache_write_tokens: ${cacheWrite}`);
 			}
 
 			lines.push(`total_tokens: ${(input ?? 0) + (output ?? 0)}`);
@@ -3882,12 +3904,19 @@ async function loadData() {
 				.join(" | ");
 		}
 
+		const cachePricing = [
+			model.pricing.cache_read ? `${formatMoney(model.pricing.cache_read)} Read` : "",
+			model.pricing.cache_write ? `${formatMoney(model.pricing.cache_write)} Write` : "",
+			model.pricing.cache_write_1h ? `${formatMoney(model.pricing.cache_write_1h)} Write (1h)` : "",
+		].filter(Boolean).join(" | ");
+
 		el.title = [
 			model.name,
 			separator,
 			`Tags:\t\t${model.tags?.join(", ") || "-"}`,
 			`Created:\t\t${formatTimestamp(model.created)}`,
 			`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
+			cachePricing ? `Cache/1M:\t${cachePricing}` : null,
 			image ? `Image Gen:\t${image}` : null,
 			separator,
 			stripMarkdown(model.description),

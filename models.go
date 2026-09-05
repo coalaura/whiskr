@@ -14,9 +14,12 @@ import (
 )
 
 type ModelPricing struct {
-	Input  float64       `json:"input"`
-	Output float64       `json:"output"`
-	Image  *ImagePricing `json:"image,omitempty"`
+	Input        float64       `json:"input"`
+	Output       float64       `json:"output"`
+	CacheRead    float64       `json:"cache_read,omitempty"`
+	CacheWrite   float64       `json:"cache_write,omitempty"`
+	CacheWrite1H float64       `json:"cache_write_1h,omitempty"`
+	Image        *ImagePricing `json:"image,omitempty"`
 }
 
 type ModelBenchmarks struct {
@@ -142,8 +145,11 @@ func LoadModels() error {
 		}
 
 		var (
-			input  float64
-			output float64
+			input        float64
+			output       float64
+			cacheRead    float64
+			cacheWrite   float64
+			cacheWrite1H float64
 
 			benchmarks *ModelBenchmarks
 			voices     []string
@@ -157,10 +163,17 @@ func LoadModels() error {
 			input = full.Pricing.Prompt.Float64()
 			output = full.Pricing.Completion.Float64()
 
+			cacheRead = full.Pricing.InputCacheRead.Float64()
+			cacheWrite = full.Pricing.InputCacheWrite.Float64()
+			cacheWrite1H = full.Pricing.InputCacheWrite1H.Float64()
+
 			benchmarks = GetModelBenchmarks(full)
 		} else {
 			input = model.Endpoint.Pricing.Prompt.Float64()
 			output = model.Endpoint.Pricing.Completion.Float64()
+
+			cacheRead = model.Endpoint.Pricing.InputCacheRead.Float64()
+			cacheWrite = model.Endpoint.Pricing.InputCacheWrite.Float64()
 		}
 
 		slug := GetFullModelSlug(model.Slug, model.Name)
@@ -177,9 +190,12 @@ func LoadModels() error {
 
 			Benchmarks: benchmarks,
 			Pricing: ModelPricing{
-				Input:  input * 1000000,
-				Output: output * 1000000,
-				Image:  ImageModelPricing[slug],
+				Input:        input * 1000000,
+				Output:       output * 1000000,
+				CacheRead:    cacheRead * 1000000,
+				CacheWrite:   cacheWrite * 1000000,
+				CacheWrite1H: cacheWrite1H * 1000000,
+				Image:        ImageModelPricing[slug],
 			},
 			Context: ModelContext{
 				Total:      model.Endpoint.ContextLength,

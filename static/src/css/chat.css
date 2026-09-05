@@ -1096,6 +1096,7 @@ body.no-title #title {
 .statistics .ttft::after,
 .statistics .tps::after,
 .statistics .tokens::after,
+.statistics .cache::after,
 .message .tags::before {
 	content: "";
 	position: absolute;
@@ -1699,7 +1700,8 @@ body.no-title #title {
 .statistics .ttft,
 .statistics .tps,
 .statistics .cost,
-.statistics .tokens {
+.statistics .tokens,
+.statistics .cache {
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -1709,7 +1711,8 @@ body.no-title #title {
 .statistics .provider::after,
 .statistics .ttft::after,
 .statistics .tps::after,
-.statistics .tokens::after {
+.statistics .tokens::after,
+.statistics .cache::after {
 	left: unset;
 	right: -14px;
 }
@@ -1732,6 +1735,11 @@ body.no-title #title {
 .statistics .tokens::before {
 	background-color: var(--c-text);
 	mask-image: url(icons/tokens.svg);
+}
+
+.statistics .cache::before {
+	background-color: var(--c-text);
+	mask-image: url(icons/cache.svg);
 }
 
 .statistics .cost::before {
@@ -2230,6 +2238,7 @@ body.loading #version,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
+.message .statistics .cache::before,
 .message .statistics .cost::before,
 #role::before,
 #proxy::before,
@@ -2258,6 +2267,7 @@ body.loading #version,
 .message .statistics .ttft::before,
 .message .statistics .tps::before,
 .message .statistics .tokens::before,
+.message .statistics .cache::before,
 .message .statistics .cost::before,
 .message .tag-json,
 .message .tag-search,
