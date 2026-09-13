@@ -154,21 +154,13 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 		metadata.Platform = "Unknown"
 	}
 
-	settings := metadata.Settings
-
-	if bare {
-		settings = ChatSettings{}
-	}
-
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
 	err := tmpl.Execute(buf, PromptData{
 		Name:     model.Name,
 		Slug:     model.Slug,
-		Date:     FormatPromptDate(metadata),
 		Platform: metadata.Platform,
-		Settings: settings,
 	})
 
 	if err != nil {
