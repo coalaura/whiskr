@@ -154,6 +154,12 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 		metadata.Platform = "Unknown"
 	}
 
+	settings := metadata.Settings
+
+	if bare {
+		settings = ChatSettings{}
+	}
+
 	buf := GetFreeBuffer()
 	defer pool.Put(buf)
 
@@ -161,6 +167,7 @@ func BuildPrompt(name string, metadata ChatMetadata, model *Model, bare bool) (s
 		Name:     model.Name,
 		Slug:     model.Slug,
 		Platform: metadata.Platform,
+		Settings: settings,
 	})
 
 	if err != nil {
