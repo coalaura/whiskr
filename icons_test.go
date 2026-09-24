@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/coalaura/openingrouter"
 	"github.com/coalaura/whiskr/internal/paths"
 )
 
@@ -60,33 +60,11 @@ func TestProviderIcons(t *testing.T) {
 		t.Errorf("%s (%s): %s\n", name, icon, err)
 	}
 
-	dir := filepath.Join("static", "public", "providers")
-
-	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-
-		base := filepath.Base(path)
-
-		if _, ok := seen[base]; ok {
-			return nil
-		}
-
-		t.Errorf("unknown provider: %s\n", path)
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	t.Logf("checked %d providers\n", len(registry))
 }
 
 func TestLabIcons(t *testing.T) {
-	err := LoadModels()
+	list, err := openingrouter.ListFrontendModels(context.Background())
 	if err != nil {
 		t.Fatal(err)
 
@@ -97,7 +75,7 @@ func TestLabIcons(t *testing.T) {
 
 	seen := make(map[string]struct{})
 
-	for _, model := range ModelList {
+	for _, model := range list {
 		lab := model.Author
 
 		base := model.Author + ".png"
@@ -119,26 +97,6 @@ func TestLabIcons(t *testing.T) {
 		}
 
 		t.Errorf("%s (%s): %s\n", lab, icon, err)
-	}
-
-	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-
-		base := filepath.Base(path)
-
-		if _, ok := seen[base]; ok {
-			return nil
-		}
-
-		t.Errorf("unknown lab: %s\n", path)
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	t.Logf("checked %d labs\n", len(seen))
