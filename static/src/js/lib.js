@@ -445,7 +445,7 @@ export function readFile(file, handler, onError = false) {
 	});
 }
 
-export function selectFile(accept, multiple, handler, onError = false) {
+export function selectFile(accept, multiple, handler, onError = false, onImage = false) {
 	return new Promise(resolve => {
 		const input = make("input");
 
@@ -465,6 +465,16 @@ export function selectFile(accept, multiple, handler, onError = false) {
 			const results = [];
 
 			for (const file of files) {
+				if (onImage && file.type.startsWith("image/")) {
+					try {
+						await onImage(file);
+					} catch (err) {
+						onError?.(`${file.name}: ${err.message}`);
+					}
+
+					continue;
+				}
+
 				const result = await readFile(file, handler, onError);
 
 				if (result) {

@@ -2399,6 +2399,16 @@ class Message {
 		});
 	}
 
+	async insertInlineImage(dataUrl) {
+		if (!this.#editing) {
+			this.toggleEdit();
+		}
+
+		await insertImageIntoTextarea(dataUrl, this.#_edit);
+
+		this.updateEditHeight();
+	}
+
 	async clearFiles(skipConfirm = false) {
 		if (!this.#files.length) {
 			return;
@@ -4561,7 +4571,7 @@ async function uploadToMessage(self, message = false) {
 
 	const files = await selectFile(
 		// the ultimate list
-		"text/*",
+		"text/*,image/*",
 		true,
 		file => {
 			if (!file.name) {
@@ -4582,10 +4592,25 @@ async function uploadToMessage(self, message = false) {
 				throw new Error("File is too big (max 4MB)");
 			}
 		},
-		msg => notify(msg, "error")
+		msg => notify(msg, "error"),
+		async file => {
+			self.classList.add("loading");
+
+			try {
+				const dataUrl = await readFileAsDataUrl(file);
+
+				if (message) {
+					await message.insertInlineImage(dataUrl);
+				} else {
+					await insertImageIntoTextarea(dataUrl, $message);
+				}
+			} finally {
+				self.classList.remove("loading");
+			}
+		}
 	);
 
-	if (!files.length) {
+	if (!files || !files.length) {
 		return;
 	}
 
