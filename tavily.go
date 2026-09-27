@@ -316,6 +316,7 @@ func TavilyRunContents(ctx context.Context, args *FetchContentsArguments) (*Tavi
 		Format:       "markdown",
 		IncludeUsage: true,
 	})
+
 	if err != nil {
 		return nil, err
 	}
