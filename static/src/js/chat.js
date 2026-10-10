@@ -773,6 +773,7 @@ class Message {
 
 	#_message;
 	#_tags;
+	#_iteration;
 	#_time;
 	#_files;
 	#_reasoning;
@@ -1122,12 +1123,12 @@ class Message {
 		_body.appendChild(_info);
 
 		// iteration
-		const _iteration = make("div", "iteration");
+		this.#_iteration = make("div", "iteration");
 
-		_iteration.title = "Iteration";
-		_iteration.textContent = this.#iteration || "";
+		this.#_iteration.title = "Iteration";
+		this.#_iteration.textContent = this.#iteration || "";
 
-		_info.appendChild(_iteration);
+		_info.appendChild(this.#_iteration);
 
 		// time
 		this.#_time = make("div", "time");
@@ -1137,7 +1138,14 @@ class Message {
 		// loader
 		const _loader = make("div", "loader");
 
-		_loader.innerHTML = "<span></span>".repeat(3);
+		_loader.append(make("span"), make("span"), make("span"));
+
+		const _preparing = make("div", "preparing-label");
+
+		_preparing.textContent = "Preparing…";
+		_preparing.setAttribute("role", "status");
+
+		_loader.appendChild(_preparing);
 
 		_body.appendChild(_loader);
 
@@ -2323,6 +2331,13 @@ class Message {
 		this.save();
 	}
 
+	setIteration(iteration) {
+		this.#iteration = iteration;
+		this.#_iteration.textContent = iteration;
+
+		this.save();
+	}
+
 	setTime(time, ttfr, ttft, final = false) {
 		this.#time = time;
 
@@ -3284,7 +3299,9 @@ async function generate(cancel = false, noPush = false) {
 		return;
 	}
 
-	const body = await buildRequest(noPush);
+	if (!noPush) {
+		pushMessage();
+	}
 
 	const controller = new AbortController();
 
@@ -3293,11 +3310,13 @@ async function generate(cancel = false, noPush = false) {
 	const hasUser = !!messages.find(msg => msg.isUser()),
 		hasAssistant = !!messages.find(msg => msg.isAssistant());
 
-	if (!chatTitle || (hasUser && !hasAssistant)) {
-		refreshTitle();
-	}
+	let message = new Message({ role: "assistant" });
 
-	let message, stopTimeout, timeInterval, started, receivedReasoning, receivedCompletion, hasContent;
+	message.setState("preparing");
+
+	setGenerationState("waiting");
+
+	let stopTimeout, timeInterval, started, receivedReasoning, receivedCompletion, hasContent, hasError;
 
 	function startLoadingTimeout() {
 		stopTimeout?.();
@@ -3322,7 +3341,7 @@ async function generate(cancel = false, noPush = false) {
 
 	let aborted;
 
-	function finish(error = false) {
+	function finish() {
 		if (!message) {
 			return;
 		}
@@ -3331,9 +3350,11 @@ async function generate(cancel = false, noPush = false) {
 
 		clearInterval(timeInterval);
 
-		const took = Math.round((Date.now() - started) / 100) / 10;
+		if (started) {
+			const took = Math.round((Date.now() - started) / 100) / 10;
 
-		msg.setTime(took, false, false);
+			msg.setTime(took, false, false);
+		}
 
 		msg.setState(false);
 
@@ -3341,7 +3362,7 @@ async function generate(cancel = false, noPush = false) {
 
 		msg.calculateTokens();
 
-		if (error || !hasContent) {
+		if (hasError || !hasContent) {
 			setGenerationState("error");
 		} else {
 			resetGenerationState();
@@ -3350,11 +3371,17 @@ async function generate(cancel = false, noPush = false) {
 		receivedReasoning = false;
 		receivedCompletion = false;
 		hasContent = false;
+		hasError = false;
+		started = null;
 
 		message = null;
 	}
 
 	function start(data) {
+		if (started) {
+			finish();
+		}
+
 		started = Date.now();
 		hasContent = false;
 
@@ -3362,10 +3389,11 @@ async function generate(cancel = false, noPush = false) {
 
 		const total = data?.total || 1;
 
-		message = new Message({
-			iteration: total > 1 ? `${data.iteration}/${total}` : "1/1",
-			role: "assistant",
-		});
+		if (!message) {
+			message = new Message({ role: "assistant" });
+		}
+
+		message.setIteration(total > 1 ? `${data.iteration}/${total}` : "1/1");
 
 		message.setState("waiting");
 
@@ -3400,6 +3428,13 @@ async function generate(cancel = false, noPush = false) {
 
 		stopTimeout?.();
 
+		if (message && !started && !hasError) {
+			message.delete();
+			message = null;
+
+			resetGenerationState();
+		}
+
 		finish();
 
 		$chat.classList.remove("completing");
@@ -3408,6 +3443,31 @@ async function generate(cancel = false, noPush = false) {
 			refreshTitle();
 		}
 	};
+
+	let body;
+
+	try {
+		body = await buildRequest(true);
+	} catch (err) {
+		if (aborted) {
+			return;
+		}
+
+		hasError = true;
+		message.setError(err.message);
+
+		abortCallback();
+
+		return;
+	}
+
+	if (aborted) {
+		return;
+	}
+
+	if (!chatTitle || (hasUser && !hasAssistant)) {
+		refreshTitle();
+	}
 
 	stream(
 		"/-/chat",
@@ -3424,7 +3484,12 @@ async function generate(cancel = false, noPush = false) {
 				return;
 			}
 
-			if (chunk === "done") {
+			if (chunk === "done" || chunk === "aborted") {
+				if (message && !started && !hasError) {
+					hasError = true;
+					message.setError("No response received from the server.");
+				}
+
 				abortCallback();
 
 				return;
@@ -3503,6 +3568,8 @@ async function generate(cancel = false, noPush = false) {
 
 					break;
 				case "error":
+					hasError = true;
+
 					setGenerationState("error");
 
 					message?.setError(chunk.data);

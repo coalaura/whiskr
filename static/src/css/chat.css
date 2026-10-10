@@ -1628,6 +1628,7 @@ body.no-title #title {
 .message:not(.editing) .options .clear-files,
 .message:not(.has-files) .options .clear-files,
 .message.editing .options .collapse,
+.message.preparing .options,
 .message.waiting .options,
 .message.reasoning .options,
 .message.tooling .options,
@@ -1660,10 +1661,22 @@ body.no-title #title {
 	display: none;
 }
 
+.message.preparing .loader,
 .message.receiving:not(.has-text) .loader,
 .message.waiting .loader {
 	display: flex;
+	align-items: center;
 	gap: 8px;
+}
+
+.message .preparing-label {
+	display: none;
+	color: var(--c-subtext);
+	font-size: 13px;
+}
+
+.message.preparing .preparing-label {
+	display: block;
 }
 
 .message .loader span {
