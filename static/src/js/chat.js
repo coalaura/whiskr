@@ -184,7 +184,11 @@ let scrollButtonRaf,
 	lastTouchY = null,
 	lastMessagesScrollTop = 0;
 
-let modelDropdown, reasoningDropdown, providerDropdown, exportRolesDropdown;
+let modelDropdown,
+	reasoningDropdown,
+	providerDropdown,
+	exportRolesDropdown,
+	modelProvidersRequest = 0;
 
 const benchmarkLabels = {
 	intelligence: "Intelligence",
@@ -505,7 +509,7 @@ function setupCrossTabSync() {
 		}
 
 		if (change.key === "model-favorites" && modelDropdown) {
-		schedule(() => {
+			schedule(() => {
 				modelDropdown.setFavorites(change.value || []);
 			});
 		}
@@ -1547,7 +1551,7 @@ class Message {
 
 		this.#patching[name] = true;
 
-			schedule(() => {
+		schedule(() => {
 			const { html, files } = render(this.#pending[name]);
 
 			this.#patching[name] = false;
@@ -5420,7 +5424,7 @@ $messages.addEventListener("wheel", event => {
 
 $messages.addEventListener("touchstart", event => {
 	lastTouchY = event.touches[0]?.clientY ?? null;
-}, {passive: true});
+}, { passive: true });
 
 $messages.addEventListener("touchmove", event => {
 	const touchY = event.touches[0]?.clientY;
@@ -5434,15 +5438,15 @@ $messages.addEventListener("touchmove", event => {
 	}
 
 	lastTouchY = touchY;
-}, {passive: true});
+}, { passive: true });
 
 $messages.addEventListener("touchend", () => {
 	lastTouchY = null;
-}, {passive: true});
+}, { passive: true });
 
 $messages.addEventListener("touchcancel", () => {
 	lastTouchY = null;
-}, {passive: true});
+}, { passive: true });
 
 $messages.addEventListener("pointerdown", event => {
 	const bounds = $messages.getBoundingClientRect(),
@@ -5547,10 +5551,10 @@ function buildProviderOption(el, provider) {
 
 	const separator = "─".repeat(24),
 		lines = [
-		provider.name,
-		separator,
-		`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
-	];
+			provider.name,
+			separator,
+			`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
+		];
 
 	const cachePricing = [
 		provider.cache_read ? `${formatMoney(provider.cache_read)} Read` : "",
@@ -5592,15 +5596,18 @@ function buildProviderOption(el, provider) {
 }
 
 async function loadModelProviders() {
-	const model = models[$model.value];
+	const model = models[$model.value],
+		request = ++modelProvidersRequest;
 
 	modelProviders.length = 0;
 
-	if (!model) {
-		$provider.parentNode.classList.add("none");
+	$provider.parentNode.classList.add("none");
 
+	if (!model) {
 		return;
 	}
+
+	const metadataRequest = model.hf_slug ? json(`/-/model-metadata?model=${encodeURIComponent(model.slug)}`) : Promise.resolve(null);
 
 	let providers = await json(`/-/providers?model=${encodeURIComponent(model.slug)}`);
 
@@ -5608,7 +5615,7 @@ async function loadModelProviders() {
 		providers = [];
 	}
 
-	if (models[$model.value] !== model) {
+	if (request !== modelProvidersRequest || models[$model.value] !== model) {
 		return;
 	}
 
@@ -5622,7 +5629,7 @@ async function loadModelProviders() {
 
 	$provider.style.display = "";
 
-	$provider.innerHTML = "";
+	$provider.replaceChildren();
 
 	const auto = document.createElement("option");
 
@@ -5643,7 +5650,20 @@ async function loadModelProviders() {
 
 	providerDropdown = dropdown($provider);
 
+	providerDropdown.setNote(`Native quantization: ${model.hf_slug ? "loading…" : "unknown"}`);
+
 	updateChatTokens();
+
+	const metadata = await metadataRequest;
+
+	if (request !== modelProvidersRequest || models[$model.value] !== model) {
+		return;
+	}
+
+	const quantization = metadata?.native_quantization || "unknown",
+		source = metadata?.hf_slug ? `Hugging Face: ${metadata.hf_slug}\n` : "";
+
+	providerDropdown.setNote(`Native quantization: ${quantization}`, `${source}Published model weight format; compare with each provider's quantization badge.`);
 }
 
 $model.addEventListener("change", () => {

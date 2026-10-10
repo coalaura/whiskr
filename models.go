@@ -38,6 +38,7 @@ type ModelContext struct {
 type Model struct {
 	ID          string           `json:"id"`
 	Slug        string           `json:"slug"`
+	HFSlug      string           `json:"hf_slug,omitempty"`
 	Created     int64            `json:"created"`
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
@@ -208,6 +209,10 @@ func LoadModels() error {
 		}
 
 		GetModelTags(model, m)
+
+		if model.HFSlug != nil {
+			m.HFSlug = strings.TrimSpace(*model.HFSlug)
+		}
 
 		if canText {
 			if env.Models.filters != nil {

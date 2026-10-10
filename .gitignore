@@ -1,5 +1,6 @@
 config.yml
 settings.yml
+huggingface.yml
 /*.json
 chat.db
 chat.db-shm

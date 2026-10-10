@@ -14,10 +14,11 @@ func ResolvePaths() (Paths, error) {
 	}
 
 	return Paths{
-		Config:          filepath.Join(cwd, "config.yml"),
-		Settings:        filepath.Join(cwd, "settings.yml"),
-		Prompts:         filepath.Join(cwd, "prompts"),
-		ProviderIcons:   filepath.Join(cwd, "providers"),
-		VocabularyCache: filepath.Join(cwd, "vocabulary.tiktoken"),
+		Config:           filepath.Join(cwd, "config.yml"),
+		Settings:         filepath.Join(cwd, "settings.yml"),
+		HuggingFaceCache: filepath.Join(cwd, "huggingface.yml"),
+		Prompts:          filepath.Join(cwd, "prompts"),
+		ProviderIcons:    filepath.Join(cwd, "providers"),
+		VocabularyCache:  filepath.Join(cwd, "vocabulary.tiktoken"),
 	}, nil
 }

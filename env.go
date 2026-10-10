@@ -25,11 +25,12 @@ const (
 
 // gost:preserve-layout
 type EnvTokens struct {
-	Secret     string `yaml:"secret"`
-	OpenRouter string `yaml:"openrouter"`
-	OpenAI     string `yaml:"openai"`
-	Tavily     string `yaml:"tavily"`
-	GitHub     string `yaml:"github"`
+	Secret      string `yaml:"secret"`
+	OpenRouter  string `yaml:"openrouter"`
+	OpenAI      string `yaml:"openai"`
+	Tavily      string `yaml:"tavily"`
+	GitHub      string `yaml:"github"`
+	HuggingFace string `yaml:"huggingface"`
 }
 
 // gost:preserve-layout
@@ -369,11 +370,12 @@ func (e *Environment) Store() error {
 			"$.ui":             {yaml.HeadComment("")},
 			"$.authentication": {yaml.HeadComment("")},
 
-			"$.tokens.secret":     {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
-			"$.tokens.openrouter": {yaml.HeadComment(" openrouter.ai api token (used when llm.api is openrouter)")},
-			"$.tokens.openai":     {yaml.HeadComment(" openai-compatible api token (used when llm.api is openai)")},
-			"$.tokens.tavily":     {yaml.HeadComment(" tavily search api token (optional; used by search tools)")},
-			"$.tokens.github":     {yaml.HeadComment(" github api token (optional; used by search tools)")},
+			"$.tokens.secret":      {yaml.HeadComment(" server secret for signing auth tokens; auto-generated if empty")},
+			"$.tokens.openrouter":  {yaml.HeadComment(" openrouter.ai api token (used when llm.api is openrouter)")},
+			"$.tokens.openai":      {yaml.HeadComment(" openai-compatible api token (used when llm.api is openai)")},
+			"$.tokens.tavily":      {yaml.HeadComment(" tavily search api token (optional; used by search tools)")},
+			"$.tokens.github":      {yaml.HeadComment(" github api token (optional; used by search tools)")},
+			"$.tokens.huggingface": {yaml.HeadComment(" huggingface api token (optional; used for native model quantization metadata)")},
 
 			"$.server.port": {yaml.HeadComment(" port to serve whiskr on (required; default 3443)")},
 

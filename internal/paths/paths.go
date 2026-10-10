@@ -1,9 +1,10 @@
 package paths
 
 type Paths struct {
-	Config          string
-	Settings        string
-	Prompts         string
-	ProviderIcons   string
-	VocabularyCache string
+	Config           string
+	Settings         string
+	HuggingFaceCache string
+	Prompts          string
+	ProviderIcons    string
+	VocabularyCache  string
 }

@@ -80,6 +80,17 @@
 	display: none;
 }
 
+.dropdown .note {
+	flex-shrink: 0;
+	padding: 7px 8px;
+	border-bottom: 1px solid var(--c-surface1);
+	background: var(--c-surface0-dark);
+	color: var(--c-subtext);
+	font-size: 12px;
+	line-height: 1.4;
+	white-space: normal;
+}
+
 .dropdown-tooltip {
 	display: none;
 	position: fixed;

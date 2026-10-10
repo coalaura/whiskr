@@ -12,6 +12,8 @@ tokens:
   tavily: ""
   # github api token (optional; used by search tools)
   github: ""
+  # huggingface api token (optional; used for native model quantization metadata)
+  huggingface: ""
 
 server:
   # port to serve whiskr on (required; default 3443)

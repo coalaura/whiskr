@@ -103,6 +103,9 @@ Optional configuration notes (from `config.yml`):
 - `ui.reduced-motion` (bool, default: false) - disable animated effects such as the floating stars in the background.
 - `tokens.tavily` (optional) - enables the search tools; without it, web search is unavailable.
 - `tokens.github` (optional) - increases GitHub API limits for the GitHub repository tool.
+- `tokens.huggingface` (optional) - authenticates Hugging Face model metadata requests; public models work without a token.
+
+The OpenRouter provider selector shows the selected model's native quantization above the provider list, alongside the existing per-provider quantization badges. Metadata is fetched on selection using OpenRouter's `hf_slug`; unavailable metadata is shown as `unknown`. The declared quantization config takes precedence over safetensors storage types, including nested `text_config` and compressed-tensors weight formats such as MXFP4; without a config, floating-point tensor types are shown when available. Successful lookups are stored indefinitely in `huggingface.yml` beside `config.yml`, keyed by Hugging Face repository, with `quantization`, `license`, `parameters` (counts by dtype) and `total_parameters`. Failed requests are not persisted. To refresh the metadata, stop whiskr, delete the relevant model entry or the cache file and restart.
 
 ## Desktop (optional)
 

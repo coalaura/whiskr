@@ -24,11 +24,12 @@ func ResolvePaths() (Paths, error) {
 	}
 
 	return Paths{
-		Config:          filepath.Join(config, "config.yml"),
-		Settings:        filepath.Join(config, "settings.yml"),
-		Prompts:         filepath.Join(exe, "prompts"),
-		ProviderIcons:   filepath.Join(cache, "providers"),
-		VocabularyCache: filepath.Join(cache, "vocabulary.tiktoken"),
+		Config:           filepath.Join(config, "config.yml"),
+		Settings:         filepath.Join(config, "settings.yml"),
+		HuggingFaceCache: filepath.Join(config, "huggingface.yml"),
+		Prompts:          filepath.Join(exe, "prompts"),
+		ProviderIcons:    filepath.Join(cache, "providers"),
+		VocabularyCache:  filepath.Join(cache, "vocabulary.tiktoken"),
 	}, nil
 }
 

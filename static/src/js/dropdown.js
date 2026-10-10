@@ -7,6 +7,7 @@ class Dropdown {
 	#_selected;
 	#_search;
 	#_tooltip;
+	#_note;
 	#_tagFilters = [];
 
 	#all = {
@@ -179,6 +180,13 @@ class Dropdown {
 		const _content = make("div", "cont");
 
 		this.#_dropdown.appendChild(_content);
+
+		this.#_note = make("div", "note");
+
+		this.#_note.hidden = true;
+		this.#_note.setAttribute("aria-live", "polite");
+
+		_content.appendChild(this.#_note);
 
 		// tabs wrapper
 		const _tabs = make("div", "tabs");
@@ -1439,6 +1447,12 @@ class Dropdown {
 
 		this.#syncSelectedFromNative();
 		this.#render();
+	}
+
+	setNote(text, title = "") {
+		this.#_note.textContent = text;
+		this.#_note.title = title;
+		this.#_note.hidden = !text;
 	}
 
 	setAvailable(available) {

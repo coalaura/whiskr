@@ -19,10 +19,11 @@ import (
 var Version = "dev"
 
 var (
-	path     paths.Paths
-	prompts  []Prompt
-	env      *Environment
-	settings *Settings
+	path             paths.Paths
+	prompts          []Prompt
+	env              *Environment
+	settings         *Settings
+	huggingFaceCache *HuggingFaceCache
 
 	log = plain.New(plain.WithDate(plain.RFC3339Local))
 )
@@ -81,6 +82,8 @@ func main() {
 	log.MustFail(err)
 
 	defer settings.Store()
+
+	huggingFaceCache = NewHuggingFaceCache(path.HuggingFaceCache, env.Tokens.HuggingFace)
 
 	err = StartModelUpdateLoop()
 	log.MustFail(err)
@@ -152,6 +155,7 @@ func main() {
 
 		gr.Get("/-/usage", HandleUsage)
 		gr.Get("/-/providers", HandleModelProviders)
+		gr.Get("/-/model-metadata", HandleModelMetadata)
 		gr.Post("/-/title", HandleTitle)
 
 		gr.Post("/-/chat", HandleChat)
