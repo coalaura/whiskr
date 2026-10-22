@@ -2089,6 +2089,36 @@ body.no-title #title {
 	padding-bottom: 8px;
 }
 
+#compression-warning {
+	position: absolute;
+	bottom: 9px;
+	left: 24px;
+	right: 94px;
+	z-index: 1;
+	padding-left: 22px;
+	color: var(--c-red);
+	font-size: 12px;
+	line-height: 18px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#compression-warning[hidden] {
+	display: none;
+}
+
+#compression-warning::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 0;
+	width: 14px;
+	height: 14px;
+	background: currentColor;
+	mask: url(icons/danger.svg) center / contain no-repeat;
+}
+
 .dropdown,
 textarea,
 button,

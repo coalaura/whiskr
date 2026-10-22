@@ -84,6 +84,7 @@ const $version = document.getElementById("version"),
 	$bare = document.getElementById("bare"),
 	$offline = document.getElementById("offline"),
 	$compression = document.getElementById("compression"),
+	$compressionWarning = document.getElementById("compression-warning"),
 	$add = document.getElementById("add"),
 	$send = document.getElementById("send"),
 	$scrolling = document.getElementById("scrolling"),
@@ -188,6 +189,7 @@ let modelDropdown,
 	reasoningDropdown,
 	providerDropdown,
 	exportRolesDropdown,
+	chatTokensRequest = 0,
 	modelProvidersRequest = 0;
 
 const benchmarkLabels = {
@@ -338,28 +340,65 @@ function lastUserIndex() {
 	return -1;
 }
 
+function updateCompressionWarning(extraTokens) {
+	$compressionWarning.hidden = compressionMode || extraTokens <= 0;
+
+	if (!$compressionWarning.hidden) {
+		$compressionWarning.textContent = `+${formatNumber(extraTokens)} tkn - compression off`;
+	}
+}
+
 async function updateChatTokens() {
 	if (!$chatTokens) {
 		return;
 	}
 
-	let total = 0;
+	const request = ++chatTokensRequest,
+		lastUser = lastUserIndex();
 
-	const lastUser = lastUserIndex();
+	let total = 0,
+		extraTokens = 0;
+
+	if (compressionMode) {
+		updateCompressionWarning(0);
+	}
 
 	for (let i = 0; i < messages.length; i++) {
 		const msg = messages[i],
-			compressed = compressionMode && msg.hasTool() && i < lastUser;
+			canCompress = msg.hasTool() && i < lastUser,
+			compressed = compressionMode && canCompress;
 
 		msg.markCompressed(compressed);
 
-		total += compressed ? (await msg.getCompressedTokens()) || 0 : msg.getTokens() || 0;
+		let tokens = msg.getTokens() || 0;
+
+		if (canCompress) {
+			const compressedTokens = (await msg.getCompressedTokens()) || 0;
+
+			if (request !== chatTokensRequest) {
+				return;
+			}
+
+			extraTokens += tokens - compressedTokens;
+
+			if (compressed) {
+				tokens = compressedTokens;
+			}
+		}
+
+		total += tokens;
 	}
+
+	updateCompressionWarning(extraTokens);
 
 	const pendingText = $message.value.trim();
 
 	if (pendingText.length > 0) {
 		total += (await resolveTokenCount(pendingText)) || 0;
+
+		if (request !== chatTokensRequest) {
+			return;
+		}
 	}
 
 	for (const file of attachments) {
@@ -790,7 +829,7 @@ class Message {
 	#tokens = 0;
 	#textTokens = 0;
 	#toolTokens = 0;
-	#compressedToolTokens;
+	#compressedToolTokensPromise;
 	#reasoningTokens = 0;
 
 	constructor(data) {
@@ -1974,17 +2013,18 @@ class Message {
 	}
 
 	async getCompressedTokens() {
-		if (this.#compressedToolTokens === undefined) {
-			this.#compressedToolTokens =
-				(await resolveTokenCount(
-					JSON.stringify({
-						...this.#tool,
-						result: "(result omitted)",
-					})
-				)) || 0;
+		if (this.#compressedToolTokensPromise === undefined) {
+			const tool = {
+				...this.#tool,
+				result: "(result omitted)",
+			};
+
+			this.#compressedToolTokensPromise = resolveTokenCount(JSON.stringify(tool));
 		}
 
-		return this.#tokenTotal(this.#compressedToolTokens || 0);
+		const toolTokens = (await this.#compressedToolTokensPromise) || 0;
+
+		return this.#tokenTotal(toolTokens);
 	}
 
 	getCost() {
@@ -2648,7 +2688,7 @@ class Message {
 	setTool(tool) {
 		this.#tool = tool;
 
-		this.#compressedToolTokens = undefined;
+		this.#compressedToolTokensPromise = undefined;
 
 		this.#queueRender("tool");
 		this.save();
