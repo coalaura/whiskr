@@ -49,6 +49,7 @@ const ChunkType = {
 	9: "end",
 	10: "alive",
 	11: "audio",
+	12: "retry",
 };
 
 const $version = document.getElementById("version"),
@@ -112,6 +113,9 @@ const $version = document.getElementById("version"),
 	$settingsPersonalizationSection = document.getElementById("settings-personalization-section"),
 	$sName = document.getElementById("s-name"),
 	$sPrompt = document.getElementById("s-prompt"),
+	$retryMaxRetries = document.getElementById("retry-max-retries"),
+	$retryInitialDelay = document.getElementById("retry-initial-delay"),
+	$retryMaxDelay = document.getElementById("retry-max-delay"),
 	$timeOverride = document.getElementById("time-override"),
 	$personalizationSection = document.getElementById("personalization-section"),
 	$personalizationHeader = document.getElementById("personalization-header"),
@@ -523,6 +527,42 @@ function updatePersonalizationVisualState() {
 	$sPrompt.disabled = isDisabled;
 }
 
+function readRetrySettings() {
+	const retry = {
+		max_retries: $retryMaxRetries.valueAsNumber,
+		initial_delay: $retryInitialDelay.valueAsNumber,
+		max_delay: $retryMaxDelay.valueAsNumber,
+	};
+
+	const validRetries = Number.isInteger(retry.max_retries) && retry.max_retries >= 0 && retry.max_retries <= 100,
+		validInitialDelay = Number.isInteger(retry.initial_delay) && retry.initial_delay >= 1 && retry.initial_delay <= 3600,
+		validMaxDelay = Number.isInteger(retry.max_delay) && retry.max_delay >= retry.initial_delay && retry.max_delay <= 3600;
+
+	$retryMaxRetries.classList.toggle("invalid", !validRetries);
+	$retryInitialDelay.classList.toggle("invalid", !validInitialDelay);
+	$retryMaxDelay.classList.toggle("invalid", !validMaxDelay);
+
+	$retryMaxRetries.setAttribute("aria-invalid", !validRetries);
+	$retryInitialDelay.setAttribute("aria-invalid", !validInitialDelay);
+	$retryMaxDelay.setAttribute("aria-invalid", !validMaxDelay);
+
+	return validRetries && validInitialDelay && validMaxDelay ? retry : null;
+}
+
+function restoreRetrySettings(retry = load("retry-settings")) {
+	$retryMaxRetries.value = retry?.max_retries ?? 5;
+	$retryInitialDelay.value = retry?.initial_delay ?? 2;
+	$retryMaxDelay.value = retry?.max_delay ?? 30;
+
+	if (!readRetrySettings()) {
+		$retryMaxRetries.value = 5;
+		$retryInitialDelay.value = 2;
+		$retryMaxDelay.value = 30;
+
+		readRetrySettings();
+	}
+}
+
 async function syncSavedChats() {
 	await refresh(["saved-chats"]);
 
@@ -545,6 +585,10 @@ function setupCrossTabSync() {
 
 		if (change.key === "saved-chats") {
 			schedule(syncSavedChats);
+		}
+
+		if (change.key === "retry-settings") {
+			restoreRetrySettings(change.value);
 		}
 
 		if (change.key === "model-favorites" && modelDropdown) {
@@ -814,6 +858,7 @@ class Message {
 	#_tags;
 	#_iteration;
 	#_time;
+	#_retryLabel;
 	#_files;
 	#_reasoning;
 	#_text;
@@ -1185,6 +1230,13 @@ class Message {
 		_preparing.setAttribute("role", "status");
 
 		_loader.appendChild(_preparing);
+
+		this.#_retryLabel = make("div", "retry-label");
+
+		this.#_retryLabel.hidden = true;
+		this.#_retryLabel.setAttribute("role", "status");
+
+		_loader.appendChild(this.#_retryLabel);
 
 		_body.appendChild(_loader);
 
@@ -2661,6 +2713,15 @@ class Message {
 		this.#_message.classList.toggle("loading", this.#loading);
 	}
 
+	setRetry(retry) {
+		if (!retry && this.#_retryLabel.hidden) {
+			return;
+		}
+
+		this.#_retryLabel.hidden = !retry;
+		this.#_retryLabel.textContent = retry ? `Upstream rate limit - retry ${retry.attempt}/${retry.total} (${Math.ceil(retry.delay_ms / 1000)}s delay)` : "";
+	}
+
 	setState(state) {
 		if (this.#state === state) {
 			return;
@@ -3251,6 +3312,11 @@ function abortNow() {
 }
 
 async function buildRequest(noPush = false) {
+	const retry = readRetrySettings();
+	if (!retry) {
+		throw new Error("Check Automatic Retries in Settings: use whole numbers within the allowed ranges, with maximum delay at least the initial delay.");
+	}
+
 	let temperature = parseFloat($temperature.value);
 
 	if (Number.isNaN(temperature) || temperature < 0 || temperature > 2) {
@@ -3308,6 +3374,7 @@ async function buildRequest(noPush = false) {
 		session_id: sessionID,
 		temperature: temperature,
 		iterations: iterations,
+		retry: retry,
 		tools: {
 			images: hasImageTags,
 			files: allowFiles,
@@ -3397,6 +3464,7 @@ async function generate(cancel = false, noPush = false) {
 		}
 
 		msg.setState(false);
+		msg.setRetry();
 
 		refreshUsage();
 
@@ -3537,6 +3605,10 @@ async function generate(cancel = false, noPush = false) {
 
 			stopTimeout?.();
 
+			if (chunk.type !== "retry") {
+				message?.setRetry();
+			}
+
 			switch (chunk.type) {
 				case "start":
 					start(chunk.data);
@@ -3544,6 +3616,13 @@ async function generate(cancel = false, noPush = false) {
 					break;
 				case "end":
 					finish();
+
+					break;
+				case "retry":
+					setGenerationState("waiting");
+
+					message.setState("waiting");
+					message.setRetry(chunk.data);
 
 					break;
 				case "usage":
@@ -3865,6 +3944,8 @@ async function loadData() {
 	settings.enabled = load("s-enabled", true);
 	settings.name = load("s-name", "");
 	settings.prompt = load("s-prompt", "");
+
+	restoreRetrySettings();
 
 	modelBenchmarkMode = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
 
@@ -6261,6 +6342,15 @@ $sPrompt.addEventListener("change", () => {
 
 	store("s-prompt", settings.prompt);
 });
+
+for (const input of [$retryMaxRetries, $retryInitialDelay, $retryMaxDelay]) {
+	input.addEventListener("input", () => {
+		const retry = readRetrySettings();
+		if (retry) {
+			store("retry-settings", retry, true);
+		}
+	});
+}
 
 let timeTimeout;
 

@@ -356,6 +356,33 @@
 						</div>
 					</div>
 
+					<div class="settings-section">
+						<div class="settings-section-head">
+							<h4>Automatic Retries</h4>
+						</div>
+
+						<p class="settings-description" id="retry-description">Retry temporary upstream rate limits before a response begins. Set maximum retries to 0 to disable.</p>
+
+						<div class="settings-grid">
+							<div class="form-group span-2">
+								<label for="retry-max-retries">Maximum retries</label>
+								<input id="retry-max-retries" type="number" min="0" max="100" step="1" value="5" required aria-describedby="retry-description" />
+							</div>
+
+							<div class="form-group">
+								<label for="retry-initial-delay">Initial delay (seconds)</label>
+								<input id="retry-initial-delay" type="number" min="1" max="3600" step="1" value="2" required aria-describedby="retry-delay-description" />
+							</div>
+
+							<div class="form-group">
+								<label for="retry-max-delay">Maximum delay (seconds)</label>
+								<input id="retry-max-delay" type="number" min="1" max="3600" step="1" value="30" required aria-describedby="retry-delay-description" />
+							</div>
+						</div>
+
+						<p class="settings-description" id="retry-delay-description">The delay doubles after each retry, up to the maximum. The maximum must be at least the initial delay. A provider's Retry-After header may extend the wait.</p>
+					</div>
+
 					<div class="settings-section tts-only none">
 						<div class="settings-section-head">
 							<h4>Voice & Speech</h4>

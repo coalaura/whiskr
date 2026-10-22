@@ -1679,6 +1679,11 @@ body.no-title #title {
 	display: block;
 }
 
+.message .retry-label {
+	color: var(--c-subtext);
+	font-size: 13px;
+}
+
 .message .loader span {
 	width: 8px;
 	height: 8px;
@@ -2938,6 +2943,13 @@ input.invalid {
 	text-transform: uppercase;
 }
 
+#settings-modal .settings-description {
+	margin: 12px 0;
+	color: var(--c-subtext);
+	font-size: 12px;
+	line-height: 1.5;
+}
+
 #settings-modal .settings-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3007,6 +3019,10 @@ input.invalid {
 #settings-modal .form-group select:focus,
 #settings-modal .dropdown.open {
 	border-color: var(--c-overlay0);
+}
+
+#settings-modal .form-group input[type="number"].invalid {
+	border-color: var(--c-red);
 }
 
 #settings-modal .dropdown {

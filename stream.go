@@ -24,6 +24,7 @@ const (
 	ChunkEnd           ChunkType = 9
 	ChunkAlive         ChunkType = 10
 	ChunkAudio         ChunkType = 11
+	ChunkRetry         ChunkType = 12
 )
 
 type ChunkType uint8
@@ -36,6 +37,12 @@ type Chunk struct {
 type StartChunk struct {
 	Iteration int64 `msgpack:"iteration"`
 	Total     int64 `msgpack:"total"`
+}
+
+type RetryChunk struct {
+	Attempt int   `msgpack:"attempt"`
+	Total   int   `msgpack:"total"`
+	DelayMs int64 `msgpack:"delay_ms"`
 }
 
 type Stream struct {

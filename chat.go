@@ -75,20 +75,21 @@ type ChatSettings struct {
 type ChatRequest struct {
 	proxy *EnvProxy
 
-	ProxyName   string        `json:"proxy"`
-	Prompt      string        `json:"prompt"`
-	Model       string        `json:"model"`
-	Provider    string        `json:"provider"`
-	ProviderPin string        `json:"provider_pin"`
-	SessionID   string        `json:"session_id"`
-	Temperature float64       `json:"temperature"`
-	Iterations  int64         `json:"iterations"`
-	Tools       ChatTools     `json:"tools"`
-	Image       ChatImage     `json:"image"`
-	Reasoning   string        `json:"reasoning"`
-	Compression bool          `json:"compression"`
-	Metadata    ChatMetadata  `json:"metadata"`
-	Messages    []ChatMessage `json:"messages"`
+	ProxyName   string            `json:"proxy"`
+	Prompt      string            `json:"prompt"`
+	Model       string            `json:"model"`
+	Provider    string            `json:"provider"`
+	ProviderPin string            `json:"provider_pin"`
+	SessionID   string            `json:"session_id"`
+	Temperature float64           `json:"temperature"`
+	Iterations  int64             `json:"iterations"`
+	Retry       ChatRetrySettings `json:"retry"`
+	Tools       ChatTools         `json:"tools"`
+	Image       ChatImage         `json:"image"`
+	Reasoning   string            `json:"reasoning"`
+	Compression bool              `json:"compression"`
+	Metadata    ChatMetadata      `json:"metadata"`
+	Messages    []ChatMessage     `json:"messages"`
 }
 
 var (
@@ -220,6 +221,11 @@ func (r *ChatRequest) AddToolPrompt(request *openingrouter.ChatCompletionRequest
 
 func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 	var request openingrouter.ChatCompletionRequest
+
+	err := r.Retry.Validate()
+	if err != nil {
+		return nil, err
+	}
 
 	proxy, err := ResolveProxy(r.ProxyName)
 	if err != nil {
@@ -507,7 +513,9 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 }
 
 func ParseChatRequest(r *http.Request) (*ChatRequest, *openingrouter.ChatCompletionRequest, error) {
-	var raw ChatRequest
+	raw := ChatRequest{
+		Retry: DefaultChatRetrySettings(),
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&raw)
 	if err != nil {
@@ -594,7 +602,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 
 		dump("chat.json", request)
 
-		tool, message, err := RunCompletion(ctx, response, request, raw.proxy)
+		tool, message, err := RunCompletion(ctx, response, request, raw.proxy, raw.Retry)
 		if err != nil {
 			response.WriteChunk(NewChunk(ChunkError, err))
 
@@ -693,7 +701,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RunCompletion(ctx context.Context, response *Stream, request *openingrouter.ChatCompletionRequest, proxy *EnvProxy) (*ChatToolCall, string, error) {
+func RunCompletion(ctx context.Context, response *Stream, request *openingrouter.ChatCompletionRequest, proxy *EnvProxy, retrySettings ChatRetrySettings) (*ChatToolCall, string, error) {
 	started := time.Now()
 
 	var (
@@ -725,7 +733,12 @@ func RunCompletion(ctx context.Context, response *Stream, request *openingrouter
 		}
 	}
 
-	stream, err := OpenRouterStartStream(ctx, *request, proxy)
+	stream, err := OpenRouterStartStream(ctx, *request, proxy, retrySettings, func(retry RetryChunk) error {
+		id = ""
+
+		return response.WriteChunk(NewChunk(ChunkRetry, retry))
+	})
+
 	if err != nil {
 		return nil, "", err
 	}

@@ -55,10 +55,18 @@ func NewCompatibleClient(proxy *EnvProxy) openingrouter.OpenAICompatibleClient {
 	return OpenRouterClient(proxy)
 }
 
-func OpenRouterStartStream(ctx context.Context, request openingrouter.ChatCompletionRequest, proxy *EnvProxy) (openingrouter.OpenrouterStream[openingrouter.ChatStreamChunk], error) {
+func OpenRouterStartStream(ctx context.Context, request openingrouter.ChatCompletionRequest, proxy *EnvProxy, retrySettings ChatRetrySettings, notify func(RetryChunk) error) (openingrouter.OpenrouterStream[openingrouter.ChatStreamChunk], error) {
 	client := NewCompatibleClient(proxy)
 
-	stream, err := client.CreateChatCompletionStream(ctx, request)
+	stream := &RetryingChatStream{
+		ctx:      ctx,
+		request:  request,
+		settings: retrySettings,
+		start:    client.CreateChatCompletionStream,
+		notify:   notify,
+	}
+
+	err := stream.open()
 	if err != nil {
 		log.Warnln(err)
 

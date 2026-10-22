@@ -107,6 +107,16 @@ Optional configuration notes (from `config.yml`):
 
 The OpenRouter provider selector shows the selected model's native quantization above the provider list, alongside the existing per-provider quantization badges. Metadata is fetched on selection using OpenRouter's `hf_slug`; unavailable metadata is shown as `unknown`. The declared quantization config takes precedence over safetensors storage types, including nested `text_config` and compressed-tensors weight formats such as MXFP4; without a config, floating-point tensor types are shown when available. Successful lookups are stored indefinitely in `huggingface.yml` beside `config.yml`, keyed by Hugging Face repository, with `quantization`, `license`, `parameters` (counts by dtype) and `total_parameters`. Failed requests are not persisted. To refresh the metadata, stop whiskr, delete the relevant model entry or the cache file and restart.
 
+### Automatic retries
+
+Open **Settings > Automatic Retries** to configure retries. These preferences are saved in your browser and applied to each new chat request:
+
+- **Maximum retries** (default: `5`) - retries after the initial attempt; set to `0` to disable (maximum: `100`).
+- **Initial delay** (default: `2` seconds) - wait before the first retry, doubled after each retry (`1`-`3600` seconds).
+- **Maximum delay** (default: `30` seconds) - backoff cap (at least the initial delay, at most `3600` seconds). A provider's `Retry-After` header can extend the delay.
+
+Only typed HTTP/stream errors with code `429` and the explicit "temporarily rate-limited upstream" message are retried. Other errors and failures after output, reasoning, tool calls or usage begins are returned immediately. The chat displays retry progress, and Stop cancels the wait. Each tool iteration has its own retry budget; completed tool calls are not repeated.
+
 ## Desktop (optional)
 
 Desktop releases open the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Windows releases use an installer; Linux releases use an AppImage; and macOS releases use an app bundle. On first launch, whiskr creates and opens the user config. Set `tokens.openrouter`, save the file and launch whiskr again. On Windows, the config is stored at `%APPDATA%\\whiskr\\config.yml`.
