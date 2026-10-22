@@ -4496,7 +4496,7 @@ function buildFileElement(file, removeCallback, replaceCallback) {
 
 		_replace.addEventListener("click", async () => {
 			const files = await selectFile(
-				"text/*",
+				"",
 				false,
 				fl => {
 					if (!fl.name) {
@@ -4641,8 +4641,7 @@ async function uploadToMessage(self, message = false) {
 	}
 
 	const files = await selectFile(
-		// the ultimate list
-		"text/*,image/*",
+		"",
 		true,
 		file => {
 			if (!file.name) {
