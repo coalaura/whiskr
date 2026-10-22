@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"image/png"
 	"io"
 	"os"
 	"path/filepath"
@@ -48,16 +49,7 @@ func TestProviderIcons(t *testing.T) {
 
 		seen[base] = struct{}{}
 
-		_, err = os.Stat(icon)
-		if err == nil {
-			continue
-		}
-
-		if os.IsNotExist(err) {
-			err = errors.New("not found")
-		}
-
-		t.Errorf("%s (%s): %s\n", name, icon, err)
+		checkIcon(t, name, icon)
 	}
 
 	t.Logf("checked %d providers\n", len(registry))
@@ -87,17 +79,36 @@ func TestLabIcons(t *testing.T) {
 
 		seen[base] = struct{}{}
 
-		_, err = os.Stat(icon)
-		if err == nil {
-			continue
-		}
+		checkIcon(t, lab, icon)
+	}
 
+	t.Logf("checked %d labs\n", len(seen))
+}
+
+func checkIcon(t *testing.T, name, icon string) {
+	t.Helper()
+
+	file, err := os.Open(icon)
+	if err != nil {
 		if os.IsNotExist(err) {
 			err = errors.New("not found")
 		}
 
-		t.Errorf("%s (%s): %s\n", lab, icon, err)
+		t.Errorf("%s (%s): %s", name, icon, err)
+
+		return
 	}
 
-	t.Logf("checked %d labs\n", len(seen))
+	defer file.Close()
+
+	config, err := png.DecodeConfig(file)
+	if err != nil {
+		t.Errorf("%s (%s): %s", name, icon, err)
+
+		return
+	}
+
+	if config.Width != 128 || config.Height != 128 {
+		t.Errorf("%s (%s): got %dx%d, want 128x128", name, icon, config.Width, config.Height)
+	}
 }
