@@ -7,10 +7,7 @@ import (
 	"unsafe"
 )
 
-var (
-	user32                    = syscall.NewLazyDLL("user32.dll")
-	procSystemParametersInfoW = user32.NewProc("SystemParametersInfoW")
-)
+const spiGetWorkArea = 48
 
 type workarea struct {
 	left   int32
@@ -19,10 +16,13 @@ type workarea struct {
 	bottom int32
 }
 
+var (
+	user32                    = syscall.NewLazyDLL("user32.dll")
+	procSystemParametersInfoW = user32.NewProc("SystemParametersInfoW")
+)
+
 func primaryWorkArea() (int, int, bool) {
 	var r workarea
-
-	const spiGetWorkArea = 48
 
 	ret, _, _ := procSystemParametersInfoW.Call(spiGetWorkArea, 0, uintptr(unsafe.Pointer(&r)), 0)
 	if ret == 0 {

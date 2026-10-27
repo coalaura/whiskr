@@ -26,6 +26,7 @@ func applyTitlebar(w glaze.WebView, t titlebar) {
 	hwnd := windows.HWND(uintptr(w.Window()))
 
 	dark := int32(0)
+
 	if t.dark {
 		dark = 1
 	}

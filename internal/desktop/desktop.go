@@ -27,6 +27,9 @@ func RunDesktop(url string, debug bool) {
 	w, err := glaze.New(debug)
 	log.MustFail(err)
 
+	releaseIcons := applyWindowIcons(w)
+	defer releaseIcons()
+
 	defer w.Destroy()
 
 	applyTitlebar(w, titlebar{
