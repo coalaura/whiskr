@@ -48,7 +48,7 @@ end;
 procedure InitializeWizard;
 begin
 	ConfigPath := ExpandConstant('{userappdata}\whiskr\config.yml');
-	ConfigPage := CreateInputOptionPage(wpSelectTasks, 'Configure Whiskr', 'Optionally prepare your configuration before the first launch.', 'Save a basic config.yml to ' + ConfigPath + '. You can edit this file later. If you skip this step, Whiskr will create and open the config on first launch.', False, False);
+	ConfigPage := CreateInputOptionPage(wpSelectTasks, 'Configure Whiskr', 'Optionally prepare your configuration before the first launch.', 'Save a complete, commented config.yml to ' + ConfigPath + '. You can edit this file later. If you skip this step, Whiskr will create and open the config on first launch.', False, False);
 	ConfigPage.Add('Configure Whiskr now');
 	ConfigPage.Values[0] := False;
 
@@ -178,6 +178,9 @@ var
 	Lines: TArrayOfString;
 	BaseURL: String;
 	Model: String;
+	InputPath: String;
+	Parameters: String;
+	ResultCode: Integer;
 begin
 	if (CurStep <> ssPostInstall) or not ConfigureRequested then
 		Exit;
@@ -202,9 +205,20 @@ begin
 	Lines[6] := '  title-model: ' + QuoteYAML(Model);
 	Lines[7] := '';
 
-	if not ForceDirectories(ExtractFileDir(ConfigPath)) then
-		RaiseException('Could not create the Whiskr configuration directory: ' + ExtractFileDir(ConfigPath));
+	InputPath := ExpandConstant('{tmp}\whiskr-config.yml');
 
-	if not SaveStringsToUTF8File(ConfigPath, Lines, False) then
-		RaiseException('Could not save the Whiskr configuration: ' + ConfigPath);
+	try
+		if not SaveStringsToUTF8File(InputPath, Lines, False) then
+			RaiseException('Could not prepare the Whiskr configuration.');
+
+		Parameters := 'init "' + InputPath + '"';
+
+		if not Exec(ExpandConstant('{app}\{#MyAppExeName}'), Parameters, ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+			RaiseException('Could not start Whiskr to create the configuration.');
+
+		if ResultCode <> 0 then
+			RaiseException('Whiskr could not create the configuration at ' + ConfigPath + ' (exit code ' + IntToStr(ResultCode) + ').');
+	finally
+		DeleteFile(InputPath);
+	end;
 end;

@@ -127,21 +127,31 @@ func DefaultEnv() *Environment {
 }
 
 func LoadEnv() (*Environment, error) {
+	cfg, err := ReadEnv(path.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cfg.Init(true)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+func ReadEnv(path string) (*Environment, error) {
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Windows editors and installers may prefix UTF-8 YAML with a BOM.
+	body = bytes.TrimPrefix(body, []byte{0xef, 0xbb, 0xbf})
+
 	cfg := DefaultEnv()
 
-	file, err := os.OpenFile(path.Config, os.O_RDONLY, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	err = yaml.NewDecoder(file).Decode(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = cfg.Init()
+	err = yaml.Unmarshal(body, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +175,7 @@ func EnsureEnv() (bool, error) {
 	}
 
 	cfg := DefaultEnv()
+	cfg.applyDefaults()
 
 	err = cfg.Store()
 	if err != nil {
@@ -183,8 +194,36 @@ func (e *Environment) IsOpenAI() bool {
 	return e.LLM.API == APIOpenAI
 }
 
-func (e *Environment) Init() error {
+func (e *Environment) applyDefaults() {
+	if e.LLM.API == "" {
+		e.LLM.API = APIOpenRouter
+	}
+
+	if e.LLM.BaseURL == "" {
+		if e.IsOpenAI() {
+			e.LLM.BaseURL = "https://api.openai.com/v1"
+		} else {
+			e.LLM.BaseURL = "https://openrouter.ai/api/v1"
+		}
+	}
+
+	if e.Models.TitleModel == "" {
+		if e.IsOpenAI() {
+			e.Models.TitleModel = "gpt-6-luna"
+		} else {
+			e.Models.TitleModel = "google/gemini-3.1-flash-lite"
+		}
+	}
+
+	if e.Models.Transformation == "" {
+		e.Models.Transformation = "middle-out"
+	}
+}
+
+func (e *Environment) Init(persist bool) error {
 	var store bool
+
+	e.applyDefaults()
 
 	// print if debug is enabled
 	if e.Debug {
@@ -217,16 +256,6 @@ func (e *Environment) Init() error {
 		e.Tokens.Secret = secret
 
 		store = true
-	}
-
-	// normalize the llm api type
-	if e.LLM.API == "" {
-		e.LLM.API = APIOpenRouter
-	}
-
-	// normalize the llm base url
-	if e.LLM.BaseURL == "" {
-		e.LLM.BaseURL = "https://openrouter.ai/api/v1/"
 	}
 
 	if e.LLM.API != APIOpenRouter && e.LLM.API != APIOpenAI {
@@ -262,16 +291,6 @@ func (e *Environment) Init() error {
 	// check if port is valid
 	if e.Server.Port <= 0 || e.Server.Port >= 65535 {
 		return fmt.Errorf("invalid port %d", e.Server.Port)
-	}
-
-	// default title model
-	if e.Models.TitleModel == "" {
-		e.Models.TitleModel = "google/gemini-2.5-flash-lite"
-	}
-
-	// default transformation method
-	if e.Models.Transformation == "" {
-		e.Models.Transformation = "middle-out"
 	}
 
 	filters, err := ParseFilters(e.Models.Filters)
@@ -343,7 +362,7 @@ func (e *Environment) Init() error {
 		e.Authentication.lookup[user.Username] = user
 	}
 
-	if store {
+	if store && persist {
 		err = e.Store()
 		if err != nil {
 			return err
@@ -356,6 +375,18 @@ func (e *Environment) Init() error {
 }
 
 func (e *Environment) Store() error {
+	body, err := e.configYAML()
+	if err != nil {
+		return err
+	}
+
+	e.fmx.Lock()
+	defer e.fmx.Unlock()
+
+	return os.WriteFile(path.Config, body, 0644)
+}
+
+func (e *Environment) configYAML() ([]byte, error) {
 	var (
 		buffer   bytes.Buffer
 		comments = yaml.CommentMap{
@@ -386,7 +417,7 @@ func (e *Environment) Store() error {
 			"$.llm.api":      {yaml.HeadComment(" llm api type: openrouter (default) or openai (openai-compatible endpoint)")},
 			"$.llm.base-url": {yaml.HeadComment(" override the api base url (optional; defaults to https://openrouter.ai/api/v1 or https://api.openai.com/v1)")},
 
-			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs to have structured output support; set to \"-\" to disable title; default: google/gemini-2.5-flash-lite)")},
+			"$.models.title-model":      {yaml.HeadComment(" model used to generate titles (needs structured output support; set to \"-\" to disable; default: google/gemini-3.1-flash-lite for openrouter, gpt-6-luna for openai)")},
 			"$.models.image-generation": {yaml.HeadComment(" allow image generation (optional; default: true)")},
 			"$.models.text-to-speech":   {yaml.HeadComment(" allow text to speech (optional; default: true)")},
 			"$.models.transformation":   {yaml.HeadComment(" what transformation method to use for too long contexts (optional; default: middle-out)")},
@@ -404,15 +435,10 @@ func (e *Environment) Store() error {
 	e.dmx.RUnlock()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	body := bytes.ReplaceAll(buffer.Bytes(), []byte("#\n"), []byte("\n"))
-
-	e.fmx.Lock()
-	defer e.fmx.Unlock()
-
-	return os.WriteFile(path.Config, body, 0644)
+	return bytes.ReplaceAll(buffer.Bytes(), []byte("#\n"), []byte("\n")), nil
 }
 
 func CreateSecret(length int) (string, error) {

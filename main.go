@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/coalaura/plain"
 	"github.com/go-chi/chi/v5"
@@ -40,6 +41,17 @@ func main() {
 
 	path, err = paths.ResolvePaths()
 	log.MustFail(err)
+
+	if len(os.Args) > 1 && os.Args[1] == "init" {
+		err = RunConfigCommand(os.Args[2:])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+
+			os.Exit(1)
+		}
+
+		return
+	}
 
 	log.Println("Ensuring config...")
 
