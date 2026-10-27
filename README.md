@@ -119,7 +119,11 @@ Only typed HTTP/stream errors with code `429` and the explicit "temporarily rate
 
 ## Desktop (optional)
 
-Desktop releases open the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Windows releases use an installer; Linux releases use an AppImage; and macOS releases use an app bundle. On first launch, whiskr creates and opens the user config. Set `tokens.openrouter`, save the file and launch whiskr again. On Windows, the config is stored at `%APPDATA%\\whiskr\\config.yml`.
+Desktop releases open the chat in a native app window with the web UI embedded in the binary, so no `public` folder is needed. Windows releases use an installer; Linux releases use an AppImage; and macOS releases use an app bundle.
+
+The Windows installer offers optional configuration pages to select OpenRouter or an OpenAI-compatible API, enter the API token and an optional base URL, and enable or disable automatic chat titles. When titles are enabled, you can choose the title model; the initial suggestion is `google/gemini-2.5-flash-lite` for OpenRouter or `gpt-4o-mini` for OpenAI. Custom endpoints may need a different model with structured output support. A blank base URL uses `https://openrouter.ai/api/v1` or `https://api.openai.com/v1`, respectively. The installer saves these settings to `%APPDATA%\whiskr\config.yml`. Existing configurations are preserved, configuration pages are skipped during upgrades when that file exists, and silent installations do not create a config. Uninstalling leaves your config in place.
+
+If you skip configuration or use another desktop platform, whiskr creates and opens the user config on first launch. Set `tokens.openrouter`, or configure `llm.api`, `tokens.openai` and `llm.base-url` for an OpenAI-compatible endpoint, then save the file and launch whiskr again.
 
 The desktop app requires a native webview runtime:
 - **Windows**: WebView2, which is preinstalled on Windows 10/11.

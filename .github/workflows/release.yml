@@ -647,6 +647,8 @@ jobs:
 
           [Run]
           Filename: "{app}\{#MyAppExeName}"; Description: "Launch Whiskr"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
+
+          #include RepoRoot + "\.github\windows-config.iss"
           INNO_SETUP
 
       - name: Build Windows installer
