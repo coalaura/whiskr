@@ -137,6 +137,7 @@ func HandleTitle(w http.ResponseWriter, r *http.Request) {
 		},
 		Temperature: new(0.25),
 		MaxTokens:   new(100),
+		Reasoning:   &openingrouter.ChatReasoningConfig{Effort: "none"},
 		ResponseFormat: &openingrouter.ChatResponseFormat{
 			Type: openingrouter.ChatResponseFormatTypeJSONSchema,
 			JSONSchema: &openingrouter.ChatJSONSchema{
