@@ -637,17 +637,41 @@ class Dropdown {
 
 		this.#hideTooltip();
 
+		this.#_dropdown.classList.toggle("open", willOpen);
+
 		if (willOpen) {
-			const rect = this.#_dropdown.getBoundingClientRect();
+			const content = this.#_dropdown.querySelector(".cont");
 
-			if (rect.top < 250 && rect.top < window.innerHeight - rect.bottom) {
-				this.#_dropdown.classList.add("open-down");
-			} else {
-				this.#_dropdown.classList.remove("open-down");
+			content.style.maxHeight = "";
+
+			const rect = this.#_dropdown.getBoundingClientRect(),
+				height = content.getBoundingClientRect().height;
+
+			let top = 0,
+				bottom = window.innerHeight;
+
+			for (let parent = this.#_dropdown.parentElement; parent; parent = parent.parentElement) {
+				const overflow = getComputedStyle(parent).overflowY;
+
+				if (overflow === "visible") {
+					continue;
+				}
+
+				const bounds = parent.getBoundingClientRect(),
+					innerTop = bounds.top + parent.clientTop;
+
+				top = Math.max(top, innerTop);
+				bottom = Math.min(bottom, innerTop + parent.clientHeight);
 			}
-		}
 
-		this.#_dropdown.classList.toggle("open");
+			const spaceAbove = Math.max(0, rect.top - top - 4),
+				spaceBelow = Math.max(0, bottom - rect.bottom - 4),
+				openDown = spaceAbove < height && spaceBelow > spaceAbove;
+
+			this.#_dropdown.classList.toggle("open-down", openDown);
+
+			content.style.maxHeight = `${Math.min(height, openDown ? spaceBelow : spaceAbove)}px`;
+		}
 
 		let selection = false;
 
