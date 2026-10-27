@@ -649,6 +649,7 @@ jobs:
           Filename: "{app}\{#MyAppExeName}"; Description: "Launch Whiskr"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
 
           #include RepoRoot + "\.github\windows-config.iss"
+          #include RepoRoot + "\.github\windows-uninstall.iss"
           INNO_SETUP
 
       - name: Build Windows installer
