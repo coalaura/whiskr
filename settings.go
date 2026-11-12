@@ -22,8 +22,18 @@ type Settings struct {
 }
 
 type UserSettings struct {
-	Favorites []string `yaml:"favorites"`
-	CostLimit *float64 `yaml:"cost_limit,omitempty"`
+	Favorites         []string `yaml:"favorites"`
+	CostLimit         *float64 `yaml:"cost_limit,omitempty"`
+	RetryMaxRetries   *int64   `yaml:"retry_max_retries,omitempty"`
+	RetryInitialDelay *int64   `yaml:"retry_initial_delay,omitempty"`
+	RetryMaxDelay     *int64   `yaml:"retry_max_delay,omitempty"`
+	TTSModel          *string  `yaml:"tts_model,omitempty"`
+	TTSVoice          *string  `yaml:"tts_voice,omitempty"`
+	Theme             *string  `yaml:"theme,omitempty"`
+	ProviderSorting   *string  `yaml:"provider_sorting,omitempty"`
+	ModelBenchmark    *string  `yaml:"model_benchmark,omitempty"`
+	ImageResize       *string  `yaml:"image_resize,omitempty"`
+	MaxImages         *int64   `yaml:"max_images,omitempty"`
 }
 
 func LoadSettings() (*Settings, error) {
@@ -135,9 +145,23 @@ func (s *Settings) Serialize(username string) map[string]any {
 		favorites = make([]string, 0)
 	}
 
+	if user == nil {
+		user = &UserSettings{}
+	}
+
 	return map[string]any{
-		"favorites":  favorites,
-		"cost_limit": userCostLimit(user),
+		"favorites":           favorites,
+		"cost_limit":          userCostLimit(user),
+		"retry_max_retries":   user.RetryMaxRetries,
+		"retry_initial_delay": user.RetryInitialDelay,
+		"retry_max_delay":     user.RetryMaxDelay,
+		"tts_model":           user.TTSModel,
+		"tts_voice":           user.TTSVoice,
+		"theme":               user.Theme,
+		"provider_sorting":    user.ProviderSorting,
+		"model_benchmark":     user.ModelBenchmark,
+		"image_resize":        user.ImageResize,
+		"max_images":          user.MaxImages,
 	}
 }
 
@@ -146,16 +170,6 @@ func (s *Settings) CostLimit(username string) float64 {
 	defer s.mx.RUnlock()
 
 	return userCostLimit(s.Settings[username])
-}
-
-func (s *Settings) SetCostLimit(username string, limit float64) {
-	s.mx.Lock()
-	defer s.mx.Unlock()
-
-	user := s.getLocked(username)
-	user.CostLimit = new(limit)
-
-	s.ScheduleStore()
 }
 
 func (s *Settings) MigrateFavoriteModelIDs(models []*Model) bool {

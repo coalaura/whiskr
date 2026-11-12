@@ -159,7 +159,9 @@ const messages = [],
 	modelList = [],
 	disabledModels = [],
 	promptList = [],
-	pendingImages = new Map();
+	pendingImages = new Map(),
+	pendingPreferences = new Map(),
+	preferenceRevisions = new Map();
 
 let autoScrolling = false,
 	autoScrollingPaused = false,
@@ -204,8 +206,6 @@ let modelDropdown,
 let costLimit = 2,
 	nextInputCost = null,
 	costPause = null,
-	costLimitRevision = 0,
-	costLimitSave = null,
 	generationConfirmationPending = false;
 
 const benchmarkLabels = {
@@ -217,6 +217,23 @@ const benchmarkLabels = {
 const benchmarkFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 1,
 });
+
+const preferenceControls = {
+	cost_limit: { key: "cost-limit", control: $costLimit, fallback: 2 },
+	retry_max_retries: { key: "retry-settings", field: "max_retries", control: $retryMaxRetries, fallback: 5 },
+	retry_initial_delay: { key: "retry-settings", field: "initial_delay", control: $retryInitialDelay, fallback: 2 },
+	retry_max_delay: { key: "retry-settings", field: "max_delay", control: $retryMaxDelay, fallback: 30 },
+	tts_model: { key: "tts-model", control: $ttsModel, fallback: "" },
+	tts_voice: { key: "tts-voice", control: $ttsVoice, fallback: "" },
+	theme: { key: "ui-theme", control: $uiTheme, fallback: "catppuccin" },
+	provider_sorting: { key: "provider", control: $providerSorting, fallback: "" },
+	model_benchmark: { key: "model-benchmark", control: $modelBenchmark, fallback: "intelligence" },
+	image_resize: { key: "image-resize", control: $imageResize, fallback: "8192" },
+	max_images: { key: "max-images", control: $maxImages, fallback: 8 },
+};
+
+let preferencesReady = false,
+	preferenceSave = null;
 
 function normalizeModelBenchmark(mode) {
 	if (mode === "intelligence" || mode === "coding" || mode === "agentic") {
@@ -391,7 +408,6 @@ function restoreCostLimit(limit = load("cost-limit", 2)) {
 
 	if (nextLimit !== costLimit) {
 		costPause = null;
-		costLimitRevision++;
 	}
 
 	costLimit = nextLimit;
@@ -407,29 +423,6 @@ function resetCostPause() {
 	costPause = null;
 
 	schedule(updateChatTokens);
-}
-
-async function saveCostLimit(limit) {
-	costLimitRevision++;
-	$costLimit.disabled = true;
-
-	try {
-		const response = await storeSetting("cost_limit", limit);
-		if (!response.ok) {
-			throw new Error(response.statusText || `HTTP ${response.status}`);
-		}
-
-		store("cost-limit", limit, true);
-
-		restoreCostLimit(limit);
-	} catch (err) {
-		restoreCostLimit(costLimit);
-
-		notify(`Failed to save cost limit: ${err.message}`, "error");
-	} finally {
-		$costLimit.disabled = false;
-		costLimitSave = null;
-	}
 }
 
 function effectivePricing(pricing, inputTokens) {
@@ -713,7 +706,7 @@ function setupCrossTabSync() {
 			restoreRetrySettings(change.value);
 		}
 
-		if (change.key === "cost-limit" && !costLimitSave) {
+		if (change.key === "cost-limit" && !pendingPreferences.has("cost_limit")) {
 			restoreCostLimit(change.value);
 		}
 
@@ -3441,7 +3434,7 @@ function abortNow() {
 }
 
 async function buildRequest(noPush = false) {
-	await costLimitSave;
+	await waitForCostLimitSave();
 
 	const retry = readRetrySettings();
 	if (!retry) {
@@ -3570,7 +3563,7 @@ async function generate(cancel = false, noPush = false) {
 	generationConfirmationPending = true;
 
 	try {
-		await costLimitSave;
+		await waitForCostLimitSave();
 
 		let estimateRequest;
 
@@ -4111,6 +4104,208 @@ async function refreshUsage() {
 	}
 }
 
+function setupSettingsIndicators() {
+	const syncedControls = new Set();
+
+	for (const preference of Object.values(preferenceControls)) {
+		syncedControls.add(preference.control.id);
+	}
+
+	for (const label of $settingsModal.querySelectorAll(".form-group label, #settings-personalization-section h4")) {
+		const synced = syncedControls.has(label.htmlFor),
+			icon = document.createElement("span"),
+			description = synced ? "Synced with your user settings on the server" : "Stored only in this browser";
+
+		icon.className = `setting-storage ${synced ? "synced" : "local"}`;
+		icon.title = description;
+		icon.tabIndex = 0;
+		icon.setAttribute("role", "img");
+		icon.setAttribute("aria-label", description);
+		label.append(icon);
+	}
+}
+
+function updateVoicesList() {
+	const selectedModel = audioModels[$ttsModel.value];
+
+	$ttsVoice.replaceChildren();
+
+	for (const voice of selectedModel?.voices || []) {
+		const option = document.createElement("option");
+
+		option.value = voice;
+		option.textContent = voice;
+		$ttsVoice.append(option);
+	}
+
+	const storedVoice = load("tts-voice", ""),
+		voice = selectedModel?.voices?.includes(storedVoice) ? storedVoice : selectedModel?.voices?.[0] || "";
+
+	store("tts-voice", voice);
+	$ttsVoice.value = voice;
+
+	const oldDropdown = $ttsVoice.nextElementSibling;
+
+	if (oldDropdown?.classList.contains("dropdown")) {
+		oldDropdown.remove();
+	}
+
+	dropdown($ttsVoice);
+}
+
+function applyPreference(name, value) {
+	const preference = preferenceControls[name];
+
+	if (preference.field) {
+		store(preference.key, {
+			...load(preference.key, {}),
+			[preference.field]: value,
+		}, true);
+	} else {
+		store(preference.key, value, true);
+	}
+
+	preference.control.value = value;
+
+	switch (name) {
+		case "cost_limit":
+			restoreCostLimit(value);
+			break;
+		case "tts_model":
+			updateVoicesList();
+			break;
+		case "theme":
+			applyTheme(value);
+			break;
+		case "model_benchmark":
+			updateModelBenchmarkDisplay(value);
+			break;
+		case "image_resize":
+			updateAllImageSizes();
+			updateChatTokens();
+			break;
+		case "max_images":
+			$maxImages.classList.remove("invalid");
+			break;
+	}
+}
+
+function savePreference(name, value) {
+	applyPreference(name, value);
+	preferenceRevisions.set(name, (preferenceRevisions.get(name) || 0) + 1);
+	pendingPreferences.set(name, value);
+	flushPreferences();
+}
+
+function flushPreferences() {
+	if (!preferencesReady || preferenceSave || !pendingPreferences.size) {
+		return preferenceSave;
+	}
+
+	preferenceSave = persistPreferences().finally(() => {
+		preferenceSave = null;
+	});
+
+	return preferenceSave;
+}
+
+async function persistPreferences() {
+	try {
+		while (pendingPreferences.size) {
+			const [name, value] = pendingPreferences.entries().next().value,
+				revision = preferenceRevisions.get(name),
+				response = await storeSetting(name, value);
+
+			if (!response.ok) {
+				const reason = (await response.text()).trim();
+
+				throw new Error(reason || response.statusText || `HTTP ${response.status}`);
+			}
+
+			if (revision === preferenceRevisions.get(name)) {
+				pendingPreferences.delete(name);
+			}
+		}
+	} catch (error) {
+		console.error("Failed to save preferences:", error);
+		notify(`Settings saved locally, but server sync failed: ${error.message}. Change a setting to retry.`, "error");
+	}
+}
+
+async function waitForCostLimitSave() {
+	if (!pendingPreferences.has("cost_limit")) {
+		return;
+	}
+
+	await flushPreferences();
+
+	if (pendingPreferences.has("cost_limit")) {
+		throw new Error("Save the cost limit in Settings before generating.");
+	}
+}
+
+function syncPreferences(remote, revisions, pending) {
+	const local = {},
+		retry = readRetrySettings();
+
+	for (const [name, preference] of Object.entries(preferenceControls)) {
+		let value = load(preference.key, preference.fallback);
+
+		if (preference.field) {
+			value = retry?.[preference.field] ?? preference.fallback;
+		} else if (name === "tts_model" || name === "tts_voice") {
+			if (!ttsAvailable || !preference.control.value) {
+				continue;
+			}
+
+			value = preference.control.value;
+		} else if (name === "cost_limit") {
+			value = Number(value);
+
+			if (!Number.isFinite(value) || value <= 0) {
+				value = preference.fallback;
+			}
+		} else if (name === "max_images") {
+			value = Number(value);
+
+			if (!Number.isSafeInteger(value) || value < 0) {
+				value = preference.fallback;
+			}
+		} else if (!Array.from(preference.control.options).some(option => option.value === value)) {
+			value = preference.fallback;
+		}
+
+		local[name] = value;
+	}
+
+	for (const [name, value] of Object.entries(local)) {
+		if (value == null || pending.has(name) || pendingPreferences.has(name) || revisions.get(name) !== preferenceRevisions.get(name)) {
+			continue;
+		}
+
+		if (remote[name] != null) {
+			const preference = preferenceControls[name],
+				available = !preference.control.options || Array.from(preference.control.options).some(option => option.value === remote[name]);
+
+			if (available) {
+				applyPreference(name, remote[name]);
+			}
+		} else {
+			const selected = name === "tts_voice" ? $ttsVoice.value : value;
+
+			if (name !== "tts_voice" || selected) {
+				savePreference(name, selected);
+			}
+		}
+	}
+
+	restoreRetrySettings();
+
+	preferencesReady = true;
+
+	flushPreferences();
+}
+
 function storeSetting(name, data) {
 	return fetch(`/-/settings/${name}`, {
 		method: "PATCH",
@@ -4126,7 +4321,8 @@ async function syncSettings() {
 		return;
 	}
 
-	const revision = costLimitRevision;
+	const preferenceSnapshot = new Map(preferenceRevisions),
+		pendingSnapshot = new Set(pendingPreferences.keys());
 
 	try {
 		const response = await fetch("/-/settings");
@@ -4144,12 +4340,13 @@ async function syncSettings() {
 			modelDropdown.setFavorites(remoteFavorites);
 		}
 
-		if (Number.isFinite(remoteSettings?.cost_limit) && !costLimitSave && revision === costLimitRevision) {
-			store("cost-limit", remoteSettings.cost_limit, true);
-			restoreCostLimit(remoteSettings.cost_limit);
-		}
+		syncPreferences(remoteSettings || {}, preferenceSnapshot, pendingSnapshot);
 	} catch (err) {
 		console.error("Failed to sync settings:", err);
+
+		preferencesReady = true;
+
+		flushPreferences();
 	}
 }
 
@@ -4442,7 +4639,7 @@ async function loadData() {
 	if (ttsAvailable) {
 		const ttsModels = data.audio_models || [];
 
-		$ttsModel.innerHTML = "";
+		$ttsModel.replaceChildren();
 
 		for (const model of ttsModels) {
 			const opt = document.createElement("option");
@@ -4464,45 +4661,14 @@ async function loadData() {
 
 		$ttsModel.value = restoredTtsModel;
 
-		const updateVoicesList = () => {
-			const selectedModelId = $ttsModel.value,
-				selectedModel = ttsModels.find(mdl => mdl.id === selectedModelId);
-
-			$ttsVoice.innerHTML = "";
-
-			if (selectedModel?.voices) {
-				for (const voice of selectedModel.voices) {
-					const opt = document.createElement("option");
-
-					opt.value = voice;
-					opt.textContent = voice;
-
-					$ttsVoice.appendChild(opt);
-				}
-			}
-
-			let restoredTtsVoice = load("tts-voice", "");
-
-			if (!restoredTtsVoice || !selectedModel?.voices?.includes(restoredTtsVoice)) {
-				restoredTtsVoice = selectedModel?.voices?.[0] || "";
-
-				store("tts-voice", restoredTtsVoice);
-			}
-
-			$ttsVoice.value = restoredTtsVoice;
-
-			const oldVoiceDropdown = $ttsVoice.nextElementSibling;
-
-			if (oldVoiceDropdown?.classList.contains("dropdown")) {
-				oldVoiceDropdown.remove();
-			}
-
-			dropdown($ttsVoice);
-		};
-
 		$ttsModel.addEventListener("change", () => {
-			store("tts-model", $ttsModel.value);
-			updateVoicesList();
+			const previousVoice = load("tts-voice", "");
+
+			savePreference("tts_model", $ttsModel.value);
+
+			if ($ttsVoice.value !== previousVoice) {
+				savePreference("tts_voice", $ttsVoice.value);
+			}
 		});
 
 		const oldModelDropdown = $ttsModel.nextElementSibling;
@@ -4516,7 +4682,7 @@ async function loadData() {
 		updateVoicesList();
 
 		$ttsVoice.addEventListener("change", () => {
-			store("tts-voice", $ttsVoice.value);
+			savePreference("tts_voice", $ttsVoice.value);
 		});
 
 		let previewAudioElement = null,
@@ -4603,7 +4769,7 @@ async function loadData() {
 		});
 	}
 
-	if (data.config.auth && data.authenticated) {
+	if (!data.config.auth || data.authenticated) {
 		await syncSettings();
 	}
 
@@ -6147,11 +6313,7 @@ $iterations.addEventListener("input", () => {
 });
 
 $uiTheme.addEventListener("change", () => {
-	const theme = $uiTheme.value;
-
-	store("ui-theme", theme);
-
-	applyTheme(theme);
+	savePreference("theme", $uiTheme.value);
 });
 
 $provider.addEventListener("change", () => {
@@ -6161,13 +6323,11 @@ $provider.addEventListener("change", () => {
 });
 
 $providerSorting.addEventListener("change", () => {
-	store("provider", $providerSorting.value);
+	savePreference("provider_sorting", $providerSorting.value);
 });
 
 $modelBenchmark.addEventListener("change", () => {
-	store("model-benchmark", $modelBenchmark.value);
-
-	updateModelBenchmarkDisplay($modelBenchmark.value);
+	savePreference("model_benchmark", $modelBenchmark.value);
 });
 
 $imageResolution.addEventListener("change", () => {
@@ -6175,12 +6335,14 @@ $imageResolution.addEventListener("change", () => {
 });
 
 $maxImages.addEventListener("input", () => {
-	const value = $maxImages.value,
-		maxImages = parseInt(value, 10);
+	const maxImages = $maxImages.valueAsNumber,
+		valid = Number.isSafeInteger(maxImages) && maxImages >= 0;
 
-	store("max-images", value);
+	$maxImages.classList.toggle("invalid", !valid);
 
-	$maxImages.classList.toggle("invalid", Number.isNaN(maxImages) || maxImages < 0);
+	if (valid) {
+		savePreference("max_images", maxImages);
+	}
 });
 
 function updateAllImageSizes() {
@@ -6215,11 +6377,7 @@ function updateAllImageSizes() {
 }
 
 $imageResize.addEventListener("change", () => {
-	store("image-resize", $imageResize.value);
-
-	updateAllImageSizes();
-
-	updateChatTokens();
+	savePreference("image_resize", $imageResize.value);
 });
 
 $imageAspect.addEventListener("change", () => {
@@ -6567,7 +6725,7 @@ $costLimit.addEventListener("change", () => {
 	const limit = $costLimit.valueAsNumber;
 
 	if (Number.isFinite(limit) && limit > 0) {
-		costLimitSave = saveCostLimit(limit);
+		savePreference("cost_limit", limit);
 	}
 });
 
@@ -6603,8 +6761,15 @@ $sPrompt.addEventListener("change", () => {
 for (const input of [$retryMaxRetries, $retryInitialDelay, $retryMaxDelay]) {
 	input.addEventListener("input", () => {
 		const retry = readRetrySettings();
+
 		if (retry) {
-			store("retry-settings", retry, true);
+			const stored = load("retry-settings", {});
+
+			for (const [name, preference] of Object.entries(preferenceControls)) {
+				if (preference.field && stored[preference.field] !== retry[preference.field]) {
+					savePreference(name, retry[preference.field]);
+				}
+			}
 		}
 	});
 }
@@ -6752,6 +6917,8 @@ dropdown($imageResize);
 dropdown($imageAspect);
 dropdown($exportFormat);
 exportRolesDropdown = dropdown($exportRoles);
+
+setupSettingsIndicators();
 
 loadData().then(() => {
 	restore();

@@ -51,17 +51,24 @@ func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
 		}
 
 		settings.SetFavorites(username, favorites)
-	case "cost_limit":
-		var limit float64
+	case "cost_limit", "retry_max_retries", "retry_initial_delay", "retry_max_delay", "tts_model", "tts_voice", "theme", "provider_sorting", "model_benchmark", "image_resize", "max_images":
+		var value json.RawMessage
 
-		err := json.NewDecoder(r.Body).Decode(&limit)
-		if err != nil || !validCostLimit(limit) {
-			w.WriteHeader(http.StatusBadRequest)
+		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096))
+
+		err := decoder.Decode(&value)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
 		}
 
-		settings.SetCostLimit(username, limit)
+		err = settings.SetPreference(username, setting, value)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+
+			return
+		}
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 

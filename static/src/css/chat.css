@@ -3041,6 +3041,26 @@ input.invalid {
 	color: var(--c-subtext);
 }
 
+.setting-storage {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-left: 6px;
+	vertical-align: -1px;
+	background-color: currentColor;
+	mask: url("./icons/screen.svg") center / contain no-repeat;
+	opacity: 0.55;
+}
+
+.setting-storage:hover,
+.setting-storage:focus-visible {
+	opacity: 1;
+}
+
+.setting-storage.synced {
+	mask-image: url("./icons/sync.svg");
+}
+
 #settings-modal .form-group input[type="text"],
 #settings-modal .form-group input[type="number"],
 #settings-modal .form-group textarea,
