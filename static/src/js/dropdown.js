@@ -1023,6 +1023,10 @@ class Dropdown {
 				label.textContent = field[1];
 				value.textContent = field[2];
 
+				if (field[1].startsWith(">= ")) {
+					row.classList.add("tooltip-pricing-override");
+				}
+
 				row.append(label, value);
 
 				this.#_tooltip.appendChild(row);

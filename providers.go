@@ -24,22 +24,23 @@ type ProviderInfo struct {
 }
 
 type ModelProvider struct {
-	Slug          string   `json:"slug"`
-	Name          string   `json:"name"`
-	Icon          string   `json:"icon,omitempty"`
-	Input         float64  `json:"input"`
-	Output        float64  `json:"output"`
-	CacheRead     float64  `json:"cache_read,omitempty"`
-	CacheWrite    float64  `json:"cache_write,omitempty"`
-	CacheWrite1H  float64  `json:"cache_write_1h,omitempty"`
-	Discount      float64  `json:"discount,omitempty"`
-	Quantization  string   `json:"quantization,omitempty"`
-	Throughput    *float64 `json:"throughput,omitempty"`
-	Uptime        *float64 `json:"uptime,omitempty"`
-	UptimePeriod  string   `json:"uptime_period,omitempty"`
-	Training      bool     `json:"training"`
-	Retains       bool     `json:"retains"`
-	RetentionDays *int     `json:"retention_days,omitempty"`
+	Slug          string                 `json:"slug"`
+	Name          string                 `json:"name"`
+	Icon          string                 `json:"icon,omitempty"`
+	Input         float64                `json:"input"`
+	Output        float64                `json:"output"`
+	CacheRead     float64                `json:"cache_read,omitempty"`
+	CacheWrite    float64                `json:"cache_write,omitempty"`
+	CacheWrite1H  float64                `json:"cache_write_1h,omitempty"`
+	Overrides     []ModelPricingOverride `json:"overrides,omitempty"`
+	Discount      float64                `json:"discount,omitempty"`
+	Quantization  string                 `json:"quantization,omitempty"`
+	Throughput    *float64               `json:"throughput,omitempty"`
+	Uptime        *float64               `json:"uptime,omitempty"`
+	UptimePeriod  string                 `json:"uptime_period,omitempty"`
+	Training      bool                   `json:"training"`
+	Retains       bool                   `json:"retains"`
+	RetentionDays *int                   `json:"retention_days,omitempty"`
 }
 
 type ProviderGroup struct {
@@ -49,6 +50,7 @@ type ProviderGroup struct {
 	CacheRead        float64
 	CacheWrite       float64
 	CacheWrite1H     float64
+	Overrides        []ModelPricingOverride
 	Discount         float64
 	Quantization     string
 	Throughput       *float64
@@ -162,6 +164,7 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 
 		if !group.HaveIn || input < group.Input {
 			group.Input = input
+			group.Overrides = ParsePricingOverrides(endpoint.Pricing.Overrides)
 			group.HaveIn = true
 		}
 
@@ -232,6 +235,7 @@ func GetModelProviders(ctx context.Context, slug string) ([]ModelProvider, error
 			CacheRead:     group.CacheRead,
 			CacheWrite:    group.CacheWrite,
 			CacheWrite1H:  group.CacheWrite1H,
+			Overrides:     group.Overrides,
 			Discount:      group.Discount,
 			Quantization:  group.Quantization,
 			Throughput:    group.Throughput,

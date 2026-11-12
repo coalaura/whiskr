@@ -14,7 +14,12 @@ func EstimateContextCost(ctx context.Context, request *openingrouter.ChatComplet
 		return 0, fmt.Errorf("unknown model: %q", request.Model)
 	}
 
-	price := model.Pricing.Input
+	tokens, err := countContextTokens(request, tokenizer)
+	if err != nil {
+		return 0, err
+	}
+
+	pricing := model.Pricing
 
 	if provider != "" && !env.IsOpenAI() {
 		providers, err := GetModelProviders(ctx, model.Slug)
@@ -26,7 +31,11 @@ func EstimateContextCost(ctx context.Context, request *openingrouter.ChatComplet
 
 		for index := range providers {
 			if providers[index].Slug == provider {
-				price = providers[index].Input
+				pricing = ModelPricing{
+					Input:     providers[index].Input,
+					Overrides: providers[index].Overrides,
+				}
+
 				found = true
 
 				break
@@ -38,13 +47,9 @@ func EstimateContextCost(ctx context.Context, request *openingrouter.ChatComplet
 		}
 	}
 
+	price, _ := pricing.Effective(tokens)
 	if price <= 0 {
 		return 0, nil
-	}
-
-	tokens, err := countContextTokens(request, tokenizer)
-	if err != nil {
-		return 0, err
 	}
 
 	return float64(tokens) * price / 1000000, nil

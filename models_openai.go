@@ -33,6 +33,7 @@ func LoadOpenAIModels() error {
 				CacheRead:    model.Pricing.InputCacheRead.Float64() * 1000000,
 				CacheWrite:   model.Pricing.InputCacheWrite.Float64() * 1000000,
 				CacheWrite1H: model.Pricing.InputCacheWrite1H.Float64() * 1000000,
+				Overrides:    ParsePricingOverrides(model.Pricing.Overrides),
 			},
 			Context: ModelContext{
 				Total:      openAIContextTotal(model),

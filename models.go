@@ -14,12 +14,22 @@ import (
 )
 
 type ModelPricing struct {
-	Input        float64       `json:"input"`
-	Output       float64       `json:"output"`
-	CacheRead    float64       `json:"cache_read,omitempty"`
-	CacheWrite   float64       `json:"cache_write,omitempty"`
-	CacheWrite1H float64       `json:"cache_write_1h,omitempty"`
-	Image        *ImagePricing `json:"image,omitempty"`
+	Input        float64                `json:"input"`
+	Output       float64                `json:"output"`
+	CacheRead    float64                `json:"cache_read,omitempty"`
+	CacheWrite   float64                `json:"cache_write,omitempty"`
+	CacheWrite1H float64                `json:"cache_write_1h,omitempty"`
+	Image        *ImagePricing          `json:"image,omitempty"`
+	Overrides    []ModelPricingOverride `json:"overrides,omitempty"`
+}
+
+type ModelPricingOverride struct {
+	MinInputTokens int     `json:"min_input_tokens"`
+	Input          float64 `json:"input"`
+	Output         float64 `json:"output"`
+	CacheRead      float64 `json:"cache_read,omitempty"`
+	CacheWrite     float64 `json:"cache_write,omitempty"`
+	CacheWrite1H   float64 `json:"cache_write_1h,omitempty"`
 }
 
 type ModelBenchmarks struct {
@@ -73,6 +83,24 @@ var (
 	ModelMap   map[string]*Model
 	ModelIDMap map[string]*Model
 )
+
+func (p ModelPricing) Effective(inputTokenCount int) (float64, float64) {
+	effectiveIn := p.Input
+	effectiveOut := p.Output
+
+	if len(p.Overrides) > 0 {
+		for _, override := range p.Overrides {
+			if inputTokenCount < override.MinInputTokens {
+				continue
+			}
+
+			effectiveIn = override.Input
+			effectiveOut = override.Output
+		}
+	}
+
+	return effectiveIn, effectiveOut
+}
 
 func GetModel(name string) *Model {
 	modelMx.RLock()
@@ -152,6 +180,8 @@ func LoadModels() error {
 			cacheWrite   float64
 			cacheWrite1H float64
 
+			overrides []ModelPricingOverride
+
 			benchmarks *ModelBenchmarks
 			voices     []string
 		)
@@ -168,6 +198,8 @@ func LoadModels() error {
 			cacheWrite = full.Pricing.InputCacheWrite.Float64()
 			cacheWrite1H = full.Pricing.InputCacheWrite1H.Float64()
 
+			overrides = ParsePricingOverrides(full.Pricing.Overrides)
+
 			benchmarks = GetModelBenchmarks(full)
 		} else {
 			input = model.Endpoint.Pricing.Prompt.Float64()
@@ -175,6 +207,8 @@ func LoadModels() error {
 
 			cacheRead = model.Endpoint.Pricing.InputCacheRead.Float64()
 			cacheWrite = model.Endpoint.Pricing.InputCacheWrite.Float64()
+
+			overrides = ParsePricingOverrides(model.Endpoint.Pricing.Overrides)
 		}
 
 		slug := GetFullModelSlug(model.Slug, model.Name)
@@ -197,6 +231,8 @@ func LoadModels() error {
 				CacheWrite:   cacheWrite * 1000000,
 				CacheWrite1H: cacheWrite1H * 1000000,
 				Image:        ImageModelPricing[slug],
+
+				Overrides: overrides,
 			},
 			Context: ModelContext{
 				Total:      model.Endpoint.ContextLength,
@@ -438,6 +474,51 @@ func GetFullModelSlug(slug, name string) string {
 	}
 
 	return slug
+}
+
+func ParsePricingOverrides[T openingrouter.ModelPricingOverride | openingrouter.FrontendPricingOverride](overrides []T) []ModelPricingOverride {
+	if len(overrides) == 0 {
+		return nil
+	}
+
+	result := make([]ModelPricingOverride, 0, len(overrides))
+
+	for _, sourceOverride := range overrides {
+		switch override := any(sourceOverride).(type) {
+		case openingrouter.ModelPricingOverride:
+			if override.MinPromptTokens == nil {
+				continue
+			}
+
+			result = append(result, ModelPricingOverride{
+				MinInputTokens: int(*override.MinPromptTokens),
+				Input:          override.Prompt.Float64() * 1000000,
+				Output:         override.Completion.Float64() * 1000000,
+				CacheRead:      override.InputCacheRead.Float64() * 1000000,
+				CacheWrite:     override.InputCacheWrite.Float64() * 1000000,
+				CacheWrite1H:   override.InputCacheWrite1H.Float64() * 1000000,
+			})
+
+		case openingrouter.FrontendPricingOverride:
+			if override.MinPromptTokens == nil {
+				continue
+			}
+
+			result = append(result, ModelPricingOverride{
+				MinInputTokens: int(*override.MinPromptTokens),
+				Input:          override.Prompt.Float64() * 1000000,
+				Output:         override.Completion.Float64() * 1000000,
+				CacheRead:      override.InputCacheRead.Float64() * 1000000,
+				CacheWrite:     override.InputCacheWrite.Float64() * 1000000,
+				CacheWrite1H:   override.InputCacheWrite1H.Float64() * 1000000,
+			})
+
+		default:
+			panic("unsupported pricing override type")
+		}
+	}
+
+	return result
 }
 
 func isDigit(ch byte) bool {

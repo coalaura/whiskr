@@ -431,6 +431,36 @@ async function saveCostLimit(limit) {
 	}
 }
 
+function effectivePricing(pricing, inputTokens) {
+	let effective = pricing;
+
+	for (const override of pricing?.overrides || []) {
+		if (inputTokens < override.min_input_tokens) {
+			continue;
+		}
+
+		if (effective === pricing) {
+			effective = { ...pricing };
+		}
+
+		Object.assign(effective, override);
+	}
+
+	return effective;
+}
+
+function pricingOverrideDetails(pricing) {
+	const lines = [];
+
+	for (const override of pricing?.overrides || []) {
+		const effective = effectivePricing(pricing, override.min_input_tokens);
+
+		lines.push(`>= ${formatNumber(override.min_input_tokens)} input tokens: ${formatMoney(effective.input)} In | ${formatMoney(effective.output)} Out`);
+	}
+
+	return lines;
+}
+
 async function updateChatTokens() {
 	if (!$chatTokens) {
 		return;
@@ -549,7 +579,7 @@ async function updateChatTokens() {
 
 	const modelData = models[$model.value],
 		selectedProvider = modelProviders.find(provider => provider.slug === $provider.value),
-		pricing = modelData ? selectedProvider || modelData.pricing : null;
+		pricing = effectivePricing(modelData ? selectedProvider || modelData.pricing : null, total);
 
 	nextInputCost = Number.isFinite(pricing?.input) ? total * pricing.input / 1000000 : null;
 
@@ -4272,6 +4302,7 @@ async function loadData() {
 			`Tags:\t\t${model.tags?.join(", ") || "-"}`,
 			`Created:\t\t${formatTimestamp(model.created)}`,
 			`Pricing/1M:\t${formatMoney(model.pricing.input)} In | ${formatMoney(model.pricing.output)} Out`,
+			...pricingOverrideDetails(model.pricing),
 			cachePricing ? `Cache/1M:\t${cachePricing}` : null,
 			image ? `Image Gen:\t${image}` : null,
 			separator,
@@ -5875,6 +5906,7 @@ function buildProviderOption(el, provider) {
 			provider.name,
 			separator,
 			`Pricing/1M: ${formatMoney(provider.input)} In | ${formatMoney(provider.output)} Out ${provider.discount ? `(${Math.round(provider.discount * 100)}% off)` : ""}`,
+			...pricingOverrideDetails(provider),
 		];
 
 	const cachePricing = [

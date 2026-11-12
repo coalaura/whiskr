@@ -1875,10 +1875,10 @@ body.no-title #title {
 	flex-shrink: 0;
 	margin: 4px 12px 10px;
 	padding: 8px 10px;
-	border-left: 2px solid var(--c-yellow);
+	border-left: 2px solid var(--c-red);
 	border-radius: 3px;
-	background: color-mix(in srgb, var(--c-yellow) 8%, var(--c-base));
-	color: var(--c-yellow);
+	background: color-mix(in srgb, var(--c-red) 8%, var(--c-base));
+	color: var(--c-red);
 	font-size: 12px;
 	line-height: 18px;
 }
