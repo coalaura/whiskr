@@ -2866,6 +2866,24 @@ input.invalid {
 	background: var(--c-red);
 }
 
+.dialog-modal.cost-limit-dialog .content {
+	width: min(480px, calc(100vw - 32px));
+}
+
+.cost-limit-dialog .body p {
+	margin: 0;
+}
+
+.cost-limit-dialog .cost-limit-amount {
+	color: var(--c-red);
+	font-size: 1.1em;
+}
+
+.cost-limit-dialog .cost-limit-note {
+	color: var(--c-subtext);
+	font-size: 12px;
+}
+
 #save-settings,
 #login {
 	background: var(--c-green);

@@ -205,7 +205,8 @@ let costLimit = 2,
 	nextInputCost = null,
 	costPause = null,
 	costLimitRevision = 0,
-	costLimitSave = null;
+	costLimitSave = null,
+	generationConfirmationPending = false;
 
 const benchmarkLabels = {
 	intelligence: "Intelligence",
@@ -380,7 +381,7 @@ function updateCostWarning() {
 	}
 
 	const prefix = costPause ? "Paused" : "Next message",
-		action = costPause ? "Generate again to continue one iteration." : "Manual generation is still available.";
+		action = costPause ? "Generate again to review and confirm the next iteration." : "Generate to review and confirm.";
 
 	$costWarningText.textContent = `${prefix}: ~${formatMoney(cost)} input before cache discounts (limit ${formatMoney(limit)}). ${action}`;
 }
@@ -3531,9 +3532,69 @@ async function buildRequest(noPush = false) {
 	};
 }
 
+function confirmCostLimit(cost, limit) {
+	const message = document.createDocumentFragment(),
+		description = document.createElement("p"),
+		amount = document.createElement("strong"),
+		threshold = document.createElement("strong"),
+		note = document.createElement("p");
+
+	amount.className = "cost-limit-amount";
+	amount.textContent = formatMoney(cost);
+	threshold.textContent = formatMoney(limit);
+
+	description.append("The next iteration is estimated to cost ", amount, " in input before cache discounts. This meets or exceeds your ", threshold, " limit.");
+
+	note.className = "cost-limit-note";
+	note.textContent = "Automatic cost checks will still apply to subsequent iterations.";
+
+	message.append(description, note);
+
+	return confirmDialog(message, {
+		title: "Cost limit warning",
+		confirmLabel: "Generate anyway",
+		destructive: true,
+		className: "cost-limit-dialog",
+	});
+}
+
 async function generate(cancel = false, noPush = false) {
 	if (abortNow() && cancel) {
 		return;
+	}
+
+	if (generationConfirmationPending) {
+		return;
+	}
+
+	generationConfirmationPending = true;
+
+	try {
+		await costLimitSave;
+
+		let estimateRequest;
+
+		do {
+			estimateRequest = chatTokensRequest + 1;
+
+			await updateChatTokens();
+		} while (estimateRequest !== chatTokensRequest);
+
+		const cost = costPause?.cost ?? nextInputCost;
+
+		if (Number.isFinite(cost) && cost >= costLimit) {
+			const confirmed = await confirmCostLimit(cost, costLimit);
+
+			if (!confirmed) {
+				return;
+			}
+		}
+	} catch (err) {
+		notify(`Failed to check generation cost: ${err.message}`, "error");
+
+		return;
+	} finally {
+		generationConfirmationPending = false;
 	}
 
 	resetCostPause();

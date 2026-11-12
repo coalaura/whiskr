@@ -611,7 +611,7 @@ export async function detectPlatform() {
 
 const $notifications = document.getElementById("notifications");
 
-function showDialog({ title, message, value, confirmLabel = "OK", cancelLabel, destructive = false }) {
+function showDialog({ title, message, value, confirmLabel = "OK", cancelLabel, destructive = false, className }) {
 	return new Promise(resolve => {
 		const previousFocus = document.activeElement,
 			modal = make("div", "modal", "dialog-modal", "open"),
@@ -626,7 +626,15 @@ function showDialog({ title, message, value, confirmLabel = "OK", cancelLabel, d
 		header.id = uid();
 		header.textContent = title;
 
-		body.textContent = message;
+		if (className) {
+			modal.classList.add(className);
+		}
+
+		if (message instanceof Node) {
+			body.append(message);
+		} else {
+			body.textContent = message;
+		}
 
 		content.setAttribute("role", "dialog");
 		content.setAttribute("aria-modal", "true");
