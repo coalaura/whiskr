@@ -150,14 +150,14 @@ func main() {
 	})
 
 	r.Get("/-/settings", func(w http.ResponseWriter, r *http.Request) {
-		user := GetAuthenticatedUser(r)
-		if user == nil {
+		username, ok := settingsUsername(r)
+		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}
 
-		RespondJson(w, http.StatusOK, settings.Serialize(user.Username))
+		RespondJson(w, http.StatusOK, settings.Serialize(username))
 	})
 
 	r.Post("/-/auth", HandleAuthentication)
@@ -170,7 +170,7 @@ func main() {
 		gr.Get("/-/model-metadata", HandleModelMetadata)
 		gr.Post("/-/title", HandleTitle)
 
-		gr.Post("/-/chat", HandleChat)
+		gr.Post("/-/chat", HandleChat(tokenizer))
 		gr.Post("/-/dump", HandleDump)
 
 		gr.Post("/-/tokenize", HandleTokenize(tokenizer))

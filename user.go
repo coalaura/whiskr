@@ -8,8 +8,8 @@ import (
 )
 
 func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
-	user := GetAuthenticatedUser(r)
-	if user == nil {
+	username, ok := settingsUsername(r)
+	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 
 		return
@@ -50,7 +50,18 @@ func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		settings.SetFavorites(user.Username, favorites)
+		settings.SetFavorites(username, favorites)
+	case "cost_limit":
+		var limit float64
+
+		err := json.NewDecoder(r.Body).Decode(&limit)
+		if err != nil || !validCostLimit(limit) {
+			w.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		settings.SetCostLimit(username, limit)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 
@@ -58,4 +69,13 @@ func HandleUserSetting(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func settingsUsername(r *http.Request) (string, bool) {
+	user := GetAuthenticatedUser(r)
+	if user != nil {
+		return user.Username, true
+	}
+
+	return "", !env.Authentication.Enabled
 }

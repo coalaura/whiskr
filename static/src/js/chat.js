@@ -50,11 +50,16 @@ const ChunkType = {
 	10: "alive",
 	11: "audio",
 	12: "retry",
+	13: "cost_limit",
 };
 
 const $version = document.getElementById("version"),
 	$total = document.getElementById("total"),
 	$chatTokens = document.getElementById("chat-tokens"),
+	$costWarning = document.getElementById("cost-warning"),
+	$costWarningText = document.getElementById("cost-warning-text"),
+	$costWarningSettings = document.getElementById("cost-warning-settings"),
+	$costLimit = document.getElementById("cost-limit"),
 	$title = document.getElementById("title"),
 	$titleRefresh = document.getElementById("title-refresh"),
 	$titleText = document.getElementById("title-text"),
@@ -195,6 +200,12 @@ let modelDropdown,
 	exportRolesDropdown,
 	chatTokensRequest = 0,
 	modelProvidersRequest = 0;
+
+let costLimit = 2,
+	nextInputCost = null,
+	costPause = null,
+	costLimitRevision = 0,
+	costLimitSave = null;
 
 const benchmarkLabels = {
 	intelligence: "Intelligence",
@@ -352,6 +363,74 @@ function updateCompressionWarning(extraTokens) {
 	}
 }
 
+function updateCostWarning() {
+	if (costPause && (costPause.message !== messages.at(-1) || costPause.model !== models[$model.value]?.slug || costPause.provider !== $provider.value)) {
+		costPause = null;
+	}
+
+	const cost = costPause?.cost ?? nextInputCost,
+		limit = costPause?.limit ?? costLimit;
+
+	$costWarning.hidden = !Number.isFinite(cost) || cost < limit;
+
+	if ($costWarning.hidden) {
+		$costWarningText.textContent = "";
+
+		return;
+	}
+
+	const prefix = costPause ? "Paused" : "Next message",
+		action = costPause ? "Generate again to continue one iteration." : "Manual generation is still available.";
+
+	$costWarningText.textContent = `${prefix}: ~${formatMoney(cost)} input before cache discounts (limit ${formatMoney(limit)}). ${action}`;
+}
+
+function restoreCostLimit(limit = load("cost-limit", 2)) {
+	const nextLimit = Number.isFinite(limit) && limit > 0 ? limit : 2;
+
+	if (nextLimit !== costLimit) {
+		costPause = null;
+		costLimitRevision++;
+	}
+
+	costLimit = nextLimit;
+
+	$costLimit.value = costLimit;
+	$costLimit.classList.remove("invalid");
+	$costLimit.setAttribute("aria-invalid", "false");
+
+	updateCostWarning();
+}
+
+function resetCostPause() {
+	costPause = null;
+
+	schedule(updateChatTokens);
+}
+
+async function saveCostLimit(limit) {
+	costLimitRevision++;
+	$costLimit.disabled = true;
+
+	try {
+		const response = await storeSetting("cost_limit", limit);
+		if (!response.ok) {
+			throw new Error(response.statusText || `HTTP ${response.status}`);
+		}
+
+		store("cost-limit", limit, true);
+
+		restoreCostLimit(limit);
+	} catch (err) {
+		restoreCostLimit(costLimit);
+
+		notify(`Failed to save cost limit: ${err.message}`, "error");
+	} finally {
+		$costLimit.disabled = false;
+		costLimitSave = null;
+	}
+}
+
 async function updateChatTokens() {
 	if (!$chatTokens) {
 		return;
@@ -441,6 +520,14 @@ async function updateChatTokens() {
 		total += selectedPrompt.tokens;
 	}
 
+	if (selectedPrompt?.key && !bareMode && settings.enabled) {
+		total += (await resolveTokenCount(`${$sName.value}\n${$sPrompt.value}`)) || 0;
+
+		if (request !== chatTokensRequest) {
+			return;
+		}
+	}
+
 	if (!bareMode) {
 		if (allowFiles) {
 			total += promptOverheads?.files || 45;
@@ -463,6 +550,10 @@ async function updateChatTokens() {
 	const modelData = models[$model.value],
 		selectedProvider = modelProviders.find(provider => provider.slug === $provider.value),
 		pricing = modelData ? selectedProvider || modelData.pricing : null;
+
+	nextInputCost = Number.isFinite(pricing?.input) ? total * pricing.input / 1000000 : null;
+
+	updateCostWarning();
 
 	let costStr = "?";
 
@@ -589,6 +680,10 @@ function setupCrossTabSync() {
 
 		if (change.key === "retry-settings") {
 			restoreRetrySettings(change.value);
+		}
+
+		if (change.key === "cost-limit" && !costLimitSave) {
+			restoreCostLimit(change.value);
 		}
 
 		if (change.key === "model-favorites" && modelDropdown) {
@@ -2481,6 +2576,7 @@ class Message {
 				}
 
 				this.#files.splice(index, 1);
+				costPause = null;
 
 				el.remove();
 
@@ -2536,7 +2632,9 @@ class Message {
 		}
 
 		this.#files = [];
-		this.#_files.innerHTML = "";
+		costPause = null;
+
+		this.#_files.replaceChildren();
 
 		this.#_files.classList.remove("has-files");
 		this.#_message.classList.remove("has-files");
@@ -3312,6 +3410,8 @@ function abortNow() {
 }
 
 async function buildRequest(noPush = false) {
+	await costLimitSave;
+
 	const retry = readRetrySettings();
 	if (!retry) {
 		throw new Error("Check Automatic Retries in Settings: use whole numbers within the allowed ranges, with maximum delay at least the initial delay.");
@@ -3405,6 +3505,8 @@ async function generate(cancel = false, noPush = false) {
 	if (abortNow() && cancel) {
 		return;
 	}
+
+	resetCostPause();
 
 	if (!noPush) {
 		pushMessage();
@@ -3618,6 +3720,21 @@ async function generate(cancel = false, noPush = false) {
 					finish();
 
 					break;
+				case "cost_limit":
+					finish();
+					resetGenerationState();
+
+					costPause = {
+						cost: chunk.data.cost,
+						limit: chunk.data.limit,
+						message: messages.at(-1),
+						model: body.model,
+						provider: body.provider_pin || "",
+					};
+
+					updateCostWarning();
+
+					break;
 				case "retry":
 					setGenerationState("waiting");
 
@@ -3691,7 +3808,11 @@ async function generate(cancel = false, noPush = false) {
 
 					setGenerationState("error");
 
-					message?.setError(chunk.data);
+					if (message) {
+						message.setError(chunk.data);
+					} else {
+						notify(chunk.data, "error");
+					}
 
 					break;
 			}
@@ -3914,6 +4035,8 @@ async function syncSettings() {
 		return;
 	}
 
+	const revision = costLimitRevision;
+
 	try {
 		const response = await fetch("/-/settings");
 
@@ -3928,6 +4051,11 @@ async function syncSettings() {
 			store("model-favorites", remoteFavorites, true);
 
 			modelDropdown.setFavorites(remoteFavorites);
+		}
+
+		if (Number.isFinite(remoteSettings?.cost_limit) && !costLimitSave && revision === costLimitRevision) {
+			store("cost-limit", remoteSettings.cost_limit, true);
+			restoreCostLimit(remoteSettings.cost_limit);
 		}
 	} catch (err) {
 		console.error("Failed to sync settings:", err);
@@ -3946,6 +4074,7 @@ async function loadData() {
 	settings.prompt = load("s-prompt", "");
 
 	restoreRetrySettings();
+	restoreCostLimit();
 
 	modelBenchmarkMode = normalizeModelBenchmark(load("model-benchmark", "intelligence"));
 
@@ -4414,6 +4543,7 @@ async function loadData() {
 
 function clearMessages() {
 	abortNow();
+	costPause = null;
 
 	while (messages.length) {
 		messages[0].delete();
@@ -4693,12 +4823,15 @@ function pushAttachment(file, message = false) {
 			}
 
 			attachments.splice(index, 1);
+			costPause = null;
 
 			store("attachments", attachments);
 
 			el.remove();
 
 			$attachments.classList.toggle("has-files", !!attachments.length);
+
+			updateChatTokens();
 		})
 	);
 
@@ -4709,8 +4842,9 @@ function pushAttachment(file, message = false) {
 
 function clearAttachments() {
 	attachments = [];
+	costPause = null;
 
-	$attachments.innerHTML = "";
+	$attachments.replaceChildren();
 	$attachments.classList.remove("has-files");
 
 	store("attachments", []);
@@ -6322,6 +6456,36 @@ $modalSEnabled.addEventListener("change", () => {
 $openSettings.addEventListener("click", () => {
 	$settingsModal.classList.add("open");
 });
+
+$costWarningSettings.addEventListener("click", () => {
+	$settingsModal.classList.add("open");
+	$costLimit.focus();
+	$costLimit.select();
+});
+
+$costLimit.addEventListener("input", () => {
+	const valid = Number.isFinite($costLimit.valueAsNumber) && $costLimit.valueAsNumber > 0;
+
+	$costLimit.classList.toggle("invalid", !valid);
+	$costLimit.setAttribute("aria-invalid", !valid);
+});
+
+$costLimit.addEventListener("change", () => {
+	const limit = $costLimit.valueAsNumber;
+
+	if (Number.isFinite(limit) && limit > 0) {
+		costLimitSave = saveCostLimit(limit);
+	}
+});
+
+for (const element of [$chat, $messages, $sName, $sPrompt, $sEnabled, $modalSEnabled]) {
+	element.addEventListener("input", resetCostPause);
+	element.addEventListener("change", resetCostPause);
+}
+
+for (const element of [$compression, $bare, $search, $files, $json]) {
+	element.addEventListener("click", resetCostPause);
+}
 
 $settingsClose.addEventListener("click", () => {
 	$settingsModal.classList.remove("open");

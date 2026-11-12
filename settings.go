@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"os"
 	"slices"
 	"sync"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 )
+
+const DefaultCostLimit = 2.0
 
 type Settings struct {
 	mx sync.RWMutex
@@ -20,6 +23,7 @@ type Settings struct {
 
 type UserSettings struct {
 	Favorites []string `yaml:"favorites"`
+	CostLimit *float64 `yaml:"cost_limit,omitempty"`
 }
 
 func LoadSettings() (*Settings, error) {
@@ -132,8 +136,26 @@ func (s *Settings) Serialize(username string) map[string]any {
 	}
 
 	return map[string]any{
-		"favorites": favorites,
+		"favorites":  favorites,
+		"cost_limit": userCostLimit(user),
 	}
+}
+
+func (s *Settings) CostLimit(username string) float64 {
+	s.mx.RLock()
+	defer s.mx.RUnlock()
+
+	return userCostLimit(s.Settings[username])
+}
+
+func (s *Settings) SetCostLimit(username string, limit float64) {
+	s.mx.Lock()
+	defer s.mx.Unlock()
+
+	user := s.getLocked(username)
+	user.CostLimit = new(limit)
+
+	s.ScheduleStore()
 }
 
 func (s *Settings) MigrateFavoriteModelIDs(models []*Model) bool {
@@ -201,4 +223,16 @@ func (s *Settings) getLocked(username string) *UserSettings {
 	}
 
 	return user
+}
+
+func validCostLimit(limit float64) bool {
+	return limit > 0 && !math.IsNaN(limit) && !math.IsInf(limit, 0)
+}
+
+func userCostLimit(user *UserSettings) float64 {
+	if user != nil && user.CostLimit != nil && validCostLimit(*user.CostLimit) {
+		return *user.CostLimit
+	}
+
+	return DefaultCostLimit
 }

@@ -549,155 +549,179 @@ func HandleDump(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func HandleChat(w http.ResponseWriter, r *http.Request) {
-	debug("parsing chat")
+func HandleChat(tokenizer *Tokenizer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		debug("parsing chat")
 
-	raw, request, err := ParseChatRequest(r)
-	if err != nil {
-		RespondJson(w, http.StatusBadRequest, map[string]any{
-			"error": err.Error(),
-		})
-
-		return
-	}
-
-	debug("preparing stream")
-
-	ctx := r.Context()
-
-	response, err := NewStream(w, ctx)
-	if err != nil {
-		RespondJson(w, http.StatusBadRequest, map[string]any{
-			"error": err.Error(),
-		})
-
-		return
-	}
-
-	debug("handling request")
-
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				response.WriteChunk(NewChunk(ChunkAlive, nil))
-			}
-		}
-	}()
-
-	for iteration := range raw.Iterations {
-		debug("iteration %d of %d", iteration+1, raw.Iterations)
-
-		response.WriteChunk(NewChunk(ChunkStart, StartChunk{
-			Iteration: iteration + 1,
-			Total:     raw.Iterations,
-		}))
-
-		hasToolMessage := raw.AddToolPrompt(request, iteration)
-
-		dump("chat.json", request)
-
-		tool, message, err := RunCompletion(ctx, response, request, raw.proxy, raw.Retry)
+		raw, request, err := ParseChatRequest(r)
 		if err != nil {
-			response.WriteChunk(NewChunk(ChunkError, err))
+			RespondJson(w, http.StatusBadRequest, map[string]any{
+				"error": err.Error(),
+			})
 
 			return
 		}
 
-		if tool == nil {
-			debug("no tool call, done")
+		debug("preparing stream")
+
+		ctx := r.Context()
+
+		response, err := NewStream(w, ctx)
+		if err != nil {
+			RespondJson(w, http.StatusBadRequest, map[string]any{
+				"error": err.Error(),
+			})
 
 			return
 		}
 
-		debug("got %q tool call", tool.Name)
+		debug("handling request")
 
-		if len(request.Tools) == 0 {
-			response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("got %q tool call", tool.Name)))
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
 
-			continue
-		}
-
-		if raw.Tools.Offline {
-			tool.Result = "error: tool unavailable: network is offline"
-		} else {
-
-			switch tool.Name {
-			case "search_web":
-				arguments, err := ParseAndUpdateArgs[SearchWebArguments](tool)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
+			for {
+				select {
+				case <-ctx.Done():
 					return
+				case <-ticker.C:
+					response.WriteChunk(NewChunk(ChunkAlive, nil))
 				}
-
-				response.WriteChunk(NewChunk(ChunkTool, tool))
-
-				err = HandleSearchWebTool(ctx, tool, arguments)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
-					return
-				}
-			case "fetch_contents":
-				arguments, err := ParseAndUpdateArgs[FetchContentsArguments](tool)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
-					return
-				}
-
-				response.WriteChunk(NewChunk(ChunkTool, tool))
-
-				err = HandleFetchContentsTool(ctx, tool, arguments)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
-					return
-				}
-			case "github_repository":
-				arguments, err := ParseAndUpdateArgs[GitHubRepositoryArguments](tool)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
-					return
-				}
-
-				response.WriteChunk(NewChunk(ChunkTool, tool))
-
-				err = HandleGitHubRepositoryTool(ctx, tool, arguments)
-				if err != nil {
-					response.WriteChunk(NewChunk(ChunkError, err))
-
-					return
-				}
-			default:
-				tool.Invalid = true
-				tool.Result = "error: invalid tool call"
 			}
+		}()
+
+		for iteration := range raw.Iterations {
+			debug("iteration %d of %d", iteration+1, raw.Iterations)
+
+			hasToolMessage := raw.AddToolPrompt(request, iteration)
+
+			if iteration > 0 {
+				username, _ := settingsUsername(r)
+				limit := settings.CostLimit(username)
+
+				cost, err := EstimateContextCost(ctx, request, raw.ProviderPin, tokenizer)
+				if err != nil {
+					response.WriteChunk(NewChunk(ChunkError, err))
+
+					return
+				}
+
+				if cost >= limit {
+					response.WriteChunk(NewChunk(ChunkCostLimit, CostLimitChunk{
+						Cost:      cost,
+						Limit:     limit,
+						Iteration: iteration + 1,
+					}))
+
+					return
+				}
+			}
+
+			response.WriteChunk(NewChunk(ChunkStart, StartChunk{
+				Iteration: iteration + 1,
+				Total:     raw.Iterations,
+			}))
+
+			dump("chat.json", request)
+
+			tool, message, err := RunCompletion(ctx, response, request, raw.proxy, raw.Retry)
+			if err != nil {
+				response.WriteChunk(NewChunk(ChunkError, err))
+
+				return
+			}
+
+			if tool == nil {
+				debug("no tool call, done")
+
+				return
+			}
+
+			debug("got %q tool call", tool.Name)
+
+			if len(request.Tools) == 0 {
+				response.WriteChunk(NewChunk(ChunkError, fmt.Errorf("got %q tool call", tool.Name)))
+
+				continue
+			}
+
+			if raw.Tools.Offline {
+				tool.Result = "error: tool unavailable: network is offline"
+			} else {
+
+				switch tool.Name {
+				case "search_web":
+					arguments, err := ParseAndUpdateArgs[SearchWebArguments](tool)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+
+					response.WriteChunk(NewChunk(ChunkTool, tool))
+
+					err = HandleSearchWebTool(ctx, tool, arguments)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+				case "fetch_contents":
+					arguments, err := ParseAndUpdateArgs[FetchContentsArguments](tool)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+
+					response.WriteChunk(NewChunk(ChunkTool, tool))
+
+					err = HandleFetchContentsTool(ctx, tool, arguments)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+				case "github_repository":
+					arguments, err := ParseAndUpdateArgs[GitHubRepositoryArguments](tool)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+
+					response.WriteChunk(NewChunk(ChunkTool, tool))
+
+					err = HandleGitHubRepositoryTool(ctx, tool, arguments)
+					if err != nil {
+						response.WriteChunk(NewChunk(ChunkError, err))
+
+						return
+					}
+				default:
+					tool.Invalid = true
+					tool.Result = "error: invalid tool call"
+				}
+			}
+
+			tool.Done = true
+
+			debug("finished tool call")
+
+			response.WriteChunk(NewChunk(ChunkTool, tool))
+
+			if hasToolMessage {
+				request.Messages = request.Messages[:len(request.Messages)-1]
+			}
+
+			request.Messages = append(request.Messages,
+				tool.AsAssistantToolCall(message),
+				tool.AsToolMessage(),
+			)
+
+			response.WriteChunk(NewChunk(ChunkEnd, nil))
 		}
-
-		tool.Done = true
-
-		debug("finished tool call")
-
-		response.WriteChunk(NewChunk(ChunkTool, tool))
-
-		if hasToolMessage {
-			request.Messages = request.Messages[:len(request.Messages)-1]
-		}
-
-		request.Messages = append(request.Messages,
-			tool.AsAssistantToolCall(message),
-			tool.AsToolMessage(),
-		)
-
-		response.WriteChunk(NewChunk(ChunkEnd, nil))
 	}
 }
 

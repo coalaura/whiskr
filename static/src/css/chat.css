@@ -1867,6 +1867,53 @@ body.no-title #title {
 	opacity: 0.55;
 }
 
+#cost-warning {
+	display: flex;
+	align-items: center;
+	gap: 8px 12px;
+	flex-wrap: wrap;
+	flex-shrink: 0;
+	margin: 4px 12px 10px;
+	padding: 8px 10px;
+	border-left: 2px solid var(--c-yellow);
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--c-yellow) 8%, var(--c-base));
+	color: var(--c-yellow);
+	font-size: 12px;
+	line-height: 18px;
+}
+
+#cost-warning[hidden] {
+	display: none;
+}
+
+#cost-warning::before {
+	content: "";
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	background: currentColor;
+	mask: url(icons/danger.svg) center / contain no-repeat;
+}
+
+#cost-warning-text {
+	flex: 1;
+	min-width: 160px;
+}
+
+#cost-warning-settings {
+	padding: 2px 0;
+	font-size: inherit;
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+#cost-warning-settings:hover,
+#cost-warning-settings:focus-visible {
+	color: var(--c-text);
+}
+
 #chat {
 	display: flex;
 	position: relative;

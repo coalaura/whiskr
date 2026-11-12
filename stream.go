@@ -25,6 +25,7 @@ const (
 	ChunkAlive         ChunkType = 10
 	ChunkAudio         ChunkType = 11
 	ChunkRetry         ChunkType = 12
+	ChunkCostLimit     ChunkType = 13
 )
 
 type ChunkType uint8
@@ -43,6 +44,12 @@ type RetryChunk struct {
 	Attempt int   `msgpack:"attempt"`
 	Total   int   `msgpack:"total"`
 	DelayMs int64 `msgpack:"delay_ms"`
+}
+
+type CostLimitChunk struct {
+	Cost      float64 `msgpack:"cost"`
+	Limit     float64 `msgpack:"limit"`
+	Iteration int64   `msgpack:"iteration"`
 }
 
 type Stream struct {

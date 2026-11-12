@@ -108,6 +108,11 @@
 
 			<div id="messages" tabindex="0"></div>
 
+			<div id="cost-warning" role="status" aria-live="polite" hidden>
+				<span id="cost-warning-text"></span>
+				<button id="cost-warning-settings" type="button">Adjust limit</button>
+			</div>
+
 			<div id="chat">
 				<button id="top" class="hidden" title="Scroll to top"></button>
 				<button id="bottom" class="hidden" title="Scroll to bottom"></button>
@@ -352,6 +357,21 @@
 							<div class="form-group span-2">
 								<label for="time-override" title="Override date/time">Time Override</label>
 								<input id="time-override" type="text" placeholder="Now" />
+							</div>
+						</div>
+					</div>
+
+					<div class="settings-section">
+						<div class="settings-section-head">
+							<h4>Cost Limit</h4>
+						</div>
+
+						<p class="settings-description" id="cost-limit-description">Warn and pause automatic follow-up iterations when the estimated input cost reaches this amount. Each manual Generate allows one iteration. Estimates exclude the reply and assume no cache discount. Synced with your user settings.</p>
+
+						<div class="settings-grid">
+							<div class="form-group span-2">
+								<label for="cost-limit">Cost threshold (USD)</label>
+								<input id="cost-limit" type="number" min="0" step="any" value="2" required aria-describedby="cost-limit-description" />
 							</div>
 						</div>
 					</div>
