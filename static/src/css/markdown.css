@@ -328,3 +328,27 @@
 	display: block;
 	position: relative;
 }
+
+.markdown .inline-media {
+	display: inline-block;
+	width: min(100%, 640px);
+	margin: 8px 0;
+	vertical-align: top;
+}
+
+.markdown .inline-media audio,
+.markdown .inline-media video,
+.markdown .inline-youtube {
+	width: 100%;
+	border: 0;
+	border-radius: 6px;
+}
+
+.markdown .inline-media video {
+	max-height: 70vh;
+	background: var(--c-mantle);
+}
+
+.markdown .inline-youtube {
+	aspect-ratio: 16 / 9;
+}

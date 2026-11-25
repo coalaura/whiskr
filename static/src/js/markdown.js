@@ -5,6 +5,7 @@ import katex from "katex";
 import { parse, parseInline, use } from "marked";
 
 import { formatBytes, previewFile } from "./lib.js";
+import { createMediaElement } from "./media.js";
 
 const timeouts = new WeakMap(),
 	highlightCache = new Map(),
@@ -143,6 +144,12 @@ use({
 
 	renderer: {
 		image: href => {
+			const media = createMediaElement(href.href, href.text, href.title);
+
+			if (media) {
+				return media.outerHTML;
+			}
+
 			const title = href.title ? ` title="${escapeHtml(href.title)}"` : "",
 				alt = href.text ? ` alt="${escapeHtml(href.text)}"` : "";
 

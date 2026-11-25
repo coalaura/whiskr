@@ -34,6 +34,7 @@ import {
 	wrapJSON,
 } from "./lib.js";
 import { render, renderInline, stripMarkdown } from "./markdown.js";
+import { classifyMediaURL } from "./media.js";
 import { connectDB, load, onChange, refresh, store } from "./storage.js";
 
 const ChunkType = {
@@ -135,7 +136,7 @@ const $version = document.getElementById("version"),
 	$login = document.getElementById("login");
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-	markdownImageRegex = /!\[([^\]]*)\]\(([^)\n]+)\)/g,
+	markdownImageRegex = /!\[([^\]]*)\]\((<[^>\n]+>|[^\s()]+(?:\([^\s()]*\)[^\s()]*)*)(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'))?[ \t]*\)/g,
 	autoScrollResumeDistance = 50;
 
 let platform = "";
@@ -1729,6 +1730,11 @@ class Message {
 	#morph(from, to) {
 		morphdom(from, to, {
 			childrenOnly: true,
+			onBeforeElUpdated: (current, next) => {
+				if (current.matches("audio, video, iframe.inline-youtube") && current.isEqualNode(next)) {
+					return false;
+				}
+			},
 			onBeforeNodeDiscarded: node => {
 				if (node.classList?.contains("image-info")) {
 					return false;
@@ -5526,11 +5532,11 @@ function stripNonDirectImages(text, inlineImages = []) {
 	const source = text || "";
 
 	return source
-		.replace(markdownImageRegex, (_full, alt, url) => {
+		.replace(markdownImageRegex, (full, _alt, url) => {
 			const resolved = resolveImageUrl(url, inlineImages);
 
 			if (/^https?:\/\//i.test(resolved)) {
-				return `![${alt}](${resolved})`;
+				return full;
 			}
 
 			return "";
@@ -5543,8 +5549,12 @@ function stripAndCollectImages(text, inlineImages = []) {
 	const found = [];
 
 	const cleaned = (text || "")
-		.replace(markdownImageRegex, (_full, _alt, url) => {
+		.replace(markdownImageRegex, (full, _alt, url) => {
 			const resolved = resolveImageUrl(url, inlineImages);
+
+			if (classifyMediaURL(resolved)) {
+				return full;
+			}
 
 			if (/^(https?:\/\/|data:image\/)/i.test(resolved)) {
 				found.push(resolved);
@@ -5652,6 +5662,7 @@ ${imageHtml ? `<div class="images">${imageHtml}</div>` : ""}
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(title)}</title>
 <style>@import url(https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap);:root{color-scheme:dark;--c-base:#24273a;--c-surface0:#363a4f;--c-surface1:#494d64;--c-surface2:#5b6078;--c-text:#cad3f5;--c-subtext:#a5adcb;--c-mauve:#c6a0f6;--c-red:#ed8796;--c-crust:#181926;--c-mantle:#1e2030}*{box-sizing:border-box}body{margin:0;font-family:"Work Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI","Noto Sans","Helvetica Neue",Arial,sans-serif;background:var(--c-mantle);color:var(--c-text);line-height:1.6;font-size:16px}main{max-width:900px;margin:0 auto;padding:40px 20px;display:flex;flex-direction:column;gap:32px}h1{margin:0 0 16px;font-size:1.8rem;color:var(--c-text);text-align:center;font-weight:600}.message{display:flex;flex-direction:column;gap:8px;max-width:100%}.message .header{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:13px;color:var(--c-subtext);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:2px}.content{overflow-wrap:break-word}.content.markdown>*:first-child{margin-top:0}.content.markdown>*:last-child{margin-bottom:0}.content.markdown p{margin:0 0 16px 0}.content.markdown h1,.content.markdown h2,.content.markdown h3,.content.markdown h4,.content.markdown h5,.content.markdown h6{margin:24px 0 12px 0;font-weight:600;color:var(--c-text);line-height:1.3}.content.markdown a{color:var(--c-mauve);text-decoration:none}.content.markdown a:hover{text-decoration:underline}.content.markdown hr{border:none;border-top:1px solid var(--c-surface2);margin:24px 0}.content.markdown pre{background:var(--c-crust);padding:12px 16px;border-radius:6px;overflow-x:auto;border:1px solid var(--c-base);margin:16px 0}.content.markdown pre code{background:#fff0;padding:0;border:none;color:var(--c-text);font-size:14px}.content.markdown code{background:var(--c-crust);border:1px solid var(--c-base);border-radius:4px;padding:2px 6px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:14px}.content.markdown ul,.content.markdown ol{margin:0 0 16px 0;padding-left:24px}.content.markdown li{margin:4px 0}.content.markdown blockquote{margin:16px 0;padding:8px 16px;border-left:4px solid var(--c-surface2);background:color-mix(in srgb,var(--c-surface2) 20%,transparent);border-radius:0 6px 6px 0}.content.markdown table{width:100%;border-collapse:collapse;margin:16px 0}.content.markdown th,.content.markdown td{border:1px solid var(--c-surface2);padding:8px 12px;text-align:left}.content.markdown th{background:var(--c-surface1)}.files{margin-top:16px;padding-top:16px;border-top:1px solid var(--c-surface2)}.files h3{margin:0 0 10px;font-size:.95rem;color:var(--c-subtext);font-weight:500}.images{margin-top:16px;display:flex;flex-direction:column;gap:12px}img{max-width:100%;border-radius:6px;display:block}.empty{color:var(--c-overlay2);font-style:italic}</style>
+<style>.inline-media{display:inline-block;width:min(100%,640px);margin:8px 0;vertical-align:top}.inline-media audio,.inline-media video,.inline-youtube{width:100%;border:0;border-radius:6px}.inline-media video{max-height:70vh}.inline-youtube{aspect-ratio:16/9}</style>
 </head>
 <body>
 <main>

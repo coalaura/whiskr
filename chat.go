@@ -406,11 +406,11 @@ func (r *ChatRequest) Parse() (*openingrouter.ChatCompletionRequest, error) {
 			)
 
 			if strings.Contains(message.Text, "![") {
-				content.Parts = SplitImagePairs(message.Text, !model.Vision)
+				content.Parts = SplitMediaPairs(message.Text, model)
 
 				multi = true
 
-				if content.Parts[len(content.Parts)-1].Type == openingrouter.ChatContentPartTypeText {
+				if len(content.Parts) > 0 && content.Parts[len(content.Parts)-1].Type == openingrouter.ChatContentPartTypeText {
 					last = len(content.Parts) - 1
 				}
 			} else {
@@ -523,6 +523,11 @@ func ParseChatRequest(r *http.Request) (*ChatRequest, *openingrouter.ChatComplet
 	}
 
 	request, err := raw.Parse()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ResolveAudioLinks(r.Context(), request)
 	if err != nil {
 		return nil, nil, err
 	}

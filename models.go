@@ -71,6 +71,9 @@ type Model struct {
 	Images bool `json:"-"`
 	Audio  bool `json:"-"`
 	Text   bool `json:"-"`
+
+	InputAudio bool `json:"-"`
+	InputVideo bool `json:"-"`
 }
 
 const ModelShortIDPrefix = "ws-"
@@ -372,10 +375,15 @@ func GetModelTags(model openingrouter.FrontendModel, m *Model) {
 	}
 
 	for _, modality := range model.InputModalities {
-		if modality == "image" {
+		switch modality {
+		case "image":
 			m.Vision = true
 
 			m.Tags = append(m.Tags, "vision")
+		case "audio":
+			m.InputAudio = true
+		case "video":
+			m.InputVideo = true
 		}
 	}
 

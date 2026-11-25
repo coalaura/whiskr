@@ -25,7 +25,7 @@ func FindMarkdownCodeRegions(text string) []CodeRegion {
 		})
 	}
 
-	fenced := regexp.MustCompile(`(?m)^\x60\x60\x60[^\n]*\n(.*?\n)^\x60\x60\x60\s*$`)
+	fenced := regexp.MustCompile("(?ms)^```[^\\n]*\\n.*?(?:^```[ \\t]*$|\\z)|^~~~[^\\n]*\\n.*?(?:^~~~[ \\t]*$|\\z)")
 
 	for _, match := range fenced.FindAllStringIndex(text, -1) {
 		regions = append(regions, CodeRegion{
@@ -47,10 +47,10 @@ func IsInsideCodeBlock(pos int, regions []CodeRegion) bool {
 	return false
 }
 
-func SplitImagePairs(text string, stripImages bool) []openingrouter.ChatContentPart {
+func SplitMediaPairs(text string, model *Model) []openingrouter.ChatContentPart {
 	code := FindMarkdownCodeRegions(text)
 
-	rgx := regexp.MustCompile(`(?m)!\[([^\]]*)\]\((\S+?)\)`)
+	rgx := regexp.MustCompile(`(?m)!\[([^\]]*)\]\((?:<([^>\n]+)>|([^\s()]+(?:\([^\s()]*\)[^\s()]*)*))(?:[ \t]+(?:"[^"\n]*"|'[^'\n]*'))?[ \t]*\)`)
 
 	var (
 		index int
@@ -95,7 +95,7 @@ func SplitImagePairs(text string, stripImages bool) []openingrouter.ChatContentP
 		start := index + location[0]
 		end := index + location[1]
 
-		if IsInsideCodeBlock(start, code) {
+		if IsInsideCodeBlock(start, code) || isMarkdownEscaped(text, start) {
 			push(index, end, "")
 
 			index = end
@@ -109,8 +109,14 @@ func SplitImagePairs(text string, stripImages bool) []openingrouter.ChatContentP
 		urlStart := index + location[4]
 		urlEnd := index + location[5]
 
+		if location[4] == -1 {
+			urlStart = index + location[6]
+			urlEnd = index + location[7]
+		}
+
 		alt := text[altStart:altEnd]
 		url := text[urlStart:urlEnd]
+		mediaType, format := classifyMediaURL(url)
 
 		isDataUrl := strings.HasPrefix(url, "data:")
 		isHttpUrl := strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://")
@@ -123,32 +129,72 @@ func SplitImagePairs(text string, stripImages bool) []openingrouter.ChatContentP
 			continue
 		}
 
-		var image string
+		marker := text[start:end]
 
 		if isDataUrl {
-			image = fmt.Sprintf("![image](%s)", alt)
-		} else {
-			image = fmt.Sprintf("![image](%s)", url)
+			marker = fmt.Sprintf("![image](%s)", alt)
+		} else if mediaType != "" {
+			label := mediaType
+			if label == "youtube" {
+				label = "video"
+			}
+
+			marker = "![" + label + "](" + url + ")"
 		}
 
-		if start > index {
-			push(index, start, image)
-		} else {
-			push(index, index, image)
-		}
+		push(index, start, marker)
 
-		if !stripImages {
-			parts = append(parts, openingrouter.ChatContentPart{
-				Type: openingrouter.ChatContentPartTypeImageURL,
-				ImageURL: &openingrouter.ChatContentImageURL{
-					Detail: openingrouter.ChatImageDetailAuto,
-					URL:    url,
-				},
-			})
+		switch mediaType {
+		case "audio":
+			if model.InputAudio {
+				// ResolveAudioLinks replaces this URL with base64 before serialization.
+				parts = append(parts, openingrouter.ChatContentPart{
+					Type: openingrouter.ChatContentPartTypeInputAudio,
+					InputAudio: &openingrouter.ChatContentInputAudio{
+						Data:   url,
+						Format: format,
+					},
+				})
+			}
+		case "video", "youtube":
+			allowYouTube := mediaType != "youtube" || strings.HasPrefix(model.Slug, "google/")
+			if model.InputVideo && allowYouTube {
+				if mediaType == "youtube" {
+					url = "https://www.youtube.com/watch?v=" + format
+				}
+
+				parts = append(parts, openingrouter.ChatContentPart{
+					Type: openingrouter.ChatContentPartTypeVideoURL,
+					VideoURL: &openingrouter.ChatContentVideoURL{
+						URL: url,
+					},
+				})
+			}
+		case "image":
+			if model.Vision {
+				parts = append(parts, openingrouter.ChatContentPart{
+					Type: openingrouter.ChatContentPartTypeImageURL,
+					ImageURL: &openingrouter.ChatContentImageURL{
+						Detail: openingrouter.ChatImageDetailAuto,
+						URL:    url,
+					},
+				})
+			}
 		}
 
 		index = end
 	}
 
 	return parts
+}
+
+func isMarkdownEscaped(text string, position int) bool {
+	backslashes := 0
+
+	for position > 0 && text[position-1] == '\\' {
+		backslashes++
+		position--
+	}
+
+	return backslashes%2 != 0
 }

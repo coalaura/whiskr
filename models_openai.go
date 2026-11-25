@@ -109,11 +109,15 @@ func SetOpenAITags(model openingrouter.Model, m *Model) {
 		}
 	}
 
+	// The client's OpenAI adapter does not serialize video content parts yet.
 	for _, modality := range model.Architecture.InputModalities {
-		if modality == openingrouter.InputModalityImage {
+		switch modality {
+		case openingrouter.InputModalityImage:
 			m.Vision = true
 
 			m.Tags = append(m.Tags, "vision")
+		case openingrouter.InputModalityAudio:
+			m.InputAudio = true
 		}
 	}
 
