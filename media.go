@@ -59,16 +59,24 @@ func youtubeVideoID(parsed *url.URL) string {
 	}
 
 	videoID = strings.TrimSuffix(videoID, "/")
-	if len(videoID) != 11 {
+	if !validYouTubeID(videoID) {
 		return ""
+	}
+
+	return videoID
+}
+
+func validYouTubeID(videoID string) bool {
+	if len(videoID) != 11 {
+		return false
 	}
 
 	for _, char := range videoID {
 		valid := char >= 'a' && char <= 'z' || char >= 'A' && char <= 'Z' || char >= '0' && char <= '9' || char == '-' || char == '_'
 		if !valid {
-			return ""
+			return false
 		}
 	}
 
-	return videoID
+	return true
 }

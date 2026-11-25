@@ -1845,18 +1845,27 @@ body.no-title #title {
 	cursor: not-allowed;
 }
 
-#messages .message .body .image-wrapper img {
+#messages .message .body .image-wrapper img,
+#messages .inline-media > :first-child {
 	transition: 250ms;
 }
 
-#messages:not(.vision) .message .body .image-wrapper img {
+#messages:not(.vision) .message .body .image-wrapper img,
+#messages:not(.audio-input) .media-audio audio:not([data-playback]),
+#messages:not(.video-input) .media-video video:not([data-playback]),
+#messages:not(.youtube-input) .media-youtube > .youtube-preview {
 	filter: blur(4px);
 }
 
 #messages:not(.vision) .message .body .image-wrapper::before {
 	content: "Model does not have vision support";
+}
+
+#messages:not(.vision) .message .body .image-wrapper::before,
+#messages .inline-media .media-warning {
 	position: absolute;
 	top: 50%;
+	left: 0;
 	transform: translateY(-50%);
 	font-size: 18px;
 	font-weight: 500;
@@ -1865,6 +1874,13 @@ body.no-title #title {
 	text-align: center;
 	z-index: 2;
 	opacity: 0.55;
+	pointer-events: none;
+}
+
+#messages:not(.audio-input) .media-audio audio:not([data-playback]) ~ .media-warning,
+#messages:not(.video-input) .media-video video:not([data-playback]) ~ .media-warning,
+#messages:not(.youtube-input) .media-youtube .youtube-preview ~ .media-warning {
+	display: block;
 }
 
 #cost-warning {

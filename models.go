@@ -72,8 +72,8 @@ type Model struct {
 	Audio  bool `json:"-"`
 	Text   bool `json:"-"`
 
-	InputAudio bool `json:"-"`
-	InputVideo bool `json:"-"`
+	InputAudio bool `json:"input_audio,omitempty"`
+	InputVideo bool `json:"input_video,omitempty"`
 }
 
 const ModelShortIDPrefix = "ws-"

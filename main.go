@@ -177,6 +177,7 @@ func main() {
 		gr.Post("/-/preview", HandlePreview)
 		gr.Post("/-/image", HandleImage)
 		gr.Post("/-/tts", HandleTTS)
+		gr.Get("/-/youtube/{id}", HandleYouTubeThumbnail)
 
 		gr.Patch("/-/settings/{setting}", HandleUserSetting)
 	})

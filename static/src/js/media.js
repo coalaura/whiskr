@@ -69,20 +69,25 @@ export function createMediaElement(url, text, title) {
 		return wrapper;
 	}
 
-	wrapper.className = "no-click inline-media";
+	wrapper.className = `no-click inline-media media-${media.type}`;
 
 	if (media.type === "youtube") {
-		const player = document.createElement("iframe");
+		const preview = document.createElement("button"),
+			thumbnail = document.createElement("img");
 
-		player.className = "inline-youtube";
-		player.src = `https://www.youtube-nocookie.com/embed/${media.videoID}`;
-		player.setAttribute("aria-label", label);
-		player.loading = "lazy";
-		player.allowFullscreen = true;
-		player.allow = "encrypted-media; picture-in-picture; fullscreen";
-		player.referrerPolicy = "strict-origin-when-cross-origin";
+		wrapper.dataset.youtubeId = media.videoID;
+		preview.type = "button";
+		preview.className = "youtube-preview";
+		preview.setAttribute("aria-label", `Play on YouTube: ${label}`);
 
-		wrapper.append(player);
+		thumbnail.alt = "";
+		thumbnail.loading = "lazy";
+		thumbnail.width = 1280;
+		thumbnail.height = 720;
+		thumbnail.src = `/-/youtube/${media.videoID}`;
+
+		preview.append(thumbnail);
+		wrapper.append(preview);
 	} else if (media.type === "audio" || media.type === "video") {
 		const player = document.createElement(media.type);
 
@@ -97,6 +102,14 @@ export function createMediaElement(url, text, title) {
 
 		wrapper.append(player);
 	}
+
+	const warning = document.createElement("span"),
+		kind = media.type === "youtube" ? "YouTube" : media.type;
+
+	warning.className = "media-warning";
+	warning.textContent = `Model does not have ${kind} support`;
+
+	wrapper.append(warning);
 
 	return wrapper;
 }
